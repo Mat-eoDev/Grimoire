@@ -1,0 +1,19 @@
+{
+  "name": "newmj",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/server",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:server": "npm.cmd --workspace @newmj/server run dev",
+    "dev:web": "npm.cmd --workspace @newmj/web run dev",
+    "build": "npm.cmd --workspace @newmj/server run build && npm.cmd --workspace @newmj/web run build",
+    "check": "npm.cmd --workspace @newmj/server run check && npm.cmd --workspace @newmj/web run check",
+    "prisma:generate": "npm.cmd --workspace @newmj/server run prisma:generate",
+    "prisma:migrate": "npm.cmd --workspace @newmj/server run prisma:migrate",
+    "prisma:seed": "npm.cmd --workspace @newmj/server run prisma:seed"
+  }
+}
+

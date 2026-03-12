@@ -1,0 +1,385 @@
+Voici une reformulation propre et professionnelle du projet, puis sa traduction en fonctionnalités, rôles, MVP et couverture du référentiel.
+
+1. Reformulation du projet
+
+Le projet consiste à développer une application web d’assistance au Maître du Jeu (MJ) pour l’animation de parties de jeu de rôle.
+
+Cette application doit permettre au MJ de créer et piloter une campagne, d’y inviter des joueurs, de leur faire créer ou choisir leur personnage avec des éléments comme la race et le métier, puis de gérer le déroulement narratif et les combats tout au long de la partie.
+
+L’outil n’a pas vocation à remplacer le MJ, mais à lui fournir un support numérique centralisé pour :
+
+préparer ses parties,
+
+afficher des éléments visuels de contexte,
+
+gérer les informations visibles par les joueurs,
+
+faire apparaître des personnages non-joueurs ou des ennemis,
+
+lancer et suivre les combats,
+
+attribuer et modifier des récompenses,
+
+garder le contrôle complet sur les paramètres du jeu.
+
+Le MJ reste donc le décideur principal : il raconte, arbitre, adapte, montre ou masque des informations, modifie les événements, agit sur les combats et ajuste les récompenses selon la situation.
+
+2. Objectif produit
+
+Créer une plateforme web permettant de :
+
+centraliser la gestion d’une campagne JDR,
+
+assister le MJ dans la narration avec des supports visuels,
+
+structurer les interactions avec les joueurs,
+
+gérer les personnages, PNJ, monstres et combats,
+
+garantir au MJ la maîtrise totale du scénario et des actions.
+
+3. Utilisateurs du système
+Maître du Jeu
+
+Le MJ est l’utilisateur principal. Il doit pouvoir :
+
+créer une campagne,
+
+inviter les joueurs,
+
+préparer les scènes,
+
+sélectionner les vues et images de contexte,
+
+gérer les personnages, PNJ et monstres,
+
+lancer et contrôler les combats,
+
+attribuer ou modifier les récompenses,
+
+agir à tout moment sur les paramètres de la partie.
+
+Joueur
+
+Le joueur doit pouvoir :
+
+rejoindre une campagne,
+
+créer ou sélectionner son personnage,
+
+choisir sa race et son métier,
+
+visualiser les éléments que le MJ lui autorise,
+
+participer aux combats et aux choix de jeu.
+
+4. Fonctionnalités principales
+A. Gestion de campagne
+
+création d’une campagne
+
+modification des paramètres de campagne
+
+invitation de joueurs
+
+consultation de la liste des participants
+
+gestion de l’état de la campagne
+
+B. Gestion des personnages joueurs
+
+création d’un personnage
+
+choix de la race
+
+choix du métier / de la classe
+
+consultation des informations du personnage
+
+modification encadrée par le MJ ou selon les droits prévus
+
+C. Gestion narrative et visuelle
+
+sélection d’un décor ou contexte visuel
+
+affichage d’images de lieu : village, taverne, église, château, etc.
+
+diffusion d’un support visuel aux joueurs
+
+dissociation entre vue MJ et vue Joueur
+
+ajout d’éléments narratifs pour soutenir l’oral du MJ
+
+D. Gestion des PNJ et monstres
+
+création ou sélection d’un PNJ
+
+création ou sélection d’un monstre
+
+apparition en jeu d’un PNJ ou d’un ennemi
+
+association à une scène ou à un combat
+
+E. Gestion des combats
+
+désignation d’un joueur et d’un ennemi pour initier le combat
+
+suivi du combat
+
+action du MJ sur le déroulement
+
+gestion manuelle ou semi-assistée des résultats
+
+fin du combat avec validation par le MJ
+
+F. Récompenses
+
+proposition de récompenses
+
+sélection par le MJ
+
+modification libre par le MJ
+
+attribution au joueur ou au groupe
+
+G. Contrôle total du MJ
+
+modification des paramètres de combat
+
+ajustement des récompenses
+
+contrôle des informations visibles
+
+ajout, retrait ou modification d’ennemis et de PNJ
+
+maîtrise de toutes les variables utiles à la partie
+
+5. Règles de conception à respecter
+
+Pour que le projet reste cohérent avec l’esprit du JDR, il faut poser ces règles :
+
+Le MJ reste prioritaire
+
+L’application ne doit jamais enfermer le MJ dans une logique automatique rigide. Elle doit l’assister, pas décider à sa place.
+
+Les joueurs ne voient que ce qu’ils doivent voir
+
+Il faut une vraie gestion des droits et de la visibilité :
+
+certaines informations sont réservées au MJ,
+
+certaines sont visibles par tous,
+
+certaines peuvent être visibles seulement par un joueur ou un groupe.
+
+Le combat doit rester pilotable
+
+Même si certaines aides peuvent être prévues, le MJ doit pouvoir :
+
+corriger une valeur,
+
+interrompre une action,
+
+changer un ennemi,
+
+ajuster le résultat.
+
+Les récompenses doivent être éditables
+
+Le MJ doit pouvoir choisir une récompense proposée, mais aussi la modifier librement.
+
+6. MVP recommandé
+
+Pour rester réaliste et solide, voici le MVP que je te conseille.
+
+MVP fonctionnel
+
+authentification simple
+
+création de campagne
+
+invitation de joueurs
+
+création de personnage avec race et métier
+
+vue MJ / vue Joueur
+
+affichage de décors ou backgrounds
+
+ajout de PNJ / monstres
+
+lancement d’un combat simple
+
+attribution de récompense
+
+tableau de bord MJ
+
+Ce MVP est suffisant pour avoir un produit crédible et démontrer beaucoup de compétences du référentiel.
+
+7. Fonctionnalités à garder pour après
+
+À prévoir en version 2 :
+
+historique de campagne
+
+journal narratif
+
+initiative avancée
+
+gestion d’inventaire
+
+bibliothèque de monstres
+
+bibliothèque de récompenses
+
+sauvegarde des scènes
+
+éditeur complet de règles de jeu
+
+statistiques et suivi d’évolution des personnages
+
+8. Traduction en modules techniques
+
+Le projet peut être découpé comme suit :
+
+Module 1 - Authentification et rôles
+
+compte utilisateur
+
+rôle MJ / Joueur
+
+gestion des droits d’accès
+
+Module 2 - Campagnes
+
+création
+
+édition
+
+participation
+
+association joueurs/campagne
+
+Module 3 - Personnages
+
+fiche personnage
+
+race
+
+métier
+
+statistiques de base
+
+Module 4 - Scènes et visuels
+
+décors
+
+images de contexte
+
+gestion de l’affichage joueur
+
+Module 5 - Entités de jeu
+
+PNJ
+
+monstres
+
+ennemis
+
+gestion de leur apparition
+
+Module 6 - Combats
+
+création d’un combat
+
+participants
+
+actions
+
+état du combat
+
+résolution
+
+Module 7 - Récompenses
+
+catalogue
+
+attribution
+
+modification manuelle
+
+9. Correspondance avec le référentiel
+
+Ton projet couvre très bien le référentiel.
+
+Bloc 1
+
+Très bon pour démontrer :
+
+recueil du besoin
+
+architecture logicielle
+
+sécurité
+
+qualité
+
+accessibilité
+
+modélisation des accès et données
+
+tests
+
+Bloc 2
+
+Très bon pour démontrer :
+
+gestion de projet
+
+backlog
+
+méthode Agile
+
+modélisation métier
+
+planification
+
+communication
+
+validation du livrable
+
+Bloc 3
+
+Très bon pour démontrer :
+
+analyse algorithmique
+
+développement
+
+correction
+
+intégration de modules
+
+tests
+
+suivi de production
+
+Bloc 4
+
+Très bon pour démontrer :
+
+échanges de données
+
+documentation technique
+
+scripts d’installation
+
+environnements d’exécution
+
+structuration des données
+
+10. Formulation projet prête à réutiliser
+
+Tu peux reprendre ce texte dans ton dossier :
+
+Le projet consiste à développer une application web d’assistance au Maître du Jeu pour l’animation de campagnes de jeu de rôle. La solution permet au MJ de créer une campagne, d’inviter des joueurs, de gérer leurs personnages, d’afficher des supports visuels de contexte, de faire intervenir des PNJ ou des monstres, de lancer et piloter des combats, et d’attribuer des récompenses tout en conservant la maîtrise complète des paramètres de jeu. L’application vise à soutenir la narration, faciliter l’organisation des parties et améliorer l’expérience des joueurs sans se substituer au rôle central du MJ.
