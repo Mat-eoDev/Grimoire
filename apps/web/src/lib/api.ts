@@ -34,8 +34,3 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}) {
 
   return payload as T;
 }
-
-export function buildEventUrl(campaignId: string) {
-  return `${API_URL}/campaigns/${campaignId}/events`;
-}
-

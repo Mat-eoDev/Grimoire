@@ -102,14 +102,10 @@ authRouter.get("/me", async (request, response, next) => {
         userId: auth.user.id
       },
       include: {
-        campaign: {
-          include: {
-            members: true
-          }
-        }
+        campaign: true
       },
       orderBy: {
-        createdAt: "desc"
+        joinedAt: "desc"
       }
     });
 
@@ -118,14 +114,11 @@ authRouter.get("/me", async (request, response, next) => {
       campaigns: memberships.map((membership) => ({
         memberId: membership.id,
         role: membership.role,
-        status: membership.status,
         campaign: {
           id: membership.campaign.id,
           title: membership.campaign.title,
-          description: membership.campaign.description,
-          status: membership.campaign.status,
-          publishedAt: membership.campaign.publishedAt,
-          memberCount: membership.campaign.members.length
+          joinCode: membership.campaign.joinCode,
+          status: membership.campaign.status
         }
       }))
     });

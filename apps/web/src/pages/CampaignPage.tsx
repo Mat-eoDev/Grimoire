@@ -1,104 +1,154 @@
-import { useEffect, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 
-import { MjDashboard } from "../components/MjDashboard";
-import { PlayerDashboard } from "../components/PlayerDashboard";
 import { apiFetch } from "../lib/api";
-import { subscribeToCampaign } from "../lib/events";
-import type { CampaignPayload, SessionPayload } from "../lib/types";
+import type { CampaignDetail, SessionPayload } from "../lib/types";
 
-type CampaignPageProps = {
-  session: SessionPayload;
-  expectedRole: "GM" | "PLAYER";
+type Props = {
+  session: SessionPayload | null;
   onLogout: () => Promise<void>;
 };
 
-export function CampaignPage({ session, expectedRole, onLogout }: CampaignPageProps) {
-  const params = useParams();
-  const campaignId = params.campaignId ?? "";
-  const [payload, setPayload] = useState<CampaignPayload | null>(null);
+const STATUS_LABEL: Record<string, string> = {
+  DRAFT: "En attente",
+  ACTIVE: "En cours",
+  CLOSED: "Terminee"
+};
+
+export function CampaignPage({ session, onLogout }: Props) {
+  const { campaignId } = useParams<{ campaignId: string }>();
+  const [data, setData] = useState<CampaignDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  async function loadCampaign() {
-    if (!campaignId) {
-      return;
-    }
-
+  const load = useCallback(async () => {
+    if (!campaignId) return;
     try {
-      const nextPayload = await apiFetch<CampaignPayload>(`/campaigns/${campaignId}`);
-      setPayload(nextPayload);
+      const result = await apiFetch<CampaignDetail>(`/campaigns/${campaignId}`);
+      setData(result);
       setError(null);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Chargement impossible");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+      setData(null);
     } finally {
       setLoading(false);
     }
+  }, [campaignId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!data || data.campaign.status === "CLOSED") {
+      return;
+    }
+    const interval = setInterval(load, 4000);
+    return () => clearInterval(interval);
+  }, [data, load]);
+
+  async function handleLaunch() {
+    if (!campaignId) return;
+    setActionLoading(true);
+    try {
+      await apiFetch(`/campaigns/${campaignId}/launch`, { method: "POST" });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setActionLoading(false);
+    }
   }
 
-  useEffect(() => {
-    setLoading(true);
-    void loadCampaign();
-  }, [campaignId]);
-
-  useEffect(() => {
-    if (!campaignId) {
-      return undefined;
+  async function handleStop() {
+    if (!campaignId) return;
+    setActionLoading(true);
+    try {
+      await apiFetch(`/campaigns/${campaignId}/stop`, { method: "POST" });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setActionLoading(false);
     }
-
-    return subscribeToCampaign(campaignId, () => {
-      void loadCampaign();
-    });
-  }, [campaignId]);
+  }
 
   if (loading) {
-    return <div className="app-shell loading-screen">Connexion a la campagne...</div>;
+    return <div className="app-shell">Chargement...</div>;
   }
 
-  if (error) {
+  if (error || !data) {
     return (
       <div className="app-shell">
-        <div className="feedback feedback--error">{error}</div>
+        <p className="error">{error ?? "Partie introuvable"}</p>
         <Link to="/">Retour</Link>
       </div>
     );
   }
 
-  if (!payload) {
-    return <div className="app-shell">Campagne introuvable.</div>;
-  }
-
-  if (payload.viewer.role !== expectedRole) {
-    return <Navigate to={`/campaigns/${campaignId}/${payload.viewer.role === "GM" ? "mj" : "player"}`} replace />;
-  }
+  const isGm = data.viewer.role === "GM";
+  const { campaign } = data;
 
   return (
     <div className="app-shell">
       <header className="campaign-header">
         <div>
-          <p className="eyebrow">{expectedRole === "GM" ? "Zone MJ" : "Zone joueur"}</p>
-          <h1>{payload.campaign.title}</h1>
-          <p>{payload.campaign.description || "Aucune description pour cette campagne."}</p>
+          <Link to="/">&larr; Accueil</Link>
+          <h1>{campaign.title}</h1>
+          <p>
+            MJ: {campaign.gmUser.username} — Statut: {STATUS_LABEL[campaign.status] ?? campaign.status}
+          </p>
         </div>
-        <div className="toolbar">
-          <span className="pill">{session.user.username}</span>
-          <button className="button-ghost" onClick={() => void loadCampaign()}>
-            Actualiser
+        {session ? (
+          <button type="button" onClick={onLogout}>
+            Deconnexion ({session.user.username})
           </button>
-          <Link className="button-link" to="/">
-            Accueil
-          </Link>
-          <button className="button-ghost" onClick={() => void onLogout()}>
-            Quitter
-          </button>
-        </div>
+        ) : (
+          <Link to="/">Connexion</Link>
+        )}
       </header>
 
-      {expectedRole === "GM" ? (
-        <MjDashboard payload={payload} reload={loadCampaign} />
-      ) : (
-        <PlayerDashboard payload={payload} reload={loadCampaign} />
+      <section className="campaign-code">
+        <h2>Code de la partie</h2>
+        <p className="join-code">{campaign.joinCode}</p>
+        <p>Partage ce code aux joueurs pour qu'ils rejoignent.</p>
+      </section>
+
+      {isGm && (
+        <section className="campaign-controls">
+          {campaign.status === "DRAFT" && (
+            <button type="button" onClick={handleLaunch} disabled={actionLoading}>
+              {actionLoading ? "..." : "Lancer la campagne"}
+            </button>
+          )}
+          {campaign.status === "ACTIVE" && (
+            <button type="button" onClick={handleStop} disabled={actionLoading}>
+              {actionLoading ? "..." : "Stopper la campagne"}
+            </button>
+          )}
+          {campaign.status === "CLOSED" && <p>Cette campagne est terminee.</p>}
+        </section>
       )}
+
+      {!isGm && (
+        <section className="campaign-controls">
+          {campaign.status === "DRAFT" && <p>En attente du lancement par le MJ.</p>}
+          {campaign.status === "ACTIVE" && <p>La campagne est en cours !</p>}
+          {campaign.status === "CLOSED" && <p>La campagne est terminee.</p>}
+        </section>
+      )}
+
+      <section className="campaign-members">
+        <h2>Participants ({data.members.length})</h2>
+        <ul>
+          {data.members.map((member) => (
+            <li key={member.id}>
+              {member.user.username} — {member.role === "GM" ? "MJ" : "Joueur"}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

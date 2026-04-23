@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import { apiFetch } from "./lib/api";
 import type { SessionPayload } from "./lib/types";
 import { CampaignPage } from "./pages/CampaignPage";
 import { HomePage } from "./pages/HomePage";
-import { InvitePage } from "./pages/InvitePage";
 
 export function App() {
   const [session, setSession] = useState<SessionPayload | null>(null);
@@ -23,9 +22,7 @@ export function App() {
   }
 
   async function logout() {
-    await apiFetch("/auth/logout", {
-      method: "POST"
-    });
+    await apiFetch("/auth/logout", { method: "POST" });
     setSession(null);
   }
 
@@ -34,7 +31,7 @@ export function App() {
   }, []);
 
   if (isLoading) {
-    return <div className="app-shell loading-screen">Chargement de la table du MJ...</div>;
+    return <div className="app-shell loading-screen">Chargement...</div>;
   }
 
   return (
@@ -44,30 +41,9 @@ export function App() {
         element={<HomePage session={session} onSessionRefresh={refreshSession} onLogout={logout} />}
       />
       <Route
-        path="/invite/:token"
-        element={<InvitePage session={session} onSessionRefresh={refreshSession} />}
-      />
-      <Route
-        path="/campaigns/:campaignId/mj"
-        element={
-          session ? (
-            <CampaignPage session={session} expectedRole="GM" onLogout={logout} />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
-      />
-      <Route
-        path="/campaigns/:campaignId/player"
-        element={
-          session ? (
-            <CampaignPage session={session} expectedRole="PLAYER" onLogout={logout} />
-          ) : (
-            <Navigate to="/" replace />
-          )
-        }
+        path="/campaigns/:campaignId"
+        element={<CampaignPage session={session} onLogout={logout} />}
       />
     </Routes>
   );
 }
-

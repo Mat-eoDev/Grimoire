@@ -2,247 +2,191 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../lib/api";
-import type { SessionPayload } from "../lib/types";
+import type { CampaignSummaryResponse, SessionPayload } from "../lib/types";
 
-type HomePageProps = {
+type Props = {
   session: SessionPayload | null;
   onSessionRefresh: () => Promise<void>;
   onLogout: () => Promise<void>;
 };
 
-export function HomePage({ session, onSessionRefresh, onLogout }: HomePageProps) {
+type AuthMode = "login" | "register";
+
+export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
   const navigate = useNavigate();
-  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [registerForm, setRegisterForm] = useState({ email: "", username: "", password: "" });
-  const [campaignForm, setCampaignForm] = useState({ title: "", description: "" });
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
 
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+  const [title, setTitle] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  async function handleAuth(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setMessage(null);
+    setAuthError(null);
+    setAuthLoading(true);
 
     try {
-      await apiFetch("/auth/login", {
-        method: "POST",
-        json: loginForm
-      });
+      const path = mode === "login" ? "/auth/login" : "/auth/register";
+      const payload: Record<string, string> = { email, password };
+      if (mode === "register") {
+        payload.username = username;
+      }
+      await apiFetch(path, { method: "POST", json: payload });
       await onSessionRefresh();
-      setMessage("Connexion reussie.");
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Connexion impossible");
+      setEmail("");
+      setUsername("");
+      setPassword("");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Erreur");
+    } finally {
+      setAuthLoading(false);
     }
   }
 
-  async function handleRegister(event: FormEvent<HTMLFormElement>) {
+  async function handleCreate(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setMessage(null);
-
+    setActionError(null);
+    setActionLoading(true);
     try {
-      await apiFetch("/auth/register", {
+      const result = await apiFetch<CampaignSummaryResponse>("/campaigns", {
         method: "POST",
-        json: registerForm
+        json: { title }
       });
+      setTitle("");
       await onSessionRefresh();
-      setMessage("Compte cree et session ouverte.");
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Creation de compte impossible");
+      navigate(`/campaigns/${result.campaign.id}`);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Erreur");
+    } finally {
+      setActionLoading(false);
     }
   }
 
-  async function handleCreateCampaign(event: FormEvent<HTMLFormElement>) {
+  async function handleJoin(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setMessage(null);
-
+    setActionError(null);
+    setActionLoading(true);
     try {
-      const payload = await apiFetch<{ campaign: { id: string } }>("/campaigns", {
+      const result = await apiFetch<CampaignSummaryResponse>("/campaigns/join", {
         method: "POST",
-        json: campaignForm
+        json: { joinCode: joinCode.trim().toUpperCase() }
       });
+      setJoinCode("");
       await onSessionRefresh();
-      navigate(`/campaigns/${payload.campaign.id}/mj`);
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Creation de campagne impossible");
+      navigate(`/campaigns/${result.campaign.id}`);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Erreur");
+    } finally {
+      setActionLoading(false);
     }
+  }
+
+  if (!session) {
+    return (
+      <div className="app-shell">
+        <h1>NewMJ</h1>
+        <div className="auth-tabs">
+          <button type="button" onClick={() => setMode("login")} disabled={mode === "login"}>
+            Connexion
+          </button>
+          <button type="button" onClick={() => setMode("register")} disabled={mode === "register"}>
+            Creer un compte
+          </button>
+        </div>
+        <form onSubmit={handleAuth} className="auth-form">
+          <label>
+            Email
+            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          </label>
+          {mode === "register" && (
+            <label>
+              Pseudo
+              <input value={username} onChange={(event) => setUsername(event.target.value)} required />
+            </label>
+          )}
+          <label>
+            Mot de passe
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              minLength={8}
+            />
+          </label>
+          {authError && <p className="error">{authError}</p>}
+          <button type="submit" disabled={authLoading}>
+            {authLoading ? "..." : mode === "login" ? "Se connecter" : "Creer le compte"}
+          </button>
+        </form>
+      </div>
+    );
   }
 
   return (
     <div className="app-shell">
-      <div className="hero-band">
-        <div>
-          <p className="eyebrow">NewMJ</p>
-          <h1>Le pupitre du maitre du jeu, en direct avec les joueurs.</h1>
-          <p className="hero-copy">
-            Cree une campagne, valide les personnages, projette une scene, pilote un combat et diffuse
-            instantanement la vue joueur.
-          </p>
-        </div>
-      </div>
+      <header className="home-header">
+        <h1>Bonjour {session.user.username}</h1>
+        <button type="button" onClick={onLogout}>
+          Se deconnecter
+        </button>
+      </header>
 
-      {error ? <div className="feedback feedback--error">{error}</div> : null}
-      {message ? <div className="feedback feedback--success">{message}</div> : null}
+      <section className="home-actions">
+        <form onSubmit={handleCreate} className="action-card">
+          <h2>Creer une partie</h2>
+          <label>
+            Titre
+            <input value={title} onChange={(event) => setTitle(event.target.value)} required />
+          </label>
+          <button type="submit" disabled={actionLoading}>
+            {actionLoading ? "..." : "Creer"}
+          </button>
+        </form>
 
-      {!session ? (
-        <div className="two-column-grid">
-          <section className="section-card">
-            <header className="section-card__header">
-              <div>
-                <h2>Connexion</h2>
-                <p>Reviens sur ta table en cours.</p>
-              </div>
-            </header>
-            <div className="section-card__body">
-              <form className="stack-form" onSubmit={handleLogin}>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    value={loginForm.email}
-                    onChange={(event) => setLoginForm((current) => ({ ...current, email: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label>
-                  Mot de passe
-                  <input
-                    type="password"
-                    value={loginForm.password}
-                    onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))}
-                    required
-                  />
-                </label>
-                <button type="submit">Se connecter</button>
-              </form>
-            </div>
-          </section>
+        <form onSubmit={handleJoin} className="action-card">
+          <h2>Rejoindre une partie</h2>
+          <label>
+            Code
+            <input
+              value={joinCode}
+              onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+              required
+              minLength={4}
+              maxLength={8}
+            />
+          </label>
+          <button type="submit" disabled={actionLoading}>
+            {actionLoading ? "..." : "Rejoindre"}
+          </button>
+        </form>
+      </section>
 
-          <section className="section-card">
-            <header className="section-card__header">
-              <div>
-                <h2>Nouveau compte</h2>
-                <p>Prepare ton acces MJ ou joueur.</p>
-              </div>
-            </header>
-            <div className="section-card__body">
-              <form className="stack-form" onSubmit={handleRegister}>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    value={registerForm.email}
-                    onChange={(event) => setRegisterForm((current) => ({ ...current, email: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label>
-                  Pseudo
-                  <input
-                    type="text"
-                    value={registerForm.username}
-                    onChange={(event) => setRegisterForm((current) => ({ ...current, username: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label>
-                  Mot de passe
-                  <input
-                    type="password"
-                    value={registerForm.password}
-                    onChange={(event) => setRegisterForm((current) => ({ ...current, password: event.target.value }))}
-                    required
-                  />
-                </label>
-                <button type="submit">Creer le compte</button>
-              </form>
-            </div>
-          </section>
-        </div>
-      ) : (
-        <div className="stack-layout">
-          <section className="section-card">
-            <header className="section-card__header">
-              <div>
-                <h2>Bienvenue, {session.user.username}</h2>
-                <p>{session.user.email}</p>
-              </div>
-              <div className="toolbar">
-                <button className="button-ghost" onClick={() => void onSessionRefresh()}>
-                  Actualiser
+      {actionError && <p className="error">{actionError}</p>}
+
+      {session.campaigns.length > 0 && (
+        <section className="campaign-list">
+          <h2>Mes parties</h2>
+          <ul>
+            {session.campaigns.map((item) => (
+              <li key={item.memberId}>
+                <button type="button" onClick={() => navigate(`/campaigns/${item.campaign.id}`)}>
+                  <strong>{item.campaign.title}</strong>
+                  <span>
+                    {item.role} — {item.campaign.status}
+                  </span>
                 </button>
-                <button className="button-ghost" onClick={() => void onLogout()}>
-                  Se deconnecter
-                </button>
-              </div>
-            </header>
-            <div className="section-card__body">
-              <form className="stack-form" onSubmit={handleCreateCampaign}>
-                <label>
-                  Titre de campagne
-                  <input
-                    type="text"
-                    value={campaignForm.title}
-                    onChange={(event) => setCampaignForm((current) => ({ ...current, title: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label>
-                  Description
-                  <textarea
-                    rows={3}
-                    value={campaignForm.description}
-                    onChange={(event) =>
-                      setCampaignForm((current) => ({ ...current, description: event.target.value }))
-                    }
-                  />
-                </label>
-                <button type="submit">Creer une campagne</button>
-              </form>
-            </div>
-          </section>
-
-          <section className="section-card">
-            <header className="section-card__header">
-              <div>
-                <h2>Mes campagnes</h2>
-                <p>Entre soit en poste MJ, soit dans la vue joueur.</p>
-              </div>
-            </header>
-            <div className="section-card__body">
-              <div className="campaign-grid">
-                {session.campaigns.map((entry) => (
-                  <article className="campaign-tile" key={entry.memberId}>
-                    <div>
-                      <p className="eyebrow">{entry.role === "GM" ? "MJ" : "JOUEUR"}</p>
-                      <h3>{entry.campaign.title}</h3>
-                      <p>{entry.campaign.description || "Aucune description."}</p>
-                    </div>
-                    <div className="pill-row">
-                      <span className="pill">{entry.campaign.status}</span>
-                      <span className="pill">{entry.campaign.memberCount} membres</span>
-                    </div>
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/campaigns/${entry.campaign.id}/${entry.role === "GM" ? "mj" : "player"}`
-                        )
-                      }
-                    >
-                      Ouvrir la campagne
-                    </button>
-                  </article>
-                ))}
-                {session.campaigns.length === 0 ? (
-                  <p className="empty-state">Aucune campagne pour le moment. Cree la premiere table.</p>
-                ) : null}
-              </div>
-            </div>
-          </section>
-        </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );
 }
-

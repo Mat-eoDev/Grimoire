@@ -15,7 +15,6 @@ enum AccountStatus {
 enum CampaignStatus {
   DRAFT
   ACTIVE
-  PAUSED
   CLOSED
 }
 
@@ -24,97 +23,17 @@ enum MemberRole {
   PLAYER
 }
 
-enum MemberStatus {
-  INVITED
-  ACTIVE
-  LEFT
-  BANNED
-}
-
-enum InviteStatus {
-  PENDING
-  ACCEPTED
-  EXPIRED
-  CANCELLED
-}
-
-enum ActorType {
-  PLAYER_CHARACTER
-  NPC
-  MONSTER
-}
-
-enum SceneStatus {
-  PREPARED
-  LIVE
-  ARCHIVED
-}
-
-enum VisualMediaType {
-  IMAGE
-  MAP
-  BACKGROUND
-}
-
-enum VisibilityScope {
-  GM_ONLY
-  ALL_PLAYERS
-}
-
-enum CombatStatus {
-  PLANNED
-  LIVE
-  PAUSED
-  ENDED
-}
-
-enum CombatSide {
-  PLAYERS
-  OPPONENTS
-  NEUTRAL
-}
-
-enum ParticipantStatus {
-  READY
-  ACTIVE
-  KO
-  DEAD
-  FLED
-}
-
-enum CombatActionType {
-  ATTACK
-  SPELL
-  ITEM
-  DEFEND
-  MANUAL_ADJUST
-  FLEE
-}
-
-enum RewardType {
-  XP
-  ITEM
-  GOLD
-  STORY
-  CUSTOM
-}
-
 model User {
-  id                String             @id @default(uuid())
-  email             String             @unique
-  username          String             @unique
-  passwordHash      String
-  status            AccountStatus      @default(ACTIVE)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  sessions          Session[]
-  gmCampaigns       Campaign[]         @relation("CampaignGM")
-  memberships       CampaignMember[]
-  invitesSent       CampaignInvite[]   @relation("InviteSender")
-  invitesAccepted   CampaignInvite[]   @relation("InviteAcceptor")
-  validatedActions  CombatAction[]     @relation("ActionValidator")
-  rewardsCreated    Reward[]           @relation("RewardCreator")
-  rewardsGranted    RewardAssignment[] @relation("RewardGranter")
+  id           String           @id @default(uuid())
+  email        String           @unique
+  username     String           @unique
+  passwordHash String
+  status       AccountStatus    @default(ACTIVE)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  sessions     Session[]
+  gmCampaigns  Campaign[]       @relation("CampaignGM")
+  memberships  CampaignMember[]
 }
 
 model Session {
@@ -130,274 +49,29 @@ model Session {
 }
 
 model Campaign {
-  id                String             @id @default(uuid())
-  gmUserId          String
-  gmUser            User               @relation("CampaignGM", fields: [gmUserId], references: [id])
-  title             String
-  description       String?
-  status            CampaignStatus     @default(DRAFT)
-  publishedSceneId  String?
-  publishedScene    Scene?             @relation("PublishedScene", fields: [publishedSceneId], references: [id], onDelete: SetNull)
-  publishedVisualId String?
-  publishedVisual   SceneVisual?       @relation("PublishedVisual", fields: [publishedVisualId], references: [id], onDelete: SetNull)
-  publishedAt       DateTime?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  members           CampaignMember[]
-  invites           CampaignInvite[]
-  actors            GameActor[]
-  scenes            Scene[]            @relation("CampaignScenes")
-  combats           Combat[]
-  rewards           Reward[]
-  rewardAssignments RewardAssignment[]
+  id          String           @id @default(uuid())
+  gmUserId    String
+  gmUser      User             @relation("CampaignGM", fields: [gmUserId], references: [id])
+  title       String
+  joinCode    String           @unique
+  status      CampaignStatus   @default(DRAFT)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  members     CampaignMember[]
 }
 
 model CampaignMember {
-  id        String       @id @default(uuid())
+  id         String     @id @default(uuid())
   campaignId String
-  campaign  Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      MemberRole
-  status    MemberStatus @default(ACTIVE)
-  joinedAt  DateTime?
-  createdAt DateTime     @default(now())
-  actors    GameActor[]
-  shares    VisualShare[]
+  campaign   Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       MemberRole
+  joinedAt   DateTime   @default(now())
 
   @@unique([campaignId, userId])
   @@index([userId])
   @@index([campaignId, role])
 }
-
-model CampaignInvite {
-  id               String       @id @default(uuid())
-  campaignId       String
-  campaign         Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  invitedByUserId  String
-  invitedByUser    User         @relation("InviteSender", fields: [invitedByUserId], references: [id])
-  targetEmail      String
-  token            String       @unique
-  status           InviteStatus @default(PENDING)
-  acceptedByUserId String?
-  acceptedByUser   User?        @relation("InviteAcceptor", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
-  expiresAt        DateTime
-  createdAt        DateTime     @default(now())
-
-  @@index([campaignId, status])
-}
-
-model Race {
-  id          Int         @id @default(autoincrement())
-  code        String      @unique
-  name        String      @unique
-  description String?
-  actors      GameActor[]
-}
-
-model CharacterClass {
-  id          Int         @id @default(autoincrement())
-  code        String      @unique
-  name        String      @unique
-  description String?
-  actors      GameActor[]
-
-  @@map("classes")
-}
-
-model ActorTemplate {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  actorType   ActorType
-  level       Int       @default(1)
-  hpMax       Int       @default(10)
-  summary     String?
-  createdAt   DateTime  @default(now())
-}
-
-model GameActor {
-  id            String          @id @default(uuid())
-  campaignId    String
-  campaign      Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  ownerMemberId String?
-  ownerMember   CampaignMember? @relation(fields: [ownerMemberId], references: [id], onDelete: SetNull)
-  actorType     ActorType
-  name          String
-  raceId        Int?
-  race          Race?           @relation(fields: [raceId], references: [id], onDelete: SetNull)
-  classId       Int?
-  characterClass CharacterClass? @relation(fields: [classId], references: [id], onDelete: SetNull)
-  level         Int             @default(1)
-  hpMax         Int             @default(10)
-  hpCurrent     Int             @default(10)
-  statsJson     Json            @default("{}")
-  mjNotes       String?
-  isApproved    Boolean         @default(false)
-  isActive      Boolean         @default(true)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  sceneLinks    SceneActor[]
-  combatSlots   CombatParticipant[]
-  rewardAssignments RewardAssignment[]
-
-  @@index([campaignId, actorType])
-  @@index([ownerMemberId])
-}
-
-model Scene {
-  id                  String     @id @default(uuid())
-  campaignId          String
-  campaign            Campaign   @relation("CampaignScenes", fields: [campaignId], references: [id], onDelete: Cascade)
-  title               String
-  summary             String?
-  playerText          String?
-  gmNotes             String?
-  displayOrder        Int        @default(0)
-  status              SceneStatus @default(PREPARED)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  visuals             SceneVisual[]
-  actorLinks          SceneActor[]
-  combats             Combat[]
-  rewardAssignments   RewardAssignment[]
-  publishedByCampaigns Campaign[] @relation("PublishedScene")
-
-  @@index([campaignId, displayOrder])
-}
-
-model SceneVisual {
-  id                  String           @id @default(uuid())
-  sceneId             String
-  scene               Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
-  label               String
-  mediaType           VisualMediaType
-  assetUrl            String
-  createdAt           DateTime         @default(now())
-  shares              VisualShare[]
-  publishedByCampaigns Campaign[]      @relation("PublishedVisual")
-
-  @@index([sceneId])
-}
-
-model VisualShare {
-  id                String         @id @default(uuid())
-  visualId          String
-  visual            SceneVisual    @relation(fields: [visualId], references: [id], onDelete: Cascade)
-  memberId          String
-  member            CampaignMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  grantedByUserId   String
-  grantedAt         DateTime       @default(now())
-
-  @@unique([visualId, memberId])
-  @@index([memberId])
-}
-
-model SceneActor {
-  id              String          @id @default(uuid())
-  sceneId         String
-  scene           Scene           @relation(fields: [sceneId], references: [id], onDelete: Cascade)
-  actorId         String
-  actor           GameActor       @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  narrativeRole   String?
-  visibilityScope VisibilityScope @default(ALL_PLAYERS)
-
-  @@unique([sceneId, actorId])
-  @@index([actorId])
-}
-
-model Combat {
-  id                String         @id @default(uuid())
-  campaignId        String
-  campaign          Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  sceneId           String?
-  scene             Scene?         @relation(fields: [sceneId], references: [id], onDelete: SetNull)
-  initiatedByUserId String
-  status            CombatStatus   @default(LIVE)
-  roundNo           Int            @default(1)
-  mjValidated       Boolean        @default(false)
-  notes             String?
-  startedAt         DateTime?
-  endedAt           DateTime?
-  createdAt         DateTime       @default(now())
-  participants      CombatParticipant[]
-  actions           CombatAction[]
-  rewardAssignments RewardAssignment[]
-
-  @@index([campaignId, status])
-}
-
-model CombatParticipant {
-  id          String            @id @default(uuid())
-  combatId    String
-  combat      Combat            @relation(fields: [combatId], references: [id], onDelete: Cascade)
-  actorId     String
-  actor       GameActor         @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  side        CombatSide
-  initiative  Int?
-  currentHp   Int
-  status      ParticipantStatus @default(READY)
-  createdAt   DateTime          @default(now())
-  sourceActions CombatAction[]  @relation("ActionSource")
-  targetActions CombatAction[]  @relation("ActionTarget")
-
-  @@unique([combatId, actorId])
-  @@index([combatId, side])
-}
-
-model CombatAction {
-  id                 String            @id @default(uuid())
-  combatId           String
-  combat             Combat            @relation(fields: [combatId], references: [id], onDelete: Cascade)
-  sourceParticipantId String
-  sourceParticipant  CombatParticipant @relation("ActionSource", fields: [sourceParticipantId], references: [id], onDelete: Cascade)
-  targetParticipantId String?
-  targetParticipant  CombatParticipant? @relation("ActionTarget", fields: [targetParticipantId], references: [id], onDelete: SetNull)
-  actionType         CombatActionType
-  actionLabel        String
-  damageValue        Int?
-  healingValue       Int?
-  resultText         String?
-  validatedByUserId  String
-  validatedByUser    User              @relation("ActionValidator", fields: [validatedByUserId], references: [id])
-  performedAt        DateTime          @default(now())
-
-  @@index([combatId, performedAt])
-}
-
-model Reward {
-  id              String      @id @default(uuid())
-  campaignId      String
-  campaign        Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  createdByUserId String
-  createdByUser   User        @relation("RewardCreator", fields: [createdByUserId], references: [id])
-  rewardType      RewardType
-  label           String
-  description     String?
-  numericValue    Decimal?    @db.Decimal(10, 2)
-  createdAt       DateTime    @default(now())
-  assignments     RewardAssignment[]
-
-  @@index([campaignId, rewardType])
-}
-
-model RewardAssignment {
-  id              String     @id @default(uuid())
-  rewardId        String
-  reward          Reward     @relation(fields: [rewardId], references: [id], onDelete: Cascade)
-  campaignId      String
-  campaign        Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  actorId         String?
-  actor           GameActor? @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  grantedByUserId String
-  grantedByUser   User       @relation("RewardGranter", fields: [grantedByUserId], references: [id])
-  combatId        String?
-  combat          Combat?    @relation(fields: [combatId], references: [id], onDelete: SetNull)
-  sceneId         String?
-  scene           Scene?     @relation(fields: [sceneId], references: [id], onDelete: SetNull)
-  quantity        Decimal    @default(1) @db.Decimal(10, 2)
-  grantedAt       DateTime   @default(now())
-
-  @@index([campaignId, grantedAt])
-  @@index([actorId])
-}
-
