@@ -4,6 +4,7 @@ import { MemberRole } from "@prisma/client";
 import { Router } from "express";
 
 import { assertString, HttpError, optionalString } from "../lib/http.js";
+import { getBaseStats } from "../lib/characterStats.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -305,6 +306,54 @@ campaignsRouter.put("/campaigns/:campaignId/notes", async (request, response, ne
     });
 
     response.json({ content: note.content });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /campaigns/:campaignId/character — crée la fiche avec les stats de base
+campaignsRouter.post("/campaigns/:campaignId/character", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+    const charId   = Number(body.charId);
+    const charName = assertString(body.charName, "charName");
+
+    const member = await prisma.campaignMember.findUnique({
+      where: { campaignId_userId: { campaignId: request.params.campaignId, userId: auth.user.id } }
+    });
+    if (!member) throw new HttpError(403, "Tu ne participes pas a cette partie");
+
+    const stats = getBaseStats(charId);
+
+    const sheet = await prisma.characterSheet.upsert({
+      where: { userId_campaignId: { userId: auth.user.id, campaignId: request.params.campaignId } },
+      update: { charId, charName, ...stats },
+      create: { userId: auth.user.id, campaignId: request.params.campaignId, charId, charName, ...stats }
+    });
+
+    response.status(201).json({ sheet });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /campaigns/:campaignId/character — récupère la fiche du joueur connecté
+campaignsRouter.get("/campaigns/:campaignId/character", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+
+    const member = await prisma.campaignMember.findUnique({
+      where: { campaignId_userId: { campaignId: request.params.campaignId, userId: auth.user.id } }
+    });
+    if (!member) throw new HttpError(403, "Tu ne participes pas a cette partie");
+
+    const sheet = await prisma.characterSheet.findUnique({
+      where: { userId_campaignId: { userId: auth.user.id, campaignId: request.params.campaignId } }
+    });
+    if (!sheet) throw new HttpError(404, "Fiche personnage introuvable");
+
+    response.json({ sheet });
   } catch (error) {
     next(error);
   }

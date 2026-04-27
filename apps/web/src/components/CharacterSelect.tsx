@@ -1,11 +1,14 @@
 import { useState } from "react";
 
+import { apiFetch } from "../lib/api";
+
 export type CharacterChoice = {
   charId: number;
   name: string;
 };
 
 type Props = {
+  campaignId: string;
   onConfirm: (choice: CharacterChoice) => void;
 };
 
@@ -16,21 +19,28 @@ const CHARACTERS = [
   { id: 4, label: "Mage",      img: "/MAG.png"       },
 ];
 
-export function CharacterSelect({ onConfirm }: Props) {
+export function CharacterSelect({ campaignId, onConfirm }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [name, setName]         = useState("");
+  const [error, setError]       = useState<string | null>(null);
+  const [loading, setLoading]   = useState(false);
 
-  function handleConfirm() {
-    if (selected === null) {
-      setError("Choisis un personnage.");
-      return;
+  async function handleConfirm() {
+    if (selected === null) { setError("Choisis un personnage."); return; }
+    if (name.trim().length < 2) { setError("Le nom doit faire au moins 2 caractères."); return; }
+
+    setLoading(true);
+    try {
+      await apiFetch(`/campaigns/${campaignId}/character`, {
+        method: "POST",
+        body: JSON.stringify({ charId: selected, charName: name.trim() })
+      });
+      onConfirm({ charId: selected, name: name.trim() });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setLoading(false);
     }
-    if (name.trim().length < 2) {
-      setError("Le nom doit faire au moins 2 caractères.");
-      return;
-    }
-    onConfirm({ charId: selected, name: name.trim() });
   }
 
   return (
@@ -45,10 +55,7 @@ export function CharacterSelect({ onConfirm }: Props) {
               key={char.id}
               type="button"
               className={`char-card${selected === char.id ? " char-card--selected" : ""}`}
-              onClick={() => {
-                setSelected(char.id);
-                setError(null);
-              }}
+              onClick={() => { setSelected(char.id); setError(null); }}
             >
               <div className="char-card__avatar">
                 <img src={char.img} alt={char.label} className="char-card__img" />
@@ -66,10 +73,7 @@ export function CharacterSelect({ onConfirm }: Props) {
               value={name}
               placeholder="Entre un nom..."
               maxLength={32}
-              onChange={(e) => {
-                setName(e.target.value);
-                setError(null);
-              }}
+              onChange={(e) => { setName(e.target.value); setError(null); }}
               onKeyDown={(e) => e.key === "Enter" && handleConfirm()}
             />
           </label>
@@ -81,8 +85,9 @@ export function CharacterSelect({ onConfirm }: Props) {
           type="button"
           className="char-confirm-btn"
           onClick={handleConfirm}
+          disabled={loading}
         >
-          Confirmer
+          {loading ? "..." : "Confirmer"}
         </button>
       </div>
     </div>

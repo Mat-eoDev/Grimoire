@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { CharacterSelect, type CharacterChoice } from "../components/CharacterSelect";
+import { CharacterSheet } from "../components/CharacterSheet";
 import { PlayerNotes } from "../components/PlayerNotes";
 import { apiFetch } from "../lib/api";
 import type { CampaignDetail, SessionPayload } from "../lib/types";
@@ -116,7 +117,7 @@ export function CampaignPage({ session, onLogout }: Props) {
   const MAX_PLAYERS = 5;
 
   if (!isGm && !character) {
-    return <CharacterSelect onConfirm={handleCharacterConfirm} />;
+    return <CharacterSelect campaignId={campaignId!} onConfirm={handleCharacterConfirm} />;
   }
 
   /* checklist DRAFT */
@@ -287,8 +288,13 @@ export function CampaignPage({ session, onLogout }: Props) {
         </div>
       )}
 
-      {/* Notes privées joueur */}
-      {!isGm && campaignId && <PlayerNotes campaignId={campaignId} />}
+      {/* Fiche + Notes joueur */}
+      {!isGm && campaignId && (
+        <>
+          <CharacterSheet campaignId={campaignId} />
+          <PlayerNotes campaignId={campaignId} />
+        </>
+      )}
 
     </div>
   );

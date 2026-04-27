@@ -1184,6 +1184,110 @@ code {
   transform: none;
 }
 
+/* ── Character Sheet ── */
+.char-sheet {
+  border: 1px solid rgba(77, 57, 36, 0.16);
+  border-radius: 24px;
+  background: var(--paper);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.char-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.char-sheet__portrait {
+  width: 80px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #c97a43, #9a4728);
+  flex-shrink: 0;
+}
+
+.char-sheet__identity {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.char-sheet__class {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.char-sheet__name {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.char-sheet__hp {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.char-sheet__hp-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.char-sheet__hp-top strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.char-sheet__stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+.char-sheet__stat {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.char-sheet__stat-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.char-sheet__stat-top strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.char-sheet__stat-bar-bg {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(77, 57, 36, 0.1);
+  overflow: hidden;
+}
+
+.char-sheet__stat-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #9a4728, #c97a43);
+  transition: width 600ms ease;
+}
+
 /* ── Player Notes ── */
 .notes-section {
   border: 1px solid rgba(77, 57, 36, 0.16);
