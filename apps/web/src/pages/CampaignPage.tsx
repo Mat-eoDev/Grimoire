@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import { CharacterSelect, type CharacterChoice } from "../components/CharacterSelect";
 import { apiFetch } from "../lib/api";
 import type { CampaignDetail, SessionPayload } from "../lib/types";
 
@@ -21,6 +22,15 @@ export function CampaignPage({ session, onLogout }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [character, setCharacter] = useState<CharacterChoice | null>(() => {
+    if (!campaignId) return null;
+    try {
+      const stored = localStorage.getItem(`char_${campaignId}`);
+      return stored ? (JSON.parse(stored) as CharacterChoice) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const load = useCallback(async () => {
     if (!campaignId) return;
@@ -74,6 +84,13 @@ export function CampaignPage({ session, onLogout }: Props) {
     }
   }
 
+  function handleCharacterConfirm(choice: CharacterChoice) {
+    if (campaignId) {
+      localStorage.setItem(`char_${campaignId}`, JSON.stringify(choice));
+    }
+    setCharacter(choice);
+  }
+
   if (loading) {
     return <div className="app-shell">Chargement...</div>;
   }
@@ -89,6 +106,10 @@ export function CampaignPage({ session, onLogout }: Props) {
 
   const isGm = data.viewer.role === "GM";
   const { campaign } = data;
+
+  if (!isGm && !character) {
+    return <CharacterSelect onConfirm={handleCharacterConfirm} />;
+  }
 
   return (
     <div className="app-shell">
@@ -133,6 +154,11 @@ export function CampaignPage({ session, onLogout }: Props) {
 
       {!isGm && (
         <section className="campaign-controls">
+          {character && (
+            <p>
+              Personnage {character.charId} — <strong>{character.name}</strong>
+            </p>
+          )}
           {campaign.status === "DRAFT" && <p>En attente du lancement par le MJ.</p>}
           {campaign.status === "ACTIVE" && <p>La campagne est en cours !</p>}
           {campaign.status === "CLOSED" && <p>La campagne est terminee.</p>}
