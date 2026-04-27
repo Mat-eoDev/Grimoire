@@ -9,7 +9,12 @@ type Props = {
   onConfirm: (choice: CharacterChoice) => void;
 };
 
-const CHARACTERS = [1, 2, 3, 4];
+const CHARACTERS = [
+  { id: 1, label: "Assassin",  img: "/ASSASSIN.png"  },
+  { id: 2, label: "Chevalier", img: "/CHEVALIER.png" },
+  { id: 3, label: "Elfe",      img: "/ELFE.png"      },
+  { id: 4, label: "Mage",      img: "/MAG.png"       },
+];
 
 export function CharacterSelect({ onConfirm }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
@@ -35,20 +40,20 @@ export function CharacterSelect({ onConfirm }: Props) {
         <p className="char-select-subtitle">Sélectionne ton personnage puis entre son nom.</p>
 
         <div className="char-grid">
-          {CHARACTERS.map((id) => (
+          {CHARACTERS.map((char) => (
             <button
-              key={id}
+              key={char.id}
               type="button"
-              className={`char-card${selected === id ? " char-card--selected" : ""}`}
+              className={`char-card${selected === char.id ? " char-card--selected" : ""}`}
               onClick={() => {
-                setSelected(id);
+                setSelected(char.id);
                 setError(null);
               }}
             >
               <div className="char-card__avatar">
-                <span className="char-card__number">{id}</span>
+                <img src={char.img} alt={char.label} className="char-card__img" />
               </div>
-              <span className="char-card__label">Personnage {id}</span>
+              <span className="char-card__label">{char.label}</span>
             </button>
           ))}
         </div>
