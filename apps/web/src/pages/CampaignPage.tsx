@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { CharacterSelect, type CharacterChoice } from "../components/CharacterSelect";
+import { PlayerNotes } from "../components/PlayerNotes";
 import { apiFetch } from "../lib/api";
 import type { CampaignDetail, SessionPayload } from "../lib/types";
 
@@ -164,6 +165,8 @@ export function CampaignPage({ session, onLogout }: Props) {
           {campaign.status === "CLOSED" && <p>La campagne est terminee.</p>}
         </section>
       )}
+
+      {!isGm && campaignId && <PlayerNotes campaignId={campaignId} />}
 
       <section className="campaign-members">
         <h2>Participants ({data.members.length})</h2>

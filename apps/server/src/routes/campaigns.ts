@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { MemberRole } from "@prisma/client";
 import { Router } from "express";
 
-import { assertString, HttpError } from "../lib/http.js";
+import { assertString, HttpError, optionalString } from "../lib/http.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -231,6 +231,80 @@ campaignsRouter.post("/campaigns/:campaignId/stop", async (request, response, ne
     });
 
     response.json({ campaign: serializeCampaign(updated) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /campaigns/:campaignId/notes — récupère les notes privées du joueur connecté
+campaignsRouter.get("/campaigns/:campaignId/notes", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+
+    const member = await prisma.campaignMember.findUnique({
+      where: {
+        campaignId_userId: {
+          campaignId: request.params.campaignId,
+          userId: auth.user.id
+        }
+      }
+    });
+
+    if (!member) {
+      throw new HttpError(403, "Tu ne participes pas a cette partie");
+    }
+
+    const note = await prisma.playerNote.findUnique({
+      where: {
+        userId_campaignId: {
+          userId: auth.user.id,
+          campaignId: request.params.campaignId
+        }
+      }
+    });
+
+    response.json({ content: note?.content ?? "" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /campaigns/:campaignId/notes — sauvegarde les notes privées du joueur connecté
+campaignsRouter.put("/campaigns/:campaignId/notes", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+    const content = optionalString(body.content) ?? "";
+
+    const member = await prisma.campaignMember.findUnique({
+      where: {
+        campaignId_userId: {
+          campaignId: request.params.campaignId,
+          userId: auth.user.id
+        }
+      }
+    });
+
+    if (!member) {
+      throw new HttpError(403, "Tu ne participes pas a cette partie");
+    }
+
+    const note = await prisma.playerNote.upsert({
+      where: {
+        userId_campaignId: {
+          userId: auth.user.id,
+          campaignId: request.params.campaignId
+        }
+      },
+      update: { content },
+      create: {
+        userId: auth.user.id,
+        campaignId: request.params.campaignId,
+        content
+      }
+    });
+
+    response.json({ content: note.content });
   } catch (error) {
     next(error);
   }
