@@ -33,7 +33,7 @@ export function CharacterSelect({ campaignId, onConfirm }: Props) {
     try {
       await apiFetch(`/campaigns/${campaignId}/character`, {
         method: "POST",
-        body: JSON.stringify({ charId: selected, charName: name.trim() })
+        json: { charId: selected, charName: name.trim() }
       });
       onConfirm({ charId: selected, name: name.trim() });
     } catch (err) {
