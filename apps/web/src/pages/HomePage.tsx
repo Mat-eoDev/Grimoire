@@ -192,99 +192,143 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
   }
 
   /* ── PAGE ACCUEIL CONNECTÉ ── */
+  const totalParties   = session.campaigns.length;
+  const gmCount        = session.campaigns.filter(c => c.role === "GM").length;
+  const codesActifs    = session.campaigns.filter(c => c.campaign.status !== "CLOSED").length;
+
   return (
     <div className="app-shell">
-      <header className="hero-band">
-        <div>
+
+      {/* Hero */}
+      <header className="home-hero">
+        <div className="home-hero__left">
           <p className="eyebrow">Grimoire</p>
-          <h1>Bonjour, {session.user.username} 👋</h1>
+          <h1 className="home-hero__title">Bonjour, {session.user.username}</h1>
+          <p className="home-hero__sub">
+            Ton salon de campagne est prêt. Crée une campagne, rejoins une aventure ou reprends une partie en cours.
+          </p>
         </div>
-        <button type="button" className="button-ghost" onClick={onLogout}>
-          Se déconnecter
-        </button>
+        <div className="home-hero__right">
+          <button type="button" className="home-hero__logout" onClick={onLogout}>
+            Se déconnecter
+          </button>
+          <div className="home-stats">
+            <div className="home-stat">
+              <span className="home-stat__num">{totalParties}</span>
+              <span className="home-stat__label">parties</span>
+            </div>
+            <div className="home-stat">
+              <span className="home-stat__num">{gmCount}</span>
+              <span className="home-stat__label">en tant que MJ</span>
+            </div>
+            <div className="home-stat">
+              <span className="home-stat__num">{codesActifs}</span>
+              <span className="home-stat__label">codes actifs</span>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <div className="dashboard-grid" style={{ marginTop: "1.25rem" }}>
-        <div className="section-card">
-          <div className="section-card__header">
+      {/* Cartes action */}
+      <div className="dashboard-grid">
+        {/* Créer */}
+        <div className="action-card">
+          <div className="action-card__top">
             <div>
-              <h2>Créer une partie</h2>
-              <p>Lance une nouvelle campagne en tant que MJ</p>
+              <h2 className="action-card__title">Créer une partie</h2>
+              <p className="action-card__sub">Lance une nouvelle campagne en tant que MJ</p>
             </div>
+            <span className="action-card__icon action-card__icon--accent">+</span>
           </div>
-          <div className="section-card__body">
-            <form onSubmit={handleCreate} className="stack-form">
-              <label>
-                Titre de la campagne
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="La forêt maudite..."
-                  required
-                />
-              </label>
-              <button type="submit" disabled={actionLoading}>
-                {actionLoading ? "..." : "Créer"}
-              </button>
-            </form>
-          </div>
+          <div className="action-card__divider" />
+          <form onSubmit={handleCreate} className="action-card__form">
+            <label className="action-card__label">Titre de la campagne</label>
+            <div className="auth-input-wrap">
+              <span className="auth-icon auth-icon--name">T</span>
+              <input
+                className="auth-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="La forêt maudite..."
+                required
+              />
+            </div>
+            <button type="submit" className="action-card__btn" disabled={actionLoading}>
+              {actionLoading ? "..." : "Créer"}
+            </button>
+          </form>
         </div>
 
-        <div className="section-card">
-          <div className="section-card__header">
+        {/* Rejoindre */}
+        <div className="action-card">
+          <div className="action-card__top">
             <div>
-              <h2>Rejoindre une partie</h2>
-              <p>Entre le code donné par ton MJ</p>
+              <h2 className="action-card__title">Rejoindre une partie</h2>
+              <p className="action-card__sub">Entre le code donné par ton MJ</p>
             </div>
+            <span className="action-card__icon action-card__icon--ghost">&gt;</span>
           </div>
-          <div className="section-card__body">
-            <form onSubmit={handleJoin} className="stack-form">
-              <label>
-                Code de la partie
-                <input
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  placeholder="EX: AB12CD"
-                  required
-                  minLength={4}
-                  maxLength={8}
-                />
-              </label>
-              <button type="submit" disabled={actionLoading}>
-                {actionLoading ? "..." : "Rejoindre"}
-              </button>
-            </form>
-          </div>
+          <div className="action-card__divider" />
+          <form onSubmit={handleJoin} className="action-card__form">
+            <label className="action-card__label">Code de la partie</label>
+            <div className="auth-input-wrap">
+              <span className="auth-icon">#</span>
+              <input
+                className="auth-input"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="EX: AB12CD"
+                required
+                minLength={4}
+                maxLength={8}
+              />
+            </div>
+            <button type="submit" className="action-card__btn" disabled={actionLoading}>
+              {actionLoading ? "..." : "Rejoindre"}
+            </button>
+          </form>
         </div>
       </div>
 
       {actionError && <p className="feedback feedback--error">{actionError}</p>}
 
+      {/* Liste des parties */}
       {session.campaigns.length > 0 && (
         <div className="section-card" style={{ marginTop: "1.25rem" }}>
           <div className="section-card__header">
             <h2>Mes parties ({session.campaigns.length})</h2>
+            <span style={{ fontSize: "0.85rem", color: "var(--ink-soft)", fontWeight: 600 }}>
+              Dernière activité aujourd'hui
+            </span>
           </div>
           <div className="section-card__body stack-layout">
-            {session.campaigns.map((item) => (
-              <button
-                key={item.memberId}
-                type="button"
-                className="list-row"
-                onClick={() => navigate(`/campaigns/${item.campaign.id}`)}
-                style={{ width: "100%", textAlign: "left", borderRadius: "18px", background: "var(--paper-strong)", cursor: "pointer" }}
-              >
-                <div>
-                  <strong>{item.campaign.title}</strong>
-                  <p style={{ margin: "0.2rem 0 0", fontSize: "0.85rem", color: "var(--ink-soft)" }}>
-                    {item.role === "GM" ? "MJ" : "Joueur"}
-                  </p>
-                </div>
-                <span className={`pill${item.campaign.status === "ACTIVE" ? " pill--success" : item.campaign.status === "CLOSED" ? "" : " pill--warning"}`}>
-                  {STATUS_LABEL[item.campaign.status] ?? item.campaign.status}
-                </span>
-              </button>
-            ))}
+            {session.campaigns.map((item) => {
+              const letter = item.campaign.title.charAt(0).toUpperCase();
+              const colors = ["#c97a43","#6b8f6b","#6b7faf","#af6b8f","#8faf6b"];
+              const color  = colors[(item.campaign.title.charCodeAt(0) ?? 0) % colors.length];
+              return (
+                <button
+                  key={item.memberId}
+                  type="button"
+                  className="campaign-row"
+                  style={{ "--row-color": color } as React.CSSProperties}
+                  onClick={() => navigate(`/campaigns/${item.campaign.id}`)}
+                >
+                  <span className="campaign-row__avatar">{letter}</span>
+                  <span className="campaign-row__info">
+                    <strong>{item.campaign.title}</strong>
+                    <span>{item.role === "GM" ? "MJ" : "Joueur"}</span>
+                  </span>
+                  <span className={`pill${
+                    item.campaign.status === "ACTIVE"  ? " pill--success" :
+                    item.campaign.status === "CLOSED"  ? "" :
+                    " pill--warning"
+                  }`}>
+                    {STATUS_LABEL[item.campaign.status] ?? item.campaign.status}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
