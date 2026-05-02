@@ -39,7 +39,8 @@ export async function resolveSession(token: string) {
           id: true,
           email: true,
           username: true,
-          status: true
+          status: true,
+          isAdmin: true
         }
       }
     }

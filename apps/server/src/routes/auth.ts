@@ -40,7 +40,8 @@ authRouter.post("/register", async (request, response, next) => {
         id: true,
         email: true,
         username: true,
-        status: true
+        status: true,
+        isAdmin: true
       }
     });
 
@@ -75,7 +76,8 @@ authRouter.post("/login", async (request, response, next) => {
         id: user.id,
         email: user.email,
         username: user.username,
-        status: user.status
+        status: user.status,
+        isAdmin: user.isAdmin
       }
     });
   } catch (error) {

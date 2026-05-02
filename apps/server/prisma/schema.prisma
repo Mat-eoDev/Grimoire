@@ -12,6 +12,12 @@ enum AccountStatus {
   DISABLED
 }
 
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum CampaignStatus {
   DRAFT
   ACTIVE
@@ -29,11 +35,14 @@ model User {
   username     String           @unique
   passwordHash String
   status       AccountStatus    @default(ACTIVE)
+  isAdmin      Boolean          @default(false)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   sessions     Session[]
   gmCampaigns  Campaign[]       @relation("CampaignGM")
   memberships  CampaignMember[]
+  imageContexts ContextImage[]
+  textContexts  ContextText[]
 }
 
 model Session {
@@ -52,6 +61,10 @@ model Campaign {
   id          String           @id @default(uuid())
   gmUserId    String
   gmUser      User             @relation("CampaignGM", fields: [gmUserId], references: [id])
+  currentImageContextId String?
+  currentImageContext   ContextImage? @relation("CampaignCurrentImageContext", fields: [currentImageContextId], references: [id])
+  currentTextContextId  String?
+  currentTextContext    ContextText?  @relation("CampaignCurrentTextContext", fields: [currentTextContextId], references: [id])
   title       String
   joinCode    String           @unique
   status      CampaignStatus   @default(DRAFT)
@@ -60,6 +73,7 @@ model Campaign {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   members     CampaignMember[]
+  publishedTextEntries CampaignPublishedText[]
 }
 
 model CampaignMember {
@@ -74,4 +88,48 @@ model CampaignMember {
   @@unique([campaignId, userId])
   @@index([userId])
   @@index([campaignId, role])
+}
+
+model ContextImage {
+  id         String     @id @default(uuid())
+  name       String
+  imageDataUrl String
+  isBuiltin  Boolean    @default(false)
+  ownerId    String?
+  owner      User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  campaigns  Campaign[] @relation("CampaignCurrentImageContext")
+
+  @@unique([name, ownerId])
+  @@index([ownerId, createdAt])
+  @@index([isBuiltin, createdAt])
+}
+
+model ContextText {
+  id             String         @id @default(uuid())
+  title          String
+  content        String
+  ownerId        String
+  owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  approvalStatus ApprovalStatus @default(PENDING)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  campaigns      Campaign[]     @relation("CampaignCurrentTextContext")
+  publishedInCampaigns CampaignPublishedText[]
+
+  @@index([ownerId, createdAt])
+  @@index([approvalStatus, createdAt])
+}
+
+model CampaignPublishedText {
+  id            String      @id @default(uuid())
+  campaignId    String
+  campaign      Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  textContextId String
+  textContext   ContextText @relation(fields: [textContextId], references: [id], onDelete: Cascade)
+  publishedAt   DateTime    @default(now())
+
+  @@index([campaignId, publishedAt])
+  @@index([textContextId, publishedAt])
 }

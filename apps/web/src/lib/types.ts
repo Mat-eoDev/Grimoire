@@ -3,9 +3,11 @@ export type User = {
   email: string;
   username: string;
   status: string;
+  isAdmin: boolean;
 };
 
 export type CampaignStatus = "DRAFT" | "ACTIVE" | "CLOSED";
+export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export type CampaignSummary = {
   memberId: string;
@@ -33,6 +35,35 @@ export type CampaignMemberView = {
   };
 };
 
+export type ImageContext = {
+  id: string;
+  name: string;
+  imageDataUrl: string;
+  isBuiltin: boolean;
+  ownerId: string | null;
+  createdAt: string;
+};
+
+export type TextContext = {
+  id: string;
+  title: string;
+  content: string;
+  approvalStatus: ApprovalStatus;
+  ownerId: string;
+  createdAt: string;
+  isPublishedInCurrentCampaign?: boolean;
+  canBeSharedAcrossMj?: boolean;
+  owner?: {
+    id: string;
+    username: string;
+  };
+};
+
+export type PublishedText = TextContext & {
+  publishedEntryId: string;
+  publishedAt: string;
+};
+
 export type CampaignDetail = {
   campaign: {
     id: string;
@@ -45,12 +76,20 @@ export type CampaignDetail = {
       id: string;
       username: string;
     };
+    currentImageContext: ImageContext | null;
+    currentTextContext: TextContext | null;
   };
   viewer: {
     memberId: string;
     role: "GM" | "PLAYER";
   };
   members: CampaignMemberView[];
+  libraries: {
+    imageContexts: ImageContext[];
+    textContexts: TextContext[];
+  };
+  publishedTexts: PublishedText[];
+  moderationQueue: TextContext[];
 };
 
 export type CampaignSummaryResponse = {
