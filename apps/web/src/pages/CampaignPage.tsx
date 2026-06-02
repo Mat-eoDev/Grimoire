@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { CharacterSelect, type CharacterChoice } from "../components/CharacterSelect";
 import { CharacterSheet } from "../components/CharacterSheet";
 import { PlayerNotes } from "../components/PlayerNotes";
+import { LiveCampaign } from "../components/LiveCampaign";
 import { apiFetch } from "../lib/api";
 import type { CampaignDetail, SessionPayload } from "../lib/types";
 
@@ -128,6 +129,10 @@ export function CampaignPage({ session, onLogout }: Props) {
   ];
   const progress = Math.round((checks.filter(c => c.done).length / checks.length) * 100);
 
+  if (campaign.status === "ACTIVE") {
+    return <LiveCampaign data={data} onReload={load} onStop={handleStop} />;
+  }
+
   return (
     <div className="app-shell">
 
@@ -192,11 +197,6 @@ export function CampaignPage({ session, onLogout }: Props) {
                   Le lancement sera disponible quand tous les joueurs seront prêts.
                 </p>
               </div>
-            )}
-            {isGm && campaign.status === "ACTIVE" && (
-              <button type="button" className="camp-btn-launch" onClick={handleStop} disabled={actionLoading}>
-                {actionLoading ? "..." : "Stopper la campagne"}
-              </button>
             )}
             {campaign.status === "CLOSED" && (
               <p style={{ margin: 0, color: "var(--ink-soft)" }}>Cette campagne est terminée.</p>

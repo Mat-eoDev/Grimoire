@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-import { MemberRole } from "@prisma/client";
+import { MemberRole, SceneElementType } from "@prisma/client";
 import { Router } from "express";
 
 import { assertString, HttpError, optionalString } from "../lib/http.js";
@@ -49,6 +49,24 @@ function serializeCampaign(campaign: {
     startedAt: campaign.startedAt,
     endedAt: campaign.endedAt
   };
+}
+
+async function requireGmCampaign(campaignId: string, userId: string) {
+  const campaign = await prisma.campaign.findUnique({ where: { id: campaignId } });
+
+  if (!campaign) {
+    throw new HttpError(404, "Partie introuvable");
+  }
+
+  if (campaign.gmUserId !== userId) {
+    throw new HttpError(403, "Seul le MJ peut modifier la scene");
+  }
+
+  if (campaign.status !== "ACTIVE") {
+    throw new HttpError(400, "La campagne n'est pas en cours");
+  }
+
+  return campaign;
 }
 
 campaignsRouter.post("/campaigns", async (request, response, next) => {
@@ -126,6 +144,15 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
       where: { id: request.params.campaignId },
       include: {
         gmUser: { select: { id: true, username: true } },
+        characterSheets: {
+          include: {
+            user: { select: { id: true, username: true } }
+          },
+          orderBy: { updatedAt: "asc" }
+        },
+        sceneElements: {
+          orderBy: { createdAt: "asc" }
+        },
         members: {
           include: {
             user: { select: { id: true, username: true } }
@@ -164,8 +191,132 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
         role: member.role,
         joinedAt: member.joinedAt,
         user: member.user
-      }))
+      })),
+      live: {
+        scene: {
+          preset: campaign.scenePreset,
+          title: campaign.sceneTitle,
+          text: campaign.sceneText
+        },
+        players: campaign.characterSheets.map((sheet) => ({
+          userId: sheet.userId,
+          username: sheet.user.username,
+          charName: sheet.charName,
+          charId: sheet.charId,
+          hp: sheet.hp,
+          maxHp: sheet.maxHp
+        })),
+        elements: campaign.sceneElements
+          .filter((element) => viewer.role === MemberRole.GM || element.isVisible)
+          .map((element) => ({
+            id: element.id,
+            type: element.type,
+            name: element.name,
+            description: element.description,
+            quantity: element.quantity,
+            isVisible: element.isVisible
+          }))
+      }
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+campaignsRouter.put("/campaigns/:campaignId/live-scene", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+    const preset = assertString(body.preset, "preset");
+    const title = assertString(body.title, "title");
+    const text = optionalString(body.text) ?? "";
+
+    await requireGmCampaign(request.params.campaignId, auth.user.id);
+
+    const campaign = await prisma.campaign.update({
+      where: { id: request.params.campaignId },
+      data: {
+        scenePreset: preset,
+        sceneTitle: title,
+        sceneText: text
+      }
+    });
+
+    response.json({
+      scene: {
+        preset: campaign.scenePreset,
+        title: campaign.sceneTitle,
+        text: campaign.sceneText
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+campaignsRouter.post("/campaigns/:campaignId/scene-elements", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+    const type = assertString(body.type, "type");
+    const name = assertString(body.name, "name");
+    const description = optionalString(body.description) ?? "";
+    const quantity = Number(body.quantity ?? 1);
+
+    if (!Object.values(SceneElementType).includes(type as SceneElementType)) {
+      throw new HttpError(400, "Type d'evenement invalide");
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+      throw new HttpError(400, "La quantite doit etre comprise entre 1 et 20");
+    }
+
+    await requireGmCampaign(request.params.campaignId, auth.user.id);
+
+    const element = await prisma.sceneElement.create({
+      data: {
+        campaignId: request.params.campaignId,
+        type: type as SceneElementType,
+        name,
+        description,
+        quantity
+      }
+    });
+
+    response.status(201).json({ element });
+  } catch (error) {
+    next(error);
+  }
+});
+
+campaignsRouter.patch("/campaigns/:campaignId/scene-elements/:elementId", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+
+    await requireGmCampaign(request.params.campaignId, auth.user.id);
+
+    if (typeof body.isVisible !== "boolean") {
+      throw new HttpError(400, "isVisible doit etre un booleen");
+    }
+
+    const existing = await prisma.sceneElement.findFirst({
+      where: {
+        id: request.params.elementId,
+        campaignId: request.params.campaignId
+      }
+    });
+
+    if (!existing) {
+      throw new HttpError(404, "Element de scene introuvable");
+    }
+
+    const element = await prisma.sceneElement.update({
+      where: { id: existing.id },
+      data: { isVisible: body.isVisible }
+    });
+
+    response.json({ element });
   } catch (error) {
     next(error);
   }

@@ -23,6 +23,13 @@ enum MemberRole {
   PLAYER
 }
 
+enum SceneElementType {
+  ENEMY
+  NPC
+  OBJECT
+  NARRATION
+}
+
 model User {
   id           String           @id @default(uuid())
   email        String           @unique
@@ -64,6 +71,10 @@ model Campaign {
   members          CampaignMember[]
   playerNotes      PlayerNote[]
   characterSheets  CharacterSheet[]
+  scenePreset      String           @default("RUINS")
+  sceneTitle       String           @default("Les ruines sous la pluie")
+  sceneText        String           @default("Un grondement sourd traverse les pierres anciennes.")
+  sceneElements    SceneElement[]
 }
 
 model CampaignMember {
@@ -116,4 +127,19 @@ model PlayerNote {
 
   @@unique([userId, campaignId])
   @@index([userId, campaignId])
+}
+
+model SceneElement {
+  id          String           @id @default(uuid())
+  campaignId  String
+  campaign    Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type        SceneElementType
+  name        String
+  description String           @default("")
+  quantity    Int              @default(1)
+  isVisible   Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([campaignId, isVisible])
 }
