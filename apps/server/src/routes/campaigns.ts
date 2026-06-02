@@ -151,6 +151,9 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
           orderBy: { updatedAt: "asc" }
         },
         sceneElements: {
+          include: {
+            asset: { select: { id: true, name: true, imageDataUrl: true } }
+          },
           orderBy: { createdAt: "asc" }
         },
         members: {
@@ -171,6 +174,13 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
     if (!viewer) {
       throw new HttpError(403, "Tu ne participes pas a cette partie");
     }
+
+    const revelationAssets = viewer.role === MemberRole.GM
+      ? await prisma.revelationAsset.findMany({
+          select: { id: true, type: true, name: true, imageDataUrl: true },
+          orderBy: [{ type: "asc" }, { name: "asc" }]
+        })
+      : [];
 
     response.json({
       campaign: {
@@ -214,8 +224,10 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
             name: element.name,
             description: element.description,
             quantity: element.quantity,
-            isVisible: element.isVisible
-          }))
+            isVisible: element.isVisible,
+            asset: element.asset
+          })),
+        assets: revelationAssets
       }
     });
   } catch (error) {
@@ -262,6 +274,7 @@ campaignsRouter.post("/campaigns/:campaignId/scene-elements", async (request, re
     const name = assertString(body.name, "name");
     const description = optionalString(body.description) ?? "";
     const quantity = Number(body.quantity ?? 1);
+    const assetId = optionalString(body.assetId);
 
     if (!Object.values(SceneElementType).includes(type as SceneElementType)) {
       throw new HttpError(400, "Type d'evenement invalide");
@@ -273,13 +286,22 @@ campaignsRouter.post("/campaigns/:campaignId/scene-elements", async (request, re
 
     await requireGmCampaign(request.params.campaignId, auth.user.id);
 
+    if (assetId) {
+      const asset = await prisma.revelationAsset.findUnique({ where: { id: assetId } });
+
+      if (!asset || asset.type !== type) {
+        throw new HttpError(400, "Cette image ne correspond pas au type de revelation");
+      }
+    }
+
     const element = await prisma.sceneElement.create({
       data: {
         campaignId: request.params.campaignId,
         type: type as SceneElementType,
         name,
         description,
-        quantity
+        quantity,
+        assetId
       }
     });
 

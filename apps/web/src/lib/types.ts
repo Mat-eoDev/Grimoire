@@ -72,6 +72,17 @@ export type CampaignDetail = {
       description: string;
       quantity: number;
       isVisible: boolean;
+      asset: {
+        id: string;
+        name: string;
+        imageDataUrl: string;
+      } | null;
+    }>;
+    assets: Array<{
+      id: string;
+      type: "ENEMY" | "NPC" | "OBJECT" | "NARRATION";
+      name: string;
+      imageDataUrl: string;
     }>;
   };
 };

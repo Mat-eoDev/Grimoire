@@ -31,6 +31,21 @@ const ELEMENT_DEFAULTS = {
   NARRATION: { name: "Brouillard ancien", description: "L'atmosphere de la scene change." }
 } as const;
 
+const ELEMENT_ICONS = {
+  ENEMY: "!",
+  NPC: "?",
+  OBJECT: "*",
+  NARRATION: "..."
+} as const;
+
+const NARRATION_SUGGESTIONS = [
+  "",
+  "Un grondement sourd traverse les pierres anciennes.",
+  "Un silence pesant s'installe soudainement.",
+  "Une brume froide envahit lentement les lieux.",
+  "Quelque chose vient de bouger dans l'ombre."
+];
+
 const CHAR_LABELS: Record<number, string> = {
   1: "Assassin",
   2: "Chevalier",
@@ -44,6 +59,11 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
   const [text, setText] = useState(data.live.scene.text);
   const [preset, setPreset] = useState(data.live.scene.preset);
   const [loading, setLoading] = useState(false);
+  const [draftType, setDraftType] = useState<keyof typeof ELEMENT_LABELS | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const [draftDescription, setDraftDescription] = useState("");
+  const [draftQuantity, setDraftQuantity] = useState(1);
+  const [draftAssetId, setDraftAssetId] = useState("");
   const visibleElements = data.live.elements.filter((element) => element.isVisible);
 
   async function publishScene() {
@@ -59,22 +79,28 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
     }
   }
 
-  async function addElement(type: keyof typeof ELEMENT_LABELS) {
+  function prepareElement(type: keyof typeof ELEMENT_LABELS) {
     const defaults = ELEMENT_DEFAULTS[type];
-    const name = window.prompt(`Nom de l'element : ${ELEMENT_LABELS[type]}`, defaults.name);
-    if (!name?.trim()) return;
+    setDraftType(type);
+    setDraftName(defaults.name);
+    setDraftDescription(defaults.description);
+    setDraftQuantity(1);
+    setDraftAssetId("");
+  }
 
-    const description = window.prompt("Courte description visible par les joueurs :", defaults.description);
-    if (description === null) return;
-
-    const quantity = type === "ENEMY"
-      ? Number(window.prompt("Combien d'ennemis ?", "1") ?? 1)
-      : 1;
-
+  async function revealElement() {
+    if (!draftType || !draftName.trim()) return;
     await apiFetch(`/campaigns/${data.campaign.id}/scene-elements`, {
       method: "POST",
-      json: { type, name: name.trim(), description: description.trim(), quantity }
+      json: {
+        type: draftType,
+        name: draftName.trim(),
+        description: draftDescription.trim(),
+        quantity: draftType === "ENEMY" ? draftQuantity : 1,
+        assetId: draftAssetId || undefined
+      }
     });
+    setDraftType(null);
     await onReload();
   }
 
@@ -99,6 +125,7 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
           <h1>{data.live.scene.text || "Le MJ prepare la suite de votre aventure..."}</h1>
         </section>
         <PlayerHealth players={data.live.players} />
+        <SceneRevelations elements={visibleElements} />
         <section className="live-player__elements">
           <p className="live-kicker">Presences dans la scene</p>
           <div className="live-element-grid">
@@ -128,6 +155,7 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
           <div className={`live-preview live-scene--${data.live.scene.preset.toLowerCase()}`}>
             <p className="live-kicker">{data.live.scene.title}</p>
             <h2>{data.live.scene.text}</h2>
+            <SceneRevelations elements={visibleElements} />
             {visibleElements.some((element) => element.type === "ENEMY") && (
               <div className="live-preview__threat">
                 <span>Ennemis visibles</span>
@@ -181,16 +209,85 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
             <p className="live-muted">Revelation immediate aux joueurs.</p>
             <div className="live-action-grid">
               {(Object.keys(ELEMENT_LABELS) as Array<keyof typeof ELEMENT_LABELS>).map((type) => (
-                <button key={type} type="button" onClick={() => addElement(type)}>
+                <button key={type} type="button" onClick={() => prepareElement(type)}>
                   + {ELEMENT_LABELS[type]}
                 </button>
               ))}
             </div>
+            {draftType && (
+              <div className="live-reveal-form">
+                <h3>Reveler : {ELEMENT_LABELS[draftType]}</h3>
+                <label>
+                  Nom
+                  <input value={draftName} onChange={(event) => setDraftName(event.target.value)} />
+                </label>
+                {draftType === "NARRATION" && (
+                  <label>
+                    Proposition facultative
+                    <select
+                      value=""
+                      onChange={(event) => event.target.value && setDraftDescription(event.target.value)}
+                    >
+                      <option value="">Choisir un texte...</option>
+                      {NARRATION_SUGGESTIONS.slice(1).map((suggestion) => (
+                        <option key={suggestion} value={suggestion}>{suggestion}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <label>
+                  Texte visible
+                  <textarea value={draftDescription} onChange={(event) => setDraftDescription(event.target.value)} rows={3} />
+                </label>
+                {draftType === "ENEMY" && (
+                  <label>
+                    Quantite
+                    <input type="number" min={1} max={20} value={draftQuantity} onChange={(event) => setDraftQuantity(Number(event.target.value))} />
+                  </label>
+                )}
+                {draftType !== "NARRATION" && (
+                  <label>
+                    Image
+                    <select value={draftAssetId} onChange={(event) => setDraftAssetId(event.target.value)}>
+                      <option value="">Aucune image : pictogramme par defaut</option>
+                      {data.live.assets.filter((asset) => asset.type === draftType).map((asset) => (
+                        <option key={asset.id} value={asset.id}>{asset.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <div className="live-reveal-form__actions">
+                  <button type="button" className="live-text-button" onClick={() => setDraftType(null)}>Annuler</button>
+                  <button type="button" onClick={revealElement}>Reveler maintenant</button>
+                </div>
+              </div>
+            )}
           </section>
           <button type="button" className="live-stop" onClick={onStop}>Terminer la partie</button>
         </aside>
       </div>
     </main>
+  );
+}
+
+function SceneRevelations({ elements }: { elements: CampaignDetail["live"]["elements"] }) {
+  const hasEnemies = elements.some((element) => element.type === "ENEMY");
+
+  return (
+    <div className="scene-revelations">
+      {elements.map((element) => (
+        <div
+          key={element.id}
+          className={`scene-revelation scene-revelation--${element.type.toLowerCase()}${element.type === "NPC" && hasEnemies ? " scene-revelation--npc-with-enemies" : ""}`}
+        >
+          {element.asset
+            ? <img src={element.asset.imageDataUrl} alt={element.asset.name} />
+            : <span className="scene-revelation__fallback">{ELEMENT_ICONS[element.type]}</span>}
+          <strong>{element.name}{element.quantity > 1 ? ` x${element.quantity}` : ""}</strong>
+          {element.type === "NARRATION" && <p>{element.description}</p>}
+        </div>
+      ))}
+    </div>
   );
 }
 

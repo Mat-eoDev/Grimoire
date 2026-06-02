@@ -1460,6 +1460,95 @@ code {
   box-shadow: inset 0 0 0 1px rgba(242, 230, 208, 0.12);
 }
 
+.scene-revelations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scene-revelation {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  min-width: 108px;
+  color: #f2e6d0;
+  text-align: center;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.42));
+}
+
+.scene-revelation img {
+  width: min(180px, 18vw);
+  height: min(220px, 24vh);
+  object-fit: contain;
+}
+
+.scene-revelation strong {
+  padding: 0.32rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(9, 8, 7, 0.76);
+  font-size: 0.78rem;
+}
+
+.scene-revelation__fallback {
+  width: 74px;
+  height: 74px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #f2e6d0;
+  background: rgba(41, 33, 29, 0.88);
+  border: 2px solid currentColor;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.scene-revelation--enemy {
+  z-index: 4;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  color: #d66a60;
+}
+
+.scene-revelation--object {
+  z-index: 2;
+  top: 18%;
+  right: 13%;
+  color: #d9b36c;
+}
+
+.scene-revelation--npc {
+  z-index: 3;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  color: #7da0c2;
+}
+
+.scene-revelation--npc-with-enemies {
+  z-index: 2;
+  left: 27%;
+  top: 37%;
+}
+
+.scene-revelation--narration {
+  z-index: 6;
+  left: 4%;
+  bottom: 5%;
+  max-width: min(520px, 75%);
+  justify-items: start;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  color: #d9b36c;
+  background: rgba(9, 8, 7, 0.8);
+  text-align: left;
+}
+
+.scene-revelation--narration .scene-revelation__fallback { display: none; }
+.scene-revelation--narration p { margin: 0; color: #f2e6d0; font-size: 0.88rem; line-height: 1.45; }
+
 .live-preview h2 { max-width: 70%; margin-top: 0.65rem; font-size: 1.7rem; }
 
 .live-preview__threat {
@@ -1541,6 +1630,22 @@ code {
 .live-action-grid button { padding: 0.7rem 0.4rem; border-radius: 8px; font-size: 0.72rem; box-shadow: none; }
 .live-stop { background: #29211d; color: #b85a50; box-shadow: none; }
 
+.live-reveal-form {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  display: grid;
+  gap: 0.7rem;
+  border-top: 1px solid rgba(242, 230, 208, 0.12);
+}
+
+.live-reveal-form h3 { margin: 0; color: #f2e6d0; font-size: 0.95rem; }
+.live-reveal-form label { color: #b8a996; font-size: 0.75rem; }
+.live-reveal-form input,
+.live-reveal-form select,
+.live-reveal-form textarea { padding: 0.62rem; border-radius: 8px; background: #29211d; border-color: rgba(242, 230, 208, 0.16); color: #f2e6d0; font-size: 0.8rem; }
+.live-reveal-form__actions { display: flex; gap: 0.65rem; align-items: center; justify-content: flex-end; }
+.live-reveal-form__actions button:last-child { padding: 0.65rem 0.8rem; border-radius: 8px; font-size: 0.75rem; }
+
 .live-gm__element-list { display: grid; gap: 0.5rem; margin-top: 0.9rem; }
 .live-gm__element { padding: 0.8rem 1rem; display: grid; grid-template-columns: 1fr 150px auto; gap: 0.7rem; align-items: center; border-radius: 8px; background: #29211d; }
 .live-gm__element span { color: #b8a996; font-size: 0.7rem; text-transform: uppercase; }
@@ -1549,8 +1654,14 @@ code {
 
 .live-player {
   position: relative;
+  overflow: hidden;
   padding-bottom: 2rem;
   background-attachment: fixed;
+}
+
+.live-player > .scene-revelations {
+  top: 66px;
+  height: calc(100vh - 66px);
 }
 
 .live-player__story {
