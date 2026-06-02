@@ -344,6 +344,31 @@ campaignsRouter.patch("/campaigns/:campaignId/scene-elements/:elementId", async 
   }
 });
 
+campaignsRouter.delete("/campaigns/:campaignId/scene-elements/:elementId", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+
+    await requireGmCampaign(request.params.campaignId, auth.user.id);
+
+    const existing = await prisma.sceneElement.findFirst({
+      where: {
+        id: request.params.elementId,
+        campaignId: request.params.campaignId
+      }
+    });
+
+    if (!existing) {
+      throw new HttpError(404, "Element de scene introuvable");
+    }
+
+    await prisma.sceneElement.delete({ where: { id: existing.id } });
+
+    response.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+});
+
 campaignsRouter.post("/campaigns/:campaignId/launch", async (request, response, next) => {
   try {
     const auth = requireAuth(request);
