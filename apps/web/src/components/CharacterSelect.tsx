@@ -13,10 +13,10 @@ type Props = {
 };
 
 const CHARACTERS = [
-  { id: 1, label: "Assassin",  img: "/ASSASSIN.png"  },
-  { id: 2, label: "Chevalier", img: "/CHEVALIER.png" },
-  { id: 3, label: "Elfe",      img: "/ELFE.png"      },
-  { id: 4, label: "Mage",      img: "/MAG.png"       },
+  { id: 1, label: "Assassin",  img: "/lib_picture/player/ASSASSIN.png"  },
+  { id: 2, label: "Chevalier", img: "/lib_picture/player/CHEVALIER.png" },
+  { id: 3, label: "Elfe",      img: "/lib_picture/player/ELFE.png"      },
+  { id: 4, label: "Mage",      img: "/lib_picture/player/MAG.png"       },
 ];
 
 export function CharacterSelect({ campaignId, onConfirm }: Props) {
