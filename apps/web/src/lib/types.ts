@@ -87,6 +87,31 @@ export type CampaignDetail = {
   };
 };
 
+export type ItemType = "WEAPON" | "SHIELD" | "CONSUMABLE" | "MISC";
+
+export type Item = {
+  id: string;
+  slug: string;
+  name: string;
+  type: ItemType;
+  imageFile: string;
+  description: string;
+  equipable: boolean;
+};
+
+export type InventoryEntry = {
+  id: string;
+  quantity: number;
+  equipped: boolean;
+  bonusMaxHp: number;
+  bonusAttack: number;
+  bonusDefense: number;
+  bonusSpeed: number;
+  bonusMagic: number;
+  effectHp: number;
+  item: Item;
+};
+
 export type CampaignSummaryResponse = {
   campaign: {
     id: string;
