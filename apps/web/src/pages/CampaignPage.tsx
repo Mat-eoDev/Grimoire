@@ -37,6 +37,7 @@ export function CampaignPage({ session, onLogout }: Props) {
   const [loading, setLoading]         = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [copied, setCopied]           = useState(false);
+  const [refreshKey, setRefreshKey]   = useState(0);
 
   const [character, setCharacter] = useState<CharacterChoice | null>(() => {
     if (!campaignId) return null;
@@ -52,6 +53,7 @@ export function CampaignPage({ session, onLogout }: Props) {
       const result = await apiFetch<CampaignDetail>(`/campaigns/${campaignId}`);
       setData(result);
       setError(null);
+      setRefreshKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur");
       setData(null);
@@ -130,7 +132,7 @@ export function CampaignPage({ session, onLogout }: Props) {
   const progress = Math.round((checks.filter(c => c.done).length / checks.length) * 100);
 
   if (campaign.status === "ACTIVE") {
-    return <LiveCampaign data={data} onReload={load} onStop={handleStop} />;
+    return <LiveCampaign data={data} onReload={load} onStop={handleStop} refreshKey={refreshKey} />;
   }
 
   return (

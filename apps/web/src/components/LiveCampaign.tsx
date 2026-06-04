@@ -3,11 +3,15 @@ import { useState, type CSSProperties } from "react";
 
 import { apiFetch } from "../lib/api";
 import type { CampaignDetail } from "../lib/types";
+import { Inventory } from "./Inventory";
+import { CharacterSheet } from "./CharacterSheet";
+import { PlayerDetailModal } from "./PlayerDetailModal";
 
 type Props = {
   data: CampaignDetail;
   onReload: () => Promise<void>;
   onStop: () => Promise<void>;
+  refreshKey: number;
 };
 
 const BACKGROUND_FILES = [
@@ -105,8 +109,9 @@ const CHAR_LABELS: Record<number, string> = {
   4: "Mage"
 };
 
-export function LiveCampaign({ data, onReload, onStop }: Props) {
+export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const isGm = data.viewer.role === "GM";
+  const [selectedPlayer, setSelectedPlayer] = useState<CampaignDetail["live"]["players"][number] | null>(null);
   const [title, setTitle] = useState(data.live.scene.title);
   const [text, setText] = useState(data.live.scene.text);
   const [preset, setPreset] = useState(() => resolveSceneContext(data.live.scene.preset).id);
@@ -184,26 +189,12 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
 
   if (!isGm) {
     return (
-      <main className="live-player live-scene" style={sceneBackgroundStyle(data.live.scene.preset)}>
-        <header className="live-topbar">
-          <strong>GRIMOIRE</strong>
-          <span>{data.campaign.title}</span>
-          <span className="live-badge">Exploration</span>
-        </header>
-        <section className="live-player__story">
-          <p className="live-kicker">{data.live.scene.title}</p>
-          <h1>{data.live.scene.text || "Le MJ prepare la suite de votre aventure..."}</h1>
-        </section>
-        <PlayerHealth players={data.live.players} />
-        <SceneRevelations elements={visibleElements} />
-        <section className="live-player__elements">
-          <p className="live-kicker">Presences dans la scene</p>
-          <div className="live-element-grid">
-            {visibleElements.map((element) => <ElementCard key={element.id} element={element} />)}
-            {visibleElements.length === 0 && <p className="live-empty">Rien de particulier ne retient votre attention.</p>}
-          </div>
-        </section>
-      </main>
+      <PlayerView
+        data={data}
+        visibleElements={visibleElements}
+        sceneStyle={sceneBackgroundStyle(data.live.scene.preset)}
+        refreshKey={refreshKey}
+      />
     );
   }
 
@@ -377,10 +368,18 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
             onVisibilityChange={setElementVisibility}
             onRemove={removeElement}
           />
-          <PlayerHealth players={data.live.players} />
+          <PlayerHealth players={data.live.players} onSelectPlayer={setSelectedPlayer} />
           <button type="button" className="live-stop" onClick={onStop}>Terminer la partie</button>
         </aside>
       </div>
+      {selectedPlayer && (
+        <PlayerDetailModal
+          campaignId={data.campaign.id}
+          player={selectedPlayer}
+          members={data.members}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </main>
   );
 }
@@ -442,15 +441,26 @@ function SceneRevelations({ elements }: { elements: CampaignDetail["live"]["elem
   );
 }
 
-function PlayerHealth({ players }: { players: CampaignDetail["live"]["players"] }) {
+function PlayerHealth({
+  players,
+  onSelectPlayer,
+}: {
+  players: CampaignDetail["live"]["players"];
+  onSelectPlayer?: (player: CampaignDetail["live"]["players"][number]) => void;
+}) {
   return (
     <section className="live-health live-panel">
       <p className="live-kicker">Etat du groupe</p>
       {players.map((player) => (
-        <div key={player.userId} className="live-health__row">
+        <div
+          key={player.userId}
+          className={`live-health__row ${onSelectPlayer ? "live-health__row--clickable" : ""}`}
+          onClick={() => onSelectPlayer?.(player)}
+        >
           <div><strong>{player.charName}</strong><span>{CHAR_LABELS[player.charId] ?? player.username}</span></div>
           <b>{player.hp} / {player.maxHp}</b>
           <div className="live-health__bar"><span style={{ width: `${Math.round((player.hp / player.maxHp) * 100)}%` }} /></div>
+          {onSelectPlayer && <span className="live-health__arrow">›</span>}
         </div>
       ))}
       {players.length === 0 && <p className="live-empty">Aucune fiche personnage pour le moment.</p>}
@@ -465,5 +475,73 @@ function ElementCard({ element }: { element: CampaignDetail["live"]["elements"][
       <h2>{element.name}{element.quantity > 1 ? ` x${element.quantity}` : ""}</h2>
       <p>{element.description}</p>
     </article>
+  );
+}
+
+type PlayerViewProps = {
+  data: CampaignDetail;
+  visibleElements: CampaignDetail["live"]["elements"];
+  sceneStyle: CSSProperties;
+  refreshKey: number;
+};
+
+type PlayerTab = "scene" | "character" | "inventory";
+
+function PlayerView({ data, visibleElements, sceneStyle, refreshKey }: PlayerViewProps) {
+  const [tab, setTab] = useState<PlayerTab>("scene");
+
+  return (
+    <main className="live-player live-scene" style={sceneStyle}>
+      <header className="live-topbar">
+        <strong>GRIMOIRE</strong>
+        <span>{data.campaign.title}</span>
+        <div className="player-tabs">
+          <button
+            className={`player-tab ${tab === "scene" ? "player-tab--active" : ""}`}
+            onClick={() => setTab("scene")}
+          >
+            Scène
+          </button>
+          <button
+            className={`player-tab ${tab === "character" ? "player-tab--active" : ""}`}
+            onClick={() => setTab("character")}
+          >
+            Personnage
+          </button>
+          <button
+            className={`player-tab ${tab === "inventory" ? "player-tab--active" : ""}`}
+            onClick={() => setTab("inventory")}
+          >
+            Inventaire
+          </button>
+        </div>
+      </header>
+
+      {tab === "scene" && (
+        <>
+          <section className="live-player__story">
+            <p className="live-kicker">{data.live.scene.title}</p>
+            <h1>{data.live.scene.text || "Le MJ prepare la suite de votre aventure..."}</h1>
+          </section>
+          <PlayerHealth players={data.live.players} />
+          <SceneRevelations elements={visibleElements} />
+          <section className="live-player__elements">
+            <p className="live-kicker">Presences dans la scene</p>
+            <div className="live-element-grid">
+              {visibleElements.map((element) => <ElementCard key={element.id} element={element} />)}
+              {visibleElements.length === 0 && <p className="live-empty">Rien de particulier ne retient votre attention.</p>}
+            </div>
+          </section>
+        </>
+      )}
+
+      {tab === "character" && (
+        <CharacterSheet campaignId={data.campaign.id} refreshKey={refreshKey} />
+      )}
+
+      {tab === "inventory" && (
+        <Inventory campaignId={data.campaign.id} refreshKey={refreshKey} />
+      )}
+    </main>
   );
 }
