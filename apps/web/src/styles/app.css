@@ -1503,6 +1503,7 @@ code {
 }
 
 .media-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.media-card--context img { object-fit: cover; }
 .media-card span { position: relative; width: 100%; padding: 0.62rem; color: #f2e6d0; background: rgba(9, 8, 7, 0.68); font-size: 0.78rem; font-weight: 700; }
 .media-card--selected { border: 3px solid #d47c42; }
 .media-card--fallback { display: grid; place-items: center; align-content: center; gap: 0.65rem; color: #d9b36c; text-align: center; }
@@ -1553,6 +1554,23 @@ code {
   flex-direction: column;
   justify-content: flex-end;
   box-shadow: inset 0 0 0 1px rgba(242, 230, 208, 0.12);
+}
+
+.live-scene {
+  background-color: #120f0e;
+  background-image:
+    linear-gradient(180deg, rgba(9, 8, 7, 0.28), rgba(9, 8, 7, 0.76)),
+    var(--scene-bg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.live-preview > .live-kicker,
+.live-preview > h2 {
+  position: relative;
+  z-index: 5;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
 }
 
 .scene-revelations {
