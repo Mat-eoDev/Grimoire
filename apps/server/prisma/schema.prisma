@@ -30,6 +30,13 @@ enum SceneElementType {
   NARRATION
 }
 
+enum ItemType {
+  WEAPON
+  SHIELD
+  CONSUMABLE
+  MISC
+}
+
 model User {
   id           String           @id @default(uuid())
   email        String           @unique
@@ -38,11 +45,12 @@ model User {
   status       AccountStatus    @default(ACTIVE)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
-  sessions     Session[]
+  sessions         Session[]
   gmCampaigns      Campaign[]       @relation("CampaignGM")
   memberships      CampaignMember[]
   playerNotes      PlayerNote[]
   characterSheets  CharacterSheet[]
+  inventoryEntries InventoryEntry[]
 }
 
 model Session {
@@ -71,6 +79,7 @@ model Campaign {
   members          CampaignMember[]
   playerNotes      PlayerNote[]
   characterSheets  CharacterSheet[]
+  inventoryEntries InventoryEntry[]
   scenePreset      String           @default("RUINS")
   sceneTitle       String           @default("Les ruines sous la pluie")
   sceneText        String           @default("Un grondement sourd traverse les pierres anciennes.")
@@ -145,6 +154,42 @@ model SceneElement {
 
   @@index([campaignId, isVisible])
   @@index([assetId])
+}
+
+model Item {
+  id          String           @id @default(uuid())
+  slug        String           @unique
+  name        String
+  type        ItemType
+  imageFile   String
+  description String           @default("")
+  equipable   Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  entries     InventoryEntry[]
+
+  @@index([type])
+}
+
+model InventoryEntry {
+  id         String   @id @default(uuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantity      Int      @default(1)
+  equipped      Boolean  @default(false)
+  bonusMaxHp    Int      @default(0)
+  bonusAttack   Int      @default(0)
+  bonusDefense  Int      @default(0)
+  bonusSpeed    Int      @default(0)
+  bonusMagic    Int      @default(0)
+  effectHp      Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([campaignId, userId])
+  @@index([itemId])
 }
 
 model RevelationAsset {
