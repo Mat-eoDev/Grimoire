@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 import { apiFetch } from "../lib/api";
 import type { CampaignDetail } from "../lib/types";
@@ -10,12 +10,64 @@ type Props = {
   onStop: () => Promise<void>;
 };
 
-const PRESETS = [
-  { id: "RUINS", label: "Ruines", title: "Les ruines sous la pluie" },
-  { id: "TAVERN", label: "Taverne", title: "La taverne du vieux pont" },
-  { id: "FOREST", label: "Foret", title: "La foret embrumee" },
-  { id: "VILLAGE", label: "Village", title: "Le village silencieux" }
+const BACKGROUND_FILES = [
+  "IMG_3184.png",
+  "IMG_3184_colorize (1).png",
+  "IMG_3184_colorize.png",
+  "IMG_3185.png",
+  "IMG_3185_colorize (1).png",
+  "IMG_3185_colorize (2).png",
+  "IMG_3185_colorize.png",
+  "IMG_3186.png",
+  "IMG_3186_colorize (2).png",
+  "IMG_3186_colorize.png",
+  "IMG_3187.png",
+  "IMG_3187_colorize (1).png",
+  "IMG_3187_colorize (2).png",
+  "IMG_3187_colorize.png",
+  "IMG_3196.png",
+  "IMG_3196_colorize (1).png",
+  "IMG_3196_colorize (2).png",
+  "IMG_3196_colorize.png",
+  "IMG_3197.png",
+  "IMG_3197_colorize (1).png",
+  "IMG_3197_colorize (2).png",
+  "IMG_3197_colorize (3).png",
+  "IMG_3197_colorize.png",
+  "IMG_3198.png",
+  "IMG_3198_colorize (1).png",
+  "IMG_3198_colorize.png",
+  "IMG_3199.png",
+  "IMG_3199_colorize (1).png",
+  "IMG_3199_colorize (2).png",
+  "IMG_3199_colorize (3).png",
+  "IMG_3199_colorize.png",
+  "IMG_3200.png",
+  "IMG_3200_colorize (1).png",
+  "IMG_3200_colorize.png"
 ];
+
+const BACKGROUND_CONTEXTS = BACKGROUND_FILES.map((file) => {
+  const id = file.replace(/\.[^.]+$/, "");
+  const label = id.replace(/_/g, " ").replace(/\s+/g, " ");
+  return {
+    id,
+    label,
+    title: `Contexte ${label}`,
+    image: `/lib_picture/background/${file}`
+  };
+});
+
+function resolveSceneContext(preset: string) {
+  return BACKGROUND_CONTEXTS.find((context) => context.id === preset) ?? BACKGROUND_CONTEXTS[0];
+}
+
+function sceneBackgroundStyle(preset: string): CSSProperties {
+  const context = resolveSceneContext(preset);
+  return {
+    "--scene-bg": `url("${context.image}")`
+  } as CSSProperties;
+}
 
 const ELEMENT_LABELS = {
   ENEMY: "Ennemi",
@@ -57,7 +109,7 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
   const isGm = data.viewer.role === "GM";
   const [title, setTitle] = useState(data.live.scene.title);
   const [text, setText] = useState(data.live.scene.text);
-  const [preset, setPreset] = useState(data.live.scene.preset);
+  const [preset, setPreset] = useState(() => resolveSceneContext(data.live.scene.preset).id);
   const [loading, setLoading] = useState(false);
   const [draftType, setDraftType] = useState<keyof typeof ELEMENT_LABELS | null>(null);
   const [draftName, setDraftName] = useState("");
@@ -132,7 +184,7 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
 
   if (!isGm) {
     return (
-      <main className={`live-player live-scene--${data.live.scene.preset.toLowerCase()}`}>
+      <main className="live-player live-scene" style={sceneBackgroundStyle(data.live.scene.preset)}>
         <header className="live-topbar">
           <strong>GRIMOIRE</strong>
           <span>{data.campaign.title}</span>
@@ -186,9 +238,9 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
               {loading ? "Diffusion..." : "Diffuser la scene"}
             </button>
           </div>
-          <div className={`live-preview live-scene--${data.live.scene.preset.toLowerCase()}`}>
-            <p className="live-kicker">{data.live.scene.title}</p>
-            <h2>{data.live.scene.text}</h2>
+          <div className="live-preview live-scene" style={sceneBackgroundStyle(preset)}>
+            <p className="live-kicker">{title}</p>
+            <h2>{text}</h2>
             <SceneRevelations elements={visibleElements} />
             {visibleElements.some((element) => element.type === "ENEMY") && (
               <div className="live-preview__threat">
@@ -217,15 +269,16 @@ export function LiveCampaign({ data, onReload, onStop }: Props) {
             ))}
           </div>
           <div className="media-grid">
-            {libraryTab === "SCENE" && PRESETS
+            {libraryTab === "SCENE" && BACKGROUND_CONTEXTS
               .filter((item) => item.label.toLowerCase().includes(search.toLowerCase()))
               .map((item) => (
                 <button
                   key={item.id}
                   type="button"
-                  className={`media-card live-scene--${item.id.toLowerCase()}${preset === item.id ? " media-card--selected" : ""}`}
+                  className={`media-card media-card--context${preset === item.id ? " media-card--selected" : ""}`}
                   onClick={() => { setPreset(item.id); setTitle(item.title); }}
                 >
+                  <img src={item.image} alt="" />
                   <span>{item.label}</span>
                 </button>
               ))}
