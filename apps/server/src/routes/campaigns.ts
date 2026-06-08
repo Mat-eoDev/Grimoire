@@ -4,6 +4,7 @@ import { MemberRole, SceneElementType } from "@prisma/client";
 import { Router } from "express";
 
 import { assertString, HttpError, optionalString } from "../lib/http.js";
+import { sseBroadcast, sseSubscribe, sseUnsubscribe } from "../lib/sseHub.js";
 import { getBaseStats } from "../lib/characterStats.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -199,6 +200,7 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
       members: campaign.members.map((member) => ({
         id: member.id,
         role: member.role,
+        isReady: member.isReady,
         joinedAt: member.joinedAt,
         user: member.user
       })),
@@ -225,6 +227,8 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
             description: element.description,
             quantity: element.quantity,
             isVisible: element.isVisible,
+            posX: element.posX,
+            posY: element.posY,
             asset: element.asset
           })),
         assets: revelationAssets
@@ -369,11 +373,99 @@ campaignsRouter.delete("/campaigns/:campaignId/scene-elements/:elementId", async
   }
 });
 
+campaignsRouter.get("/campaigns/:campaignId/stream", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const member = await prisma.campaignMember.findUnique({
+      where: { campaignId_userId: { campaignId: request.params.campaignId, userId: auth.user.id } }
+    });
+    if (!member) throw new HttpError(403, "Tu ne participes pas a cette partie");
+
+    response.setHeader("Content-Type", "text/event-stream");
+    response.setHeader("Cache-Control", "no-cache");
+    response.setHeader("Connection", "keep-alive");
+    response.flushHeaders();
+
+    sseSubscribe(request.params.campaignId, response);
+    request.on("close", () => sseUnsubscribe(request.params.campaignId, response));
+  } catch (error) {
+    next(error);
+  }
+});
+
+campaignsRouter.patch("/campaigns/:campaignId/scene-elements/:elementId/position", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+    const posX = Number(body.posX);
+    const posY = Number(body.posY);
+
+    if (!Number.isFinite(posX) || !Number.isFinite(posY)) {
+      throw new HttpError(400, "Position invalide");
+    }
+
+    await requireGmCampaign(request.params.campaignId, auth.user.id);
+
+    const element = await prisma.sceneElement.findFirst({
+      where: { id: request.params.elementId, campaignId: request.params.campaignId }
+    });
+    if (!element) throw new HttpError(404, "Element de scene introuvable");
+
+    const clamped = {
+      posX: Math.max(2, Math.min(98, posX)),
+      posY: Math.max(2, Math.min(98, posY))
+    };
+
+    await prisma.sceneElement.update({
+      where: { id: element.id },
+      data: clamped
+    });
+
+    sseBroadcast(request.params.campaignId, {
+      type: "element:moved",
+      elementId: element.id,
+      posX: clamped.posX,
+      posY: clamped.posY
+    });
+
+    response.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+});
+
+campaignsRouter.post("/campaigns/:campaignId/ready", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const member = await prisma.campaignMember.findUnique({
+      where: {
+        campaignId_userId: {
+          campaignId: request.params.campaignId,
+          userId: auth.user.id
+        }
+      }
+    });
+
+    if (!member) throw new HttpError(403, "Tu ne participes pas a cette partie");
+    if (member.role === "GM") throw new HttpError(400, "Le MJ n'a pas besoin de se marquer pret");
+
+    const updated = await prisma.campaignMember.update({
+      where: { id: member.id },
+      data: { isReady: !member.isReady }
+    });
+
+    response.json({ isReady: updated.isReady });
+  } catch (error) {
+    next(error);
+  }
+});
+
 campaignsRouter.post("/campaigns/:campaignId/launch", async (request, response, next) => {
   try {
     const auth = requireAuth(request);
     const campaign = await prisma.campaign.findUnique({
-      where: { id: request.params.campaignId }
+      where: { id: request.params.campaignId },
+      include: { members: true }
     });
 
     if (!campaign) {
@@ -386,6 +478,12 @@ campaignsRouter.post("/campaigns/:campaignId/launch", async (request, response, 
 
     if (campaign.status !== "DRAFT") {
       throw new HttpError(400, "La campagne est deja lancee ou terminee");
+    }
+
+    const players = campaign.members.filter((m) => m.role === "PLAYER");
+    const allReady = players.length > 0 && players.every((m) => m.isReady);
+    if (!allReady) {
+      throw new HttpError(400, "Tous les joueurs doivent etre prets avant de lancer");
     }
 
     const updated = await prisma.campaign.update({

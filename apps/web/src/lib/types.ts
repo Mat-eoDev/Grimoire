@@ -26,6 +26,7 @@ export type SessionPayload = {
 export type CampaignMemberView = {
   id: string;
   role: "GM" | "PLAYER";
+  isReady: boolean;
   joinedAt: string | null;
   user: {
     id: string;
@@ -67,11 +68,13 @@ export type CampaignDetail = {
     }>;
     elements: Array<{
       id: string;
-      type: "ENEMY" | "NPC" | "OBJECT" | "NARRATION";
+      type: "ENEMY" | "NPC" | "OBJECT" | "NARRATION" | "PLAYER";
       name: string;
       description: string;
       quantity: number;
       isVisible: boolean;
+      posX: number;
+      posY: number;
       asset: {
         id: string;
         name: string;
@@ -80,7 +83,7 @@ export type CampaignDetail = {
     }>;
     assets: Array<{
       id: string;
-      type: "ENEMY" | "NPC" | "OBJECT" | "NARRATION";
+      type: "ENEMY" | "NPC" | "OBJECT" | "NARRATION" | "PLAYER";
       name: string;
       imageDataUrl: string;
     }>;

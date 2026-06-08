@@ -11,7 +11,8 @@ const imageFolders = [
   { folder: "enemy", type: "ENEMY" },
   { folder: "ennemi", type: "ENEMY" },
   { folder: "object", type: "OBJECT" },
-  { folder: "objet", type: "OBJECT" }
+  { folder: "objet", type: "OBJECT" },
+  { folder: "player", type: "PLAYER" }
 ] as const;
 
 const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);

@@ -36,6 +36,7 @@ export function CampaignPage({ session, onLogout }: Props) {
   const [error, setError]             = useState<string | null>(null);
   const [loading, setLoading]         = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [readyLoading, setReadyLoading]   = useState(false);
   const [copied, setCopied]           = useState(false);
   const [refreshKey, setRefreshKey]   = useState(0);
 
@@ -81,6 +82,17 @@ export function CampaignPage({ session, onLogout }: Props) {
     } finally { setActionLoading(false); }
   }
 
+  async function handleToggleReady() {
+    if (!campaignId) return;
+    setReadyLoading(true);
+    try {
+      await apiFetch(`/campaigns/${campaignId}/ready`, { method: "POST" });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur");
+    } finally { setReadyLoading(false); }
+  }
+
   async function handleStop() {
     if (!campaignId) return;
     setActionLoading(true);
@@ -123,11 +135,16 @@ export function CampaignPage({ session, onLogout }: Props) {
     return <CharacterSelect campaignId={campaignId!} onConfirm={handleCharacterConfirm} />;
   }
 
+  const players = data.members.filter((m) => m.role === "PLAYER");
+  const allPlayersReady = players.length > 0 && players.every((m) => m.isReady);
+  const viewerMember = data.members.find((m) => m.id === data.viewer.memberId);
+  const viewerIsReady = viewerMember?.isReady ?? false;
+
   /* checklist DRAFT */
   const checks = [
     { label: "Code partagé aux joueurs", done: true },
     { label: "MJ connecté",              done: true },
-    { label: "Tous les joueurs prêts",   done: false },
+    { label: "Tous les joueurs prêts",   done: allPlayersReady },
   ];
   const progress = Math.round((checks.filter(c => c.done).length / checks.length) * 100);
 
@@ -192,13 +209,33 @@ export function CampaignPage({ session, onLogout }: Props) {
 
             {isGm && campaign.status === "DRAFT" && (
               <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-                <button type="button" className="camp-btn-launch" onClick={handleLaunch} disabled={actionLoading}>
+                <button
+                  type="button"
+                  className="camp-btn-launch"
+                  onClick={handleLaunch}
+                  disabled={actionLoading || !allPlayersReady}
+                  title={!allPlayersReady ? "En attente que tous les joueurs soient prêts" : undefined}
+                >
                   {actionLoading ? "..." : "Lancer la campagne"}
                 </button>
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--ink-soft)", maxWidth: "22ch" }}>
-                  Le lancement sera disponible quand tous les joueurs seront prêts.
-                </p>
+                {!allPlayersReady && (
+                  <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--ink-soft)", maxWidth: "22ch" }}>
+                    {players.length === 0
+                      ? "Aucun joueur dans le salon."
+                      : `${players.filter((m) => m.isReady).length} / ${players.length} joueur${players.length > 1 ? "s" : ""} prêt${players.filter((m) => m.isReady).length > 1 ? "s" : ""}.`}
+                  </p>
+                )}
               </div>
+            )}
+            {!isGm && campaign.status === "DRAFT" && (
+              <button
+                type="button"
+                className={`camp-btn-launch${viewerIsReady ? " camp-btn-launch--ready" : ""}`}
+                onClick={handleToggleReady}
+                disabled={readyLoading}
+              >
+                {readyLoading ? "..." : viewerIsReady ? "✓ Prêt" : "Je suis prêt"}
+              </button>
             )}
             {campaign.status === "CLOSED" && (
               <p style={{ margin: 0, color: "var(--ink-soft)" }}>Cette campagne est terminée.</p>
@@ -232,8 +269,8 @@ export function CampaignPage({ session, onLogout }: Props) {
                     <strong>{member.user.username}</strong>
                     <span>{isThisMemberGm ? "MJ de la partie" : "Joueur"}</span>
                   </span>
-                  <span className={`pill${isThisMemberGm ? " pill--success" : ""}`}>
-                    {isThisMemberGm ? "Connecté" : "En attente"}
+                  <span className={`pill${isThisMemberGm || member.isReady ? " pill--success" : ""}`}>
+                    {isThisMemberGm ? "Connecté" : member.isReady ? "Prêt" : "En attente"}
                   </span>
                 </div>
               );
