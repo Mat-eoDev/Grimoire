@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import { useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 
-import { apiFetch } from "../lib/api";
+import { apiFetch, API_URL } from "../lib/api";
 import type { CampaignDetail } from "../lib/types";
 import { Inventory } from "./Inventory";
 import { CharacterSheet } from "./CharacterSheet";
@@ -77,22 +77,32 @@ const ELEMENT_LABELS = {
   ENEMY: "Ennemi",
   NPC: "PNJ",
   OBJECT: "Objet visuel",
-  NARRATION: "Narration"
+  NARRATION: "Narration",
+  PLAYER: "Joueur"
 } as const;
 
 const ELEMENT_DEFAULTS = {
   ENEMY: { name: "Garde spectral", description: "Une silhouette armee barre le passage." },
   NPC: { name: "Voyageur inconnu", description: "Une presence semble vouloir vous parler." },
   OBJECT: { name: "Coffre scelle", description: "Un objet attire votre attention." },
-  NARRATION: { name: "Brouillard ancien", description: "L'atmosphere de la scene change." }
+  NARRATION: { name: "Brouillard ancien", description: "L'atmosphere de la scene change." },
+  PLAYER: { name: "", description: "" }
 } as const;
 
 const ELEMENT_ICONS = {
   ENEMY: "!",
   NPC: "?",
   OBJECT: "*",
-  NARRATION: "..."
+  NARRATION: "...",
+  PLAYER: "⚔"
 } as const;
+
+const CHAR_CLASS: Record<number, string> = {
+  1: "ASSASSIN",
+  2: "CHEVALIER",
+  3: "ELFE",
+  4: "MAG"
+};
 
 const NARRATION_SUGGESTIONS = [
   "",
@@ -109,6 +119,8 @@ const CHAR_LABELS: Record<number, string> = {
   4: "Mage"
 };
 
+type ElementPos = { posX: number; posY: number };
+
 export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const isGm = data.viewer.role === "GM";
   const [selectedPlayer, setSelectedPlayer] = useState<CampaignDetail["live"]["players"][number] | null>(null);
@@ -121,8 +133,51 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const [draftDescription, setDraftDescription] = useState("");
   const [draftQuantity, setDraftQuantity] = useState(1);
   const [draftAssetId, setDraftAssetId] = useState("");
-  const [libraryTab, setLibraryTab] = useState<"SCENE" | keyof typeof ELEMENT_LABELS>("SCENE");
+  const [libraryTab, setLibraryTab] = useState<"SCENE" | "JOUEURS" | keyof typeof ELEMENT_LABELS>("SCENE");
   const [search, setSearch] = useState("");
+
+  const [positions, setPositions] = useState<Map<string, ElementPos>>(() =>
+    new Map(data.live.elements.map((el) => [el.id, { posX: el.posX, posY: el.posY }]))
+  );
+
+  // Sync new elements from polling without overwriting live-dragged positions
+  useEffect(() => {
+    setPositions((prev) => {
+      const next = new Map(prev);
+      for (const el of data.live.elements) {
+        if (!next.has(el.id)) next.set(el.id, { posX: el.posX, posY: el.posY });
+      }
+      // Remove positions for deleted elements
+      for (const id of next.keys()) {
+        if (!data.live.elements.some((el) => el.id === id)) next.delete(id);
+      }
+      return next;
+    });
+  }, [data.live.elements]);
+
+  // SSE: real-time position updates
+  useEffect(() => {
+    const es = new EventSource(`${API_URL}/campaigns/${data.campaign.id}/stream`, { withCredentials: true });
+    es.onmessage = (e) => {
+      try {
+        const event = JSON.parse(e.data as string) as { type: string; elementId: string; posX: number; posY: number };
+        if (event.type === "element:moved") {
+          setPositions((prev) => new Map(prev).set(event.elementId, { posX: event.posX, posY: event.posY }));
+        }
+      } catch {}
+    };
+    return () => es.close();
+  }, [data.campaign.id]);
+
+  const handlePositionDrop = useCallback(async (elementId: string, posX: number, posY: number) => {
+    try {
+      await apiFetch(`/campaigns/${data.campaign.id}/scene-elements/${elementId}/position`, {
+        method: "PATCH",
+        json: { posX, posY }
+      });
+    } catch {}
+  }, [data.campaign.id]);
+
   const visibleElements = data.live.elements.filter((element) => element.isVisible);
 
   async function publishScene() {
@@ -187,11 +242,28 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
     await onReload();
   }
 
+  async function addPlayerToScene(player: CampaignDetail["live"]["players"][number]) {
+    const className = CHAR_CLASS[player.charId];
+    const asset = data.live.assets.find((a) => a.type === "PLAYER" && a.name.toUpperCase() === className);
+    await apiFetch(`/campaigns/${data.campaign.id}/scene-elements`, {
+      method: "POST",
+      json: {
+        type: "PLAYER",
+        name: player.charName,
+        description: `${CHAR_LABELS[player.charId] ?? player.username}`,
+        quantity: 1,
+        assetId: asset?.id
+      }
+    });
+    await onReload();
+  }
+
   if (!isGm) {
     return (
       <PlayerView
         data={data}
         visibleElements={visibleElements}
+        positions={positions}
         sceneStyle={sceneBackgroundStyle(data.live.scene.preset)}
         refreshKey={refreshKey}
       />
@@ -232,7 +304,13 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
           <div className="live-preview live-scene" style={sceneBackgroundStyle(preset)}>
             <p className="live-kicker">{title}</p>
             <h2>{text}</h2>
-            <SceneRevelations elements={visibleElements} />
+            <SceneCanvas
+              elements={visibleElements}
+              positions={positions}
+              onPositionChange={(id, pos) => setPositions((prev) => new Map(prev).set(id, pos))}
+              onPositionDrop={handlePositionDrop}
+              isGm
+            />
             {visibleElements.some((element) => element.type === "ENEMY") && (
               <div className="live-preview__threat">
                 <span>Ennemis visibles</span>
@@ -253,13 +331,39 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
           </div>
           <div className="media-tabs">
             <button type="button" className={libraryTab === "SCENE" ? "media-tab--active" : ""} onClick={() => setLibraryTab("SCENE")}>Contextes</button>
-            {(Object.keys(ELEMENT_LABELS) as Array<keyof typeof ELEMENT_LABELS>).map((type) => (
-              <button key={type} type="button" className={libraryTab === type ? "media-tab--active" : ""} onClick={() => setLibraryTab(type)}>
-                {ELEMENT_LABELS[type]}
-              </button>
-            ))}
+            {(Object.keys(ELEMENT_LABELS) as Array<keyof typeof ELEMENT_LABELS>)
+              .filter((type) => type !== "PLAYER")
+              .map((type) => (
+                <button key={type} type="button" className={libraryTab === type ? "media-tab--active" : ""} onClick={() => setLibraryTab(type)}>
+                  {ELEMENT_LABELS[type]}
+                </button>
+              ))}
+            <button type="button" className={libraryTab === "JOUEURS" ? "media-tab--active" : ""} onClick={() => setLibraryTab("JOUEURS")}>Joueurs</button>
           </div>
           <div className="media-grid">
+            {libraryTab === "JOUEURS" && (
+              data.live.players.length === 0
+                ? <p className="live-empty" style={{ gridColumn: "1/-1" }}>Aucun joueur avec une fiche personnage.</p>
+                : data.live.players.map((player) => {
+                    const className = CHAR_CLASS[player.charId];
+                    const asset = data.live.assets.find((a) => a.type === "PLAYER" && a.name.toUpperCase() === className);
+                    return (
+                      <button
+                        key={player.userId}
+                        type="button"
+                        className="media-card media-card--asset"
+                        onClick={() => addPlayerToScene(player)}
+                        title={`Ajouter ${player.charName} sur la scène`}
+                      >
+                        {asset
+                          ? <img src={asset.imageDataUrl} alt={player.charName} />
+                          : <span style={{ fontSize: "2rem" }}>{ELEMENT_ICONS.PLAYER}</span>}
+                        <span>{player.charName}</span>
+                        <span style={{ fontSize: "0.72rem", opacity: 0.7 }}>{CHAR_LABELS[player.charId] ?? player.username}</span>
+                      </button>
+                    );
+                  })
+            )}
             {libraryTab === "SCENE" && BACKGROUND_CONTEXTS
               .filter((item) => item.label.toLowerCase().includes(search.toLowerCase()))
               .map((item) => (
@@ -286,7 +390,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
                   <span>{asset.name}</span>
                 </button>
               ))}
-            {libraryTab !== "SCENE" && (
+            {libraryTab !== "SCENE" && libraryTab !== "JOUEURS" && libraryTab !== "PLAYER" && (
               <button type="button" className="media-card media-card--fallback" onClick={() => prepareElement(libraryTab)}>
                 <b>{ELEMENT_ICONS[libraryTab]}</b>
                 <span>Sans image</span>
@@ -420,25 +524,79 @@ function SceneElementGroup({
   );
 }
 
-function SceneRevelations({ elements }: { elements: CampaignDetail["live"]["elements"] }) {
-  const hasEnemies = elements.some((element) => element.type === "ENEMY");
+type SceneCanvasProps = {
+  elements: CampaignDetail["live"]["elements"];
+  positions: Map<string, ElementPos>;
+  onPositionChange?: (id: string, pos: ElementPos) => void;
+  onPositionDrop?: (id: string, posX: number, posY: number) => void;
+  isGm?: boolean;
+};
+
+function SceneCanvas({ elements, positions, onPositionChange, onPositionDrop, isGm = false }: SceneCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ elementId: string; lastPos: ElementPos } | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  function getPos(id: string, fallbackX: number, fallbackY: number): ElementPos {
+    return positions.get(id) ?? { posX: fallbackX, posY: fallbackY };
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>, element: CampaignDetail["live"]["elements"][number]) {
+    if (!isGm) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const pos = getPos(element.id, element.posX, element.posY);
+    dragRef.current = { elementId: element.id, lastPos: pos };
+    setDraggingId(element.id);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>, elementId: string) {
+    if (!dragRef.current || dragRef.current.elementId !== elementId || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const posX = Math.max(2, Math.min(98, ((e.clientX - rect.left) / rect.width) * 100));
+    const posY = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
+    const pos = { posX, posY };
+    dragRef.current.lastPos = pos;
+    onPositionChange?.(elementId, pos);
+  }
+
+  function onPointerUp(_e: React.PointerEvent<HTMLDivElement>, elementId: string) {
+    if (!dragRef.current || dragRef.current.elementId !== elementId) return;
+    const { posX, posY } = dragRef.current.lastPos;
+    dragRef.current = null;
+    setDraggingId(null);
+    onPositionDrop?.(elementId, posX, posY);
+  }
 
   return (
-    <div className="scene-revelations">
-      {elements.map((element) => (
-        <div
-          key={element.id}
-          className={`scene-revelation scene-revelation--${element.type.toLowerCase()}${element.type === "NPC" && hasEnemies ? " scene-revelation--npc-with-enemies" : ""}`}
-        >
-          {element.asset
-            ? <img src={element.asset.imageDataUrl} alt={element.asset.name} />
-            : <span className="scene-revelation__fallback">{ELEMENT_ICONS[element.type]}</span>}
-          <strong>{element.name}{element.quantity > 1 ? ` x${element.quantity}` : ""}</strong>
-          {element.type === "NARRATION" && <p>{element.description}</p>}
-        </div>
-      ))}
+    <div ref={containerRef} className="scene-revelations">
+      {elements.map((element) => {
+        const { posX, posY } = getPos(element.id, element.posX, element.posY);
+        const isDragging = draggingId === element.id;
+        return (
+          <div
+            key={element.id}
+            className={`scene-revelation scene-revelation--${element.type.toLowerCase()}${isGm ? " scene-revelation--draggable" : ""}${isDragging ? " scene-revelation--dragging" : ""}`}
+            style={{ left: `${posX}%`, top: `${posY}%`, transform: isDragging ? "translate(-50%, -50%) scale(1.06)" : "translate(-50%, -50%)" }}
+            onPointerDown={isGm ? (e) => onPointerDown(e, element) : undefined}
+            onPointerMove={isGm ? (e) => onPointerMove(e, element.id) : undefined}
+            onPointerUp={isGm ? (e) => onPointerUp(e, element.id) : undefined}
+          >
+            {element.asset
+              ? <img src={element.asset.imageDataUrl} alt={element.asset.name} draggable={false} />
+              : <span className="scene-revelation__fallback">{ELEMENT_ICONS[element.type]}</span>}
+            <strong>{element.name}{element.quantity > 1 ? ` x${element.quantity}` : ""}</strong>
+            {element.type === "NARRATION" && <p>{element.description}</p>}
+          </div>
+        );
+      })}
     </div>
   );
+}
+
+function SceneRevelations({ elements, positions }: { elements: CampaignDetail["live"]["elements"]; positions: Map<string, ElementPos> }) {
+  return <SceneCanvas elements={elements} positions={positions} isGm={false} />;
 }
 
 function PlayerHealth({
@@ -481,13 +639,14 @@ function ElementCard({ element }: { element: CampaignDetail["live"]["elements"][
 type PlayerViewProps = {
   data: CampaignDetail;
   visibleElements: CampaignDetail["live"]["elements"];
+  positions: Map<string, ElementPos>;
   sceneStyle: CSSProperties;
   refreshKey: number;
 };
 
 type PlayerTab = "scene" | "character" | "inventory";
 
-function PlayerView({ data, visibleElements, sceneStyle, refreshKey }: PlayerViewProps) {
+function PlayerView({ data, visibleElements, positions, sceneStyle, refreshKey }: PlayerViewProps) {
   const [tab, setTab] = useState<PlayerTab>("scene");
 
   return (
@@ -524,7 +683,7 @@ function PlayerView({ data, visibleElements, sceneStyle, refreshKey }: PlayerVie
             <h1>{data.live.scene.text || "Le MJ prepare la suite de votre aventure..."}</h1>
           </section>
           <PlayerHealth players={data.live.players} />
-          <SceneRevelations elements={visibleElements} />
+          <SceneRevelations elements={visibleElements} positions={positions} />
           <section className="live-player__elements">
             <p className="live-kicker">Presences dans la scene</p>
             <div className="live-element-grid">

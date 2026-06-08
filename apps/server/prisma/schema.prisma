@@ -28,6 +28,7 @@ enum SceneElementType {
   NPC
   OBJECT
   NARRATION
+  PLAYER
 }
 
 enum ItemType {
@@ -93,6 +94,7 @@ model CampaignMember {
   userId     String
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   role       MemberRole
+  isReady    Boolean    @default(false)
   joinedAt   DateTime   @default(now())
 
   @@unique([campaignId, userId])
@@ -147,6 +149,8 @@ model SceneElement {
   description String           @default("")
   quantity    Int              @default(1)
   isVisible   Boolean          @default(true)
+  posX        Float            @default(50)
+  posY        Float            @default(50)
   assetId     String?
   asset       RevelationAsset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
   createdAt   DateTime         @default(now())

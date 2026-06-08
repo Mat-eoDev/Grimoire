@@ -606,6 +606,11 @@ code {
 .camp-btn-launch:hover    { transform: translateY(-1px); }
 .camp-btn-launch:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
+.camp-btn-launch--ready {
+  background: linear-gradient(135deg, #3a7a3a, #5fa85f);
+  box-shadow: 0 4px 16px rgba(58, 122, 58, 0.25);
+}
+
 /* Participant row */
 .participant-row {
   display: flex;
@@ -1628,39 +1633,13 @@ code {
   font-weight: 700;
 }
 
-.scene-revelation--enemy {
-  z-index: 4;
-  left: 50%;
-  top: 46%;
-  transform: translate(-50%, -50%);
-  color: #d66a60;
-}
-
-.scene-revelation--object {
-  z-index: 2;
-  top: 18%;
-  right: 13%;
-  color: #d9b36c;
-}
-
-.scene-revelation--npc {
-  z-index: 3;
-  left: 50%;
-  top: 44%;
-  transform: translate(-50%, -50%);
-  color: #7da0c2;
-}
-
-.scene-revelation--npc-with-enemies {
-  z-index: 2;
-  left: 27%;
-  top: 37%;
-}
-
+.scene-revelation--enemy   { z-index: 4; color: #d66a60; }
+.scene-revelation--object  { z-index: 2; color: #d9b36c; }
+.scene-revelation--npc     { z-index: 3; color: #7da0c2; }
+.scene-revelation--player  { z-index: 5; color: #a8d08d; }
+.scene-revelation--player img { border-radius: 6px; box-shadow: 0 0 0 2px #a8d08d, 0 4px 12px rgba(0,0,0,0.5); }
 .scene-revelation--narration {
   z-index: 6;
-  left: 4%;
-  bottom: 5%;
   max-width: min(520px, 75%);
   justify-items: start;
   padding: 0.9rem 1rem;
@@ -1669,9 +1648,24 @@ code {
   background: rgba(9, 8, 7, 0.8);
   text-align: left;
 }
-
 .scene-revelation--narration .scene-revelation__fallback { display: none; }
 .scene-revelation--narration p { margin: 0; color: #f2e6d0; font-size: 0.88rem; line-height: 1.45; }
+
+.scene-revelation--draggable {
+  pointer-events: all;
+  cursor: grab;
+  transition: filter 120ms, transform 80ms;
+  user-select: none;
+  touch-action: none;
+}
+.scene-revelation--draggable:hover {
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,0.42)) drop-shadow(0 0 8px rgba(242,230,208,0.35));
+}
+.scene-revelation--dragging {
+  cursor: grabbing;
+  z-index: 10 !important;
+  filter: drop-shadow(0 16px 20px rgba(0,0,0,0.6)) drop-shadow(0 0 12px rgba(242,230,208,0.5));
+}
 
 .live-preview h2 { max-width: 70%; margin-top: 0.65rem; font-size: 1.7rem; }
 
