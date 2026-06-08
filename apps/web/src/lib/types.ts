@@ -115,6 +115,22 @@ export type InventoryEntry = {
   item: Item;
 };
 
+export type TradeOffer = {
+  id: string;
+  fromUserId: string;
+  fromUsername: string;
+  toUserId: string;
+  toUsername: string;
+  offeredEntryId: string;
+  offeredQty: number;
+  requestedEntryId: string | null;
+  requestedQty: number;
+  status: "PENDING" | "ACCEPTED" | "REFUSED" | "CANCELLED";
+  createdAt: string;
+  offeredEntry: InventoryEntry | null;
+  requestedEntry: InventoryEntry | null;
+};
+
 export type CampaignSummaryResponse = {
   campaign: {
     id: string;

@@ -38,6 +38,13 @@ enum ItemType {
   MISC
 }
 
+enum TradeStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+  CANCELLED
+}
+
 model User {
   id           String           @id @default(uuid())
   email        String           @unique
@@ -85,6 +92,25 @@ model Campaign {
   sceneTitle       String           @default("Les ruines sous la pluie")
   sceneText        String           @default("Un grondement sourd traverse les pierres anciennes.")
   sceneElements    SceneElement[]
+  tradeOffers      TradeOffer[]
+}
+
+model TradeOffer {
+  id               String      @id @default(uuid())
+  campaignId       String
+  campaign         Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  fromUserId       String
+  toUserId         String
+  offeredEntryId   String
+  offeredQty       Int         @default(1)
+  requestedEntryId String?
+  requestedQty     Int         @default(1)
+  status           TradeStatus @default(PENDING)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([campaignId, toUserId, status])
+  @@index([campaignId, fromUserId, status])
 }
 
 model CampaignMember {
