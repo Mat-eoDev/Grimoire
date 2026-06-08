@@ -273,11 +273,11 @@ inventoryRouter.post("/campaigns/:campaignId/inventory/:entryId/use", async (req
   }
 });
 
-// GET /campaigns/:campaignId/players/:userId/inventory — MJ : inventaire d'un joueur spécifique
+// GET /campaigns/:campaignId/players/:userId/inventory — inventaire d'un autre joueur (visible par tous les membres)
 inventoryRouter.get("/campaigns/:campaignId/players/:userId/inventory", async (request, response, next) => {
   try {
     const auth = requireAuth(request);
-    await requireGm(request.params.campaignId, auth.user.id);
+    await requireMember(request.params.campaignId, auth.user.id);
 
     const entries = await prisma.inventoryEntry.findMany({
       where: { campaignId: request.params.campaignId, userId: request.params.userId },

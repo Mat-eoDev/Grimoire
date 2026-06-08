@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { CharacterSelect, type CharacterChoice } from "../components/CharacterSelect";
 import { CharacterSheet } from "../components/CharacterSheet";
 import { PlayerNotes } from "../components/PlayerNotes";
+import { TradePanel } from "../components/TradePanel";
 import { LiveCampaign } from "../components/LiveCampaign";
 import { apiFetch } from "../lib/api";
 import type { CampaignDetail, SessionPayload } from "../lib/types";
@@ -263,7 +264,7 @@ export function CampaignPage({ session, onLogout }: Props) {
               return (
                 <div key={member.id} className="participant-row">
                   <span className="participant-row__avatar" style={{ background: color }}>
-                    {member.user.username.charAt(0).toUpperCase()}
+                    {isThisMemberGm ? "👑" : member.user.username.charAt(0).toUpperCase()}
                   </span>
                   <span className="participant-row__info">
                     <strong>{member.user.username}</strong>
@@ -330,7 +331,14 @@ export function CampaignPage({ session, onLogout }: Props) {
       {/* Fiche + Notes joueur */}
       {!isGm && campaignId && (
         <>
-          <CharacterSheet campaignId={campaignId} />
+          <div style={{ marginTop: "1.25rem" }}>
+            <CharacterSheet campaignId={campaignId} />
+          </div>
+          <TradePanel
+            campaignId={campaignId}
+            currentUserId={session?.user.id ?? ""}
+            members={data.members}
+          />
           <PlayerNotes campaignId={campaignId} />
         </>
       )}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import { apiFetch, API_URL } from "../lib/api";
 import type { CampaignDetail } from "../lib/types";
 import { Inventory } from "./Inventory";
+import { TradePanel } from "./TradePanel";
 import { CharacterSheet } from "./CharacterSheet";
 import { PlayerDetailModal } from "./PlayerDetailModal";
 
@@ -699,7 +700,14 @@ function PlayerView({ data, visibleElements, positions, sceneStyle, refreshKey }
       )}
 
       {tab === "inventory" && (
-        <Inventory campaignId={data.campaign.id} refreshKey={refreshKey} />
+        <>
+          <Inventory campaignId={data.campaign.id} refreshKey={refreshKey} />
+          <TradePanel
+            campaignId={data.campaign.id}
+            currentUserId={data.members.find((m) => m.id === data.viewer.memberId)?.user.id ?? ""}
+            members={data.members}
+          />
+        </>
       )}
     </main>
   );

@@ -6,6 +6,7 @@ import { attachAuth } from "./middleware/auth.js";
 import { authRouter } from "./routes/auth.js";
 import { campaignsRouter } from "./routes/campaigns.js";
 import { inventoryRouter } from "./routes/inventory.js";
+import { tradesRouter } from "./routes/trades.js";
 import { HttpError } from "./lib/http.js";
 
 export const app = express();
@@ -29,6 +30,7 @@ app.get("/health", (_request, response) => {
 app.use("/auth", authRouter);
 app.use("/", campaignsRouter);
 app.use("/", inventoryRouter);
+app.use("/", tradesRouter);
 
 app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
   if (error instanceof HttpError) {
