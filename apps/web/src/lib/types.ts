@@ -49,6 +49,7 @@ export type CampaignDetail = {
   };
   viewer: {
     memberId: string;
+    userId: string;
     role: "GM" | "PLAYER";
   };
   members: CampaignMemberView[];
@@ -73,6 +74,10 @@ export type CampaignDetail = {
       description: string;
       quantity: number;
       isVisible: boolean;
+      hp: number;
+      maxHp: number;
+      attack: number;
+      defense: number;
       posX: number;
       posY: number;
       asset: {
@@ -87,7 +92,45 @@ export type CampaignDetail = {
       name: string;
       imageDataUrl: string;
     }>;
+    actionRolls: ActionRoll[];
   };
+};
+
+export type ActionRollOutcome = "TOTAL_FAILURE" | "FAILURE" | "SUCCESS" | "TOTAL_SUCCESS";
+
+export type ActionRoll = {
+  id: string;
+  playerUserId: string;
+  playerUsername: string;
+  actionText: string;
+  dieSides: number;
+  totalFailureMax: number;
+  successMin: number;
+  totalSuccessMin: number;
+  targetType: "NONE" | "PLAYER" | "ELEMENT";
+  targetElementId: string | null;
+  targetUserId: string | null;
+  targetName: string;
+  targetElement: {
+    id: string;
+    name: string;
+    type: "ENEMY" | "NPC" | "OBJECT" | "NARRATION" | "PLAYER";
+    hp: number;
+    maxHp: number;
+  } | null;
+  consequenceType: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET";
+  consequenceAmount: number;
+  consequenceText: string;
+  consequences: Record<ActionRollOutcome, {
+    type: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET";
+    amount: number;
+    text: string;
+  }>;
+  status: "PENDING" | "ROLLED" | "RESOLVED" | "CANCELLED";
+  result: number | null;
+  outcome: ActionRollOutcome | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ItemType = "WEAPON" | "SHIELD" | "CONSUMABLE" | "MISC";
