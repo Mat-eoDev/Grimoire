@@ -9,6 +9,7 @@
     "check": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@3d-dice/dice-box": "^1.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0"
@@ -21,4 +22,3 @@
     "vite": "^6.2.4"
   }
 }
-

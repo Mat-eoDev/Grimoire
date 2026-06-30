@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import "@3d-dice/dice-box/dist/style.css";
 
 import { apiFetch, API_URL } from "../lib/api";
-import type { CampaignDetail } from "../lib/types";
+import type { ActionRoll, CampaignDetail } from "../lib/types";
 import { Inventory } from "./Inventory";
 import { TradePanel } from "./TradePanel";
 import { CharacterSheet } from "./CharacterSheet";
@@ -120,7 +121,40 @@ const CHAR_LABELS: Record<number, string> = {
   4: "Mage"
 };
 
+const OUTCOME_LABELS: Record<NonNullable<ActionRoll["outcome"]>, string> = {
+  TOTAL_FAILURE: "Echec total",
+  FAILURE: "Echec",
+  SUCCESS: "Reussite",
+  TOTAL_SUCCESS: "Reussite totale"
+};
+
+const CONSEQUENCE_LABELS: Record<ActionRoll["consequenceType"], string> = {
+  NONE: "Aucun effet automatique",
+  NARRATION: "Ajouter une narration",
+  DAMAGE_TARGET: "Retirer des PV a la cible",
+  DAMAGE_PLAYER: "Retirer des PV au joueur",
+  DELETE_TARGET: "Supprimer la cible"
+};
+
+const OUTCOME_ORDER: Array<NonNullable<ActionRoll["outcome"]>> = ["TOTAL_FAILURE", "FAILURE", "SUCCESS", "TOTAL_SUCCESS"];
+
+type ActionRollConsequence = ActionRoll["consequences"][NonNullable<ActionRoll["outcome"]>];
+
+function defaultConsequences(): ActionRoll["consequences"] {
+  return {
+    TOTAL_FAILURE: { type: "NONE", amount: 0, text: "" },
+    FAILURE: { type: "NONE", amount: 0, text: "" },
+    SUCCESS: { type: "NONE", amount: 0, text: "" },
+    TOTAL_SUCCESS: { type: "NONE", amount: 0, text: "" }
+  };
+}
+
 type ElementPos = { posX: number; posY: number };
+
+function elementHpLabel(element: Pick<CampaignDetail["live"]["elements"][number], "hp" | "maxHp" | "type">) {
+  if (element.type === "NARRATION") return "";
+  return `PV ${element.hp} / ${element.maxHp}`;
+}
 
 export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const isGm = data.viewer.role === "GM";
@@ -136,6 +170,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const [draftAssetId, setDraftAssetId] = useState("");
   const [libraryTab, setLibraryTab] = useState<"SCENE" | "JOUEURS" | keyof typeof ELEMENT_LABELS>("SCENE");
   const [search, setSearch] = useState("");
+  const [actionRolls, setActionRolls] = useState<ActionRoll[]>(data.live.actionRolls ?? []);
 
   const [positions, setPositions] = useState<Map<string, ElementPos>>(() =>
     new Map(data.live.elements.map((el) => [el.id, { posX: el.posX, posY: el.posY }]))
@@ -156,19 +191,42 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
     });
   }, [data.live.elements]);
 
+  useEffect(() => {
+    setActionRolls(data.live.actionRolls ?? []);
+  }, [data.live.actionRolls]);
+
   // SSE: real-time position updates
   useEffect(() => {
     const es = new EventSource(`${API_URL}/campaigns/${data.campaign.id}/stream`, { withCredentials: true });
     es.onmessage = (e) => {
       try {
-        const event = JSON.parse(e.data as string) as { type: string; elementId: string; posX: number; posY: number };
+        const event = JSON.parse(e.data as string) as {
+          type: string;
+          elementId?: string;
+          posX?: number;
+          posY?: number;
+          actionRoll?: ActionRoll;
+          actionRollId?: string;
+        };
         if (event.type === "element:moved") {
-          setPositions((prev) => new Map(prev).set(event.elementId, { posX: event.posX, posY: event.posY }));
+          if (event.elementId && typeof event.posX === "number" && typeof event.posY === "number") {
+            setPositions((prev) => new Map(prev).set(event.elementId!, { posX: event.posX!, posY: event.posY! }));
+          }
+        }
+        if (event.type === "action-roll:changed" && event.actionRoll) {
+          setActionRolls((prev) => [event.actionRoll!, ...prev.filter((roll) => roll.id !== event.actionRoll!.id)]);
+        }
+        if (event.type === "action-roll:closed" && event.actionRollId) {
+          setActionRolls((prev) => prev.filter((roll) => roll.id !== event.actionRollId));
+          void onReload();
+        }
+        if (event.type === "campaign:changed") {
+          void onReload();
         }
       } catch {}
     };
     return () => es.close();
-  }, [data.campaign.id]);
+  }, [data.campaign.id, onReload]);
 
   const handlePositionDrop = useCallback(async (elementId: string, posX: number, posY: number) => {
     try {
@@ -265,6 +323,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
         data={data}
         visibleElements={visibleElements}
         positions={positions}
+        actionRolls={actionRolls}
         sceneStyle={sceneBackgroundStyle(data.live.scene.preset)}
         refreshKey={refreshKey}
       />
@@ -473,6 +532,21 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
             onVisibilityChange={setElementVisibility}
             onRemove={removeElement}
           />
+          <ActionRollGmPanel
+            campaignId={data.campaign.id}
+            members={data.members}
+            players={data.live.players}
+            elements={data.live.elements}
+            actionRolls={actionRolls}
+            onRollChange={async (roll) => {
+              setActionRolls((prev) => [roll, ...prev.filter((item) => item.id !== roll.id)]);
+              await onReload();
+            }}
+            onRollClose={async (rollId) => {
+              setActionRolls((prev) => prev.filter((roll) => roll.id !== rollId));
+              await onReload();
+            }}
+          />
           <PlayerHealth players={data.live.players} onSelectPlayer={setSelectedPlayer} />
           <button type="button" className="live-stop" onClick={onStop}>Terminer la partie</button>
         </aside>
@@ -486,6 +560,250 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
         />
       )}
     </main>
+  );
+}
+
+function ActionRollGmPanel({
+  campaignId,
+  members,
+  players,
+  elements,
+  actionRolls,
+  onRollChange,
+  onRollClose
+}: {
+  campaignId: string;
+  members: CampaignDetail["members"];
+  players: CampaignDetail["live"]["players"];
+  elements: CampaignDetail["live"]["elements"];
+  actionRolls: ActionRoll[];
+  onRollChange: (roll: ActionRoll) => Promise<void>;
+  onRollClose: (rollId: string) => Promise<void>;
+}) {
+  const activeRoll = actionRolls[0] ?? null;
+  const [step, setStep] = useState(1);
+  const [playerUserId, setPlayerUserId] = useState(players[0]?.userId ?? "");
+  const [actionText, setActionText] = useState("");
+  const [dieSides, setDieSides] = useState(20);
+  const [totalFailureMax, setTotalFailureMax] = useState(4);
+  const [successMin, setSuccessMin] = useState(12);
+  const [totalSuccessMin, setTotalSuccessMin] = useState(18);
+  const [target, setTarget] = useState("NONE:");
+  const [consequences, setConsequences] = useState<ActionRoll["consequences"]>(() => defaultConsequences());
+  const [status, setStatus] = useState("");
+
+  const selectableElements = elements.filter((element) => element.type !== "NARRATION");
+
+  useEffect(() => {
+    if (!playerUserId && players[0]) {
+      setPlayerUserId(players[0].userId);
+    }
+    if (playerUserId && players.length > 0 && !players.some((player) => player.userId === playerUserId)) {
+      setPlayerUserId(players[0].userId);
+    }
+  }, [playerUserId, players]);
+
+  function resetForm() {
+    setStep(1);
+    setActionText("");
+    setTarget("NONE:");
+    setConsequences(defaultConsequences());
+  }
+
+  function updateConsequence(outcome: NonNullable<ActionRoll["outcome"]>, patch: Partial<ActionRollConsequence>) {
+    setConsequences((prev) => ({
+      ...prev,
+      [outcome]: { ...prev[outcome], ...patch }
+    }));
+  }
+
+  async function createRoll() {
+    if (!playerUserId || !actionText.trim()) return;
+    const [targetType, targetId] = target.split(":");
+    setStatus("Creation...");
+    try {
+      const data = await apiFetch<{ actionRoll: ActionRoll }>(`/campaigns/${campaignId}/action-rolls`, {
+        method: "POST",
+        json: {
+          playerUserId,
+          actionText: actionText.trim(),
+          dieSides,
+          totalFailureMax,
+          successMin,
+          totalSuccessMin,
+          targetType,
+          targetElementId: targetType === "ELEMENT" ? targetId : undefined,
+          targetUserId: targetType === "PLAYER" ? targetId : undefined,
+          consequenceType: consequences.SUCCESS.type,
+          consequenceAmount: consequences.SUCCESS.amount,
+          consequenceText: consequences.SUCCESS.text,
+          consequences
+        }
+      });
+      await onRollChange(data.actionRoll);
+      resetForm();
+      setStatus("");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Impossible de creer le jet");
+    }
+  }
+
+  async function resolveRoll(roll: ActionRoll) {
+    const data = await apiFetch<{ actionRoll: ActionRoll }>(`/campaigns/${campaignId}/action-rolls/${roll.id}/resolve`, {
+      method: "POST"
+    });
+    await onRollClose(data.actionRoll.id);
+  }
+
+  async function reroll(roll: ActionRoll) {
+    const data = await apiFetch<{ actionRoll: ActionRoll }>(`/campaigns/${campaignId}/action-rolls/${roll.id}/reroll`, {
+      method: "POST"
+    });
+    await onRollChange(data.actionRoll);
+  }
+
+  async function cancelRoll(roll: ActionRoll) {
+    await apiFetch(`/campaigns/${campaignId}/action-rolls/${roll.id}/cancel`, { method: "POST" });
+    await onRollClose(roll.id);
+  }
+
+  return (
+    <section className="action-roll live-panel">
+      <p className="live-kicker">Resolution d'action</p>
+      {activeRoll ? (
+        <div className="action-roll__active">
+          <h3>{activeRoll.actionText}</h3>
+          <p>{activeRoll.playerUsername} lance un d{activeRoll.dieSides}{activeRoll.targetName ? ` contre ${activeRoll.targetName}` : ""}.</p>
+          <div className="action-roll__thresholds">
+            <span>Critique {"<="} {activeRoll.totalFailureMax}</span>
+            <span>Reussite {">="} {activeRoll.successMin}</span>
+            <span>Totale {">="} {activeRoll.totalSuccessMin}</span>
+          </div>
+          {activeRoll.status === "PENDING" && <strong className="action-roll__waiting">En attente du joueur...</strong>}
+          {activeRoll.status === "ROLLED" && (
+            <>
+              <div className="action-roll__result">
+                <span>Resultat</span>
+                <b>{activeRoll.result}</b>
+                <strong>{activeRoll.outcome ? OUTCOME_LABELS[activeRoll.outcome] : ""}</strong>
+              </div>
+              {activeRoll.outcome && (
+                <>
+                  <p className="action-roll__effect">
+                    {CONSEQUENCE_LABELS[activeRoll.consequences[activeRoll.outcome].type]}
+                    {activeRoll.consequences[activeRoll.outcome].amount > 0 ? ` (${activeRoll.consequences[activeRoll.outcome].amount})` : ""}
+                  </p>
+                  {activeRoll.consequences[activeRoll.outcome].text && (
+                    <p className="action-roll__effect">{activeRoll.consequences[activeRoll.outcome].text}</p>
+                  )}
+                </>
+              )}
+            </>
+          )}
+          <div className="action-roll__actions">
+            <button type="button" className="live-text-button" onClick={() => cancelRoll(activeRoll)}>Annuler</button>
+            <button type="button" onClick={() => reroll(activeRoll)} disabled={activeRoll.status !== "ROLLED"}>Relancer</button>
+            <button type="button" onClick={() => resolveRoll(activeRoll)} disabled={activeRoll.status !== "ROLLED"}>Valider</button>
+          </div>
+        </div>
+      ) : (
+        <div className="action-roll__wizard">
+          {status && <p className="action-roll__status">{status}</p>}
+          <div className="action-roll__steps">
+            {[1, 2, 3, 4].map((item) => (
+              <button key={item} type="button" className={step === item ? "action-roll__step--active" : ""} onClick={() => setStep(item)}>
+                {item}
+              </button>
+            ))}
+          </div>
+          {step === 1 && (
+            <div className="action-roll__page">
+              <label>
+                Joueur
+                <select value={playerUserId} onChange={(event) => setPlayerUserId(event.target.value)}>
+                  {players.map((player) => <option key={player.userId} value={player.userId}>{player.charName}</option>)}
+                </select>
+              </label>
+              <label>
+                Action tentee
+                <textarea value={actionText} onChange={(event) => setActionText(event.target.value)} rows={3} placeholder="Ex: attaque le marchand" />
+              </label>
+            </div>
+          )}
+          {step === 2 && (
+            <div className="action-roll__page">
+              <label>
+                Cible
+                <select value={target} onChange={(event) => setTarget(event.target.value)}>
+                  <option value="NONE:">Aucune cible</option>
+                  <optgroup label="Elements">
+                    {selectableElements.map((element) => (
+                      <option key={element.id} value={`ELEMENT:${element.id}`}>{element.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Joueurs">
+                    {members.filter((member) => member.role === "PLAYER").map((member) => (
+                      <option key={member.user.id} value={`PLAYER:${member.user.id}`}>{member.user.username}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </label>
+              <div className="action-roll__grid">
+                <label>De<select value={dieSides} onChange={(event) => setDieSides(Number(event.target.value))}>{[4, 6, 8, 10, 12, 20, 100].map((die) => <option key={die} value={die}>d{die}</option>)}</select></label>
+                <label>Echec total {"<="}<input type="number" value={totalFailureMax} onChange={(event) => setTotalFailureMax(Number(event.target.value))} /></label>
+                <label>Reussite {">="}<input type="number" value={successMin} onChange={(event) => setSuccessMin(Number(event.target.value))} /></label>
+                <label>Totale {">="}<input type="number" value={totalSuccessMin} onChange={(event) => setTotalSuccessMin(Number(event.target.value))} /></label>
+              </div>
+            </div>
+          )}
+          {step === 3 && (
+            <div className="action-roll__page">
+              <strong className="action-roll__section-title">Effets par palier</strong>
+              <div className="action-roll__outcomes">
+                {OUTCOME_ORDER.map((outcome) => {
+                  const item = consequences[outcome];
+                  return (
+                    <section key={outcome} className="action-roll__outcome-card">
+                      <h4>{OUTCOME_LABELS[outcome]}</h4>
+                      <label>
+                        Effet
+                        <select value={item.type} onChange={(event) => updateConsequence(outcome, { type: event.target.value as ActionRollConsequence["type"] })}>
+                          {Object.entries(CONSEQUENCE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
+                      </label>
+                      {(item.type === "DAMAGE_TARGET" || item.type === "DAMAGE_PLAYER") && (
+                        <label>
+                          Montant
+                          <input type="number" min={0} value={item.amount} onChange={(event) => updateConsequence(outcome, { amount: Number(event.target.value) })} />
+                        </label>
+                      )}
+                      {(item.type === "NARRATION" || item.type === "NONE") && (
+                        <label>
+                          Texte
+                          <textarea value={item.text} onChange={(event) => updateConsequence(outcome, { text: event.target.value })} rows={2} />
+                        </label>
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {step === 4 && (
+            <div className="action-roll__page">
+              <strong>Pret a envoyer</strong>
+              <p>{players.find((player) => player.userId === playerUserId)?.charName ?? "Joueur"} devra lancer un d{dieSides}.</p>
+              <p>{actionText || "Action non renseignee"}</p>
+              <button type="button" onClick={createRoll} disabled={!playerUserId || !actionText.trim()}>Envoyer au joueur</button>
+            </div>
+          )}
+          <div className="action-roll__nav">
+            <button type="button" className="live-text-button" onClick={() => setStep(Math.max(1, step - 1))}>Retour</button>
+            <button type="button" onClick={() => setStep(Math.min(4, step + 1))}>Suite</button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -511,6 +829,7 @@ function SceneElementGroup({
           <div>
             <strong>{element.name}{element.quantity > 1 ? ` x${element.quantity}` : ""}</strong>
             <span>{ELEMENT_LABELS[element.type]}</span>
+            {element.type !== "NARRATION" && <span>{elementHpLabel(element)}</span>}
           </div>
           <div className="media-scene__actions">
             <button type="button" onClick={() => onVisibilityChange(element.id, !element.isVisible)}>
@@ -588,6 +907,7 @@ function SceneCanvas({ elements, positions, onPositionChange, onPositionDrop, is
               ? <img src={element.asset.imageDataUrl} alt={element.asset.name} draggable={false} />
               : <span className="scene-revelation__fallback">{ELEMENT_ICONS[element.type]}</span>}
             <strong>{element.name}{element.quantity > 1 ? ` x${element.quantity}` : ""}</strong>
+            {element.type !== "NARRATION" && <span className="scene-revelation__hp">{elementHpLabel(element)}</span>}
             {element.type === "NARRATION" && <p>{element.description}</p>}
           </div>
         );
@@ -632,6 +952,7 @@ function ElementCard({ element }: { element: CampaignDetail["live"]["elements"][
     <article className={`live-element-card live-element-card--${element.type.toLowerCase()}`}>
       <p className="live-kicker">{ELEMENT_LABELS[element.type]}</p>
       <h2>{element.name}{element.quantity > 1 ? ` x${element.quantity}` : ""}</h2>
+      {element.type !== "NARRATION" && <strong className="live-element-card__hp">{elementHpLabel(element)}</strong>}
       <p>{element.description}</p>
     </article>
   );
@@ -641,14 +962,16 @@ type PlayerViewProps = {
   data: CampaignDetail;
   visibleElements: CampaignDetail["live"]["elements"];
   positions: Map<string, ElementPos>;
+  actionRolls: ActionRoll[];
   sceneStyle: CSSProperties;
   refreshKey: number;
 };
 
 type PlayerTab = "scene" | "character" | "inventory";
 
-function PlayerView({ data, visibleElements, positions, sceneStyle, refreshKey }: PlayerViewProps) {
+function PlayerView({ data, visibleElements, positions, actionRolls, sceneStyle, refreshKey }: PlayerViewProps) {
   const [tab, setTab] = useState<PlayerTab>("scene");
+  const currentUserId = data.viewer.userId || data.members.find((member) => member.id === data.viewer.memberId)?.user.id || "";
 
   return (
     <main className="live-player live-scene" style={sceneStyle}>
@@ -685,6 +1008,11 @@ function PlayerView({ data, visibleElements, positions, sceneStyle, refreshKey }
           </section>
           <PlayerHealth players={data.live.players} />
           <SceneRevelations elements={visibleElements} positions={positions} />
+          <PlayerActionRollPanel
+            campaignId={data.campaign.id}
+            currentUserId={currentUserId}
+            actionRolls={actionRolls}
+          />
           <section className="live-player__elements">
             <p className="live-kicker">Presences dans la scene</p>
             <div className="live-element-grid">
@@ -710,5 +1038,164 @@ function PlayerView({ data, visibleElements, positions, sceneStyle, refreshKey }
         </>
       )}
     </main>
+  );
+}
+
+function PlayerActionRollPanel({
+  campaignId,
+  currentUserId,
+  actionRolls
+}: {
+  campaignId: string;
+  currentUserId: string;
+  actionRolls: ActionRoll[];
+}) {
+  const [localRolls, setLocalRolls] = useState(actionRolls);
+  const [error, setError] = useState("");
+  const [rollStatus, setRollStatus] = useState("");
+  const [isRolling, setIsRolling] = useState(false);
+  const diceContainerId = `dice-box-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const diceBoxRef = useRef<unknown>(null);
+  const diceBoxReadyRef = useRef<Promise<unknown> | null>(null);
+  const activeRolls = localRolls.filter((item) => item.status === "PENDING" || item.status === "ROLLED");
+  const roll = activeRolls.find((item) => item.playerUserId === currentUserId) ?? activeRolls[0] ?? null;
+
+  useEffect(() => {
+    setLocalRolls((prev) => {
+      const merged = [...actionRolls];
+      for (const rollItem of prev) {
+        if (!merged.some((item) => item.id === rollItem.id)) merged.push(rollItem);
+      }
+      return merged.filter((item) => item.status === "PENDING" || item.status === "ROLLED");
+    });
+  }, [actionRolls]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadActiveRolls() {
+      try {
+        const data = await apiFetch<{ actionRolls: ActionRoll[] }>(`/campaigns/${campaignId}/action-rolls/active`);
+        if (!cancelled) {
+          setLocalRolls(data.actionRolls);
+          setError("");
+        }
+      } catch (loadError) {
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Jet indisponible");
+      }
+    }
+
+    void loadActiveRolls();
+    const interval = window.setInterval(loadActiveRolls, 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [campaignId]);
+
+  async function getDiceBox() {
+    if (diceBoxRef.current) return diceBoxRef.current;
+    if (!diceBoxReadyRef.current) {
+      diceBoxReadyRef.current = import("@3d-dice/dice-box").then(async ({ default: DiceBox }) => {
+        const box = new DiceBox({
+          container: `#${diceContainerId}`,
+          assetPath: "/assets/",
+          themeColor: "#d9b36c",
+          scale: 6,
+          gravity: 1,
+          mass: 1,
+          friction: 0.8,
+          restitution: 0.1,
+          enableShadows: true
+        });
+        await box.init();
+        diceBoxRef.current = box;
+        return box;
+      });
+    }
+    return diceBoxReadyRef.current;
+  }
+
+  function extractDiceResult(value: unknown, sides: number): number | null {
+    if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= sides) return value;
+    if (!value || typeof value !== "object") return null;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = extractDiceResult(item, sides);
+        if (found !== null) return found;
+      }
+      return null;
+    }
+    const record = value as Record<string, unknown>;
+    if ("value" in record) {
+      const found = extractDiceResult(record.value, sides);
+      if (found !== null) return found;
+    }
+    if ("rolls" in record) {
+      const found = extractDiceResult(record.rolls, sides);
+      if (found !== null) return found;
+    }
+    return null;
+  }
+
+  async function rollDice(activeRoll: ActionRoll) {
+    setIsRolling(true);
+    setRollStatus("Lancer du de...");
+    let animatedResult: number | null = null;
+    try {
+      const diceBox = await getDiceBox() as { roll: (notation: string) => Promise<unknown> };
+      const results = await diceBox.roll(`1d${activeRoll.dieSides}`);
+      animatedResult = extractDiceResult(results, activeRoll.dieSides);
+    } catch {
+      setRollStatus("Animation indisponible, lancer serveur...");
+    }
+
+    try {
+      const data = await apiFetch<{ actionRoll: ActionRoll }>(`/campaigns/${campaignId}/action-rolls/${activeRoll.id}/roll`, {
+        method: "POST",
+        json: animatedResult ? { result: animatedResult } : undefined
+      });
+      setLocalRolls((prev) => [data.actionRoll, ...prev.filter((item) => item.id !== data.actionRoll.id)]);
+      setRollStatus("");
+    } catch (rollError) {
+      setRollStatus(rollError instanceof Error ? rollError.message : "Lancer impossible");
+    } finally {
+      setIsRolling(false);
+    }
+  }
+
+  if (!roll && !error) return null;
+
+  return (
+    <section className="player-roll-card">
+      <p className="live-kicker">Jet demande par le MJ</p>
+      {!roll && error && <p>{error}</p>}
+      {roll && (
+        <>
+      <h2>{roll.actionText}</h2>
+      {roll.targetName && <p>Cible : {roll.targetName}</p>}
+      <div id={diceContainerId} className="player-roll-card__dice" />
+      <div className="player-roll-card__rules">
+        <span>d{roll.dieSides}</span>
+        <span>Echec total {"<="} {roll.totalFailureMax}</span>
+        <span>Reussite {">="} {roll.successMin}</span>
+        <span>Totale {">="} {roll.totalSuccessMin}</span>
+      </div>
+      {rollStatus && <p className="player-roll-card__status">{rollStatus}</p>}
+      {roll.status === "PENDING" ? (
+        <button type="button" onClick={() => rollDice(roll)} disabled={isRolling}>
+          {isRolling ? "Le de roule..." : `Lancer le d${roll.dieSides}`}
+        </button>
+      ) : (
+        <div className="player-roll-card__result">
+          <span>Resultat</span>
+          <b>{roll.result}</b>
+          <strong>{roll.outcome ? OUTCOME_LABELS[roll.outcome] : "En attente"}</strong>
+          <p>Le MJ valide la resolution ou demande une relance.</p>
+        </div>
+      )}
+        </>
+      )}
+    </section>
   );
 }

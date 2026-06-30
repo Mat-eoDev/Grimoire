@@ -45,6 +45,27 @@ enum TradeStatus {
   CANCELLED
 }
 
+enum ActionRollStatus {
+  PENDING
+  ROLLED
+  RESOLVED
+  CANCELLED
+}
+
+enum ActionRollTargetType {
+  NONE
+  PLAYER
+  ELEMENT
+}
+
+enum ActionRollConsequenceType {
+  NONE
+  NARRATION
+  DAMAGE_TARGET
+  DAMAGE_PLAYER
+  DELETE_TARGET
+}
+
 model User {
   id           String           @id @default(uuid())
   email        String           @unique
@@ -92,6 +113,7 @@ model Campaign {
   sceneTitle       String           @default("Les ruines sous la pluie")
   sceneText        String           @default("Un grondement sourd traverse les pierres anciennes.")
   sceneElements    SceneElement[]
+  actionRolls      ActionRoll[]
   tradeOffers      TradeOffer[]
 }
 
@@ -175,6 +197,10 @@ model SceneElement {
   description String           @default("")
   quantity    Int              @default(1)
   isVisible   Boolean          @default(true)
+  hp          Int              @default(0)
+  maxHp       Int              @default(0)
+  attack      Int              @default(0)
+  defense     Int              @default(0)
   posX        Float            @default(50)
   posY        Float            @default(50)
   assetId     String?
@@ -184,6 +210,45 @@ model SceneElement {
 
   @@index([campaignId, isVisible])
   @@index([assetId])
+}
+
+model ActionRoll {
+  id                 String                    @id @default(uuid())
+  campaignId         String
+  campaign           Campaign                  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  playerUserId       String
+  actionText         String
+  dieSides           Int                       @default(20)
+  totalFailureMax    Int                       @default(4)
+  successMin         Int                       @default(12)
+  totalSuccessMin    Int                       @default(18)
+  targetType         ActionRollTargetType      @default(NONE)
+  targetElementId    String?
+  targetUserId       String?
+  consequenceType    ActionRollConsequenceType @default(NONE)
+  consequenceAmount  Int                       @default(0)
+  consequenceText    String                    @default("")
+  totalFailureConsequenceType ActionRollConsequenceType @default(NONE)
+  totalFailureConsequenceAmount Int                     @default(0)
+  totalFailureConsequenceText String                    @default("")
+  failureConsequenceType ActionRollConsequenceType      @default(NONE)
+  failureConsequenceAmount Int                          @default(0)
+  failureConsequenceText String                         @default("")
+  successConsequenceType ActionRollConsequenceType      @default(NONE)
+  successConsequenceAmount Int                          @default(0)
+  successConsequenceText String                         @default("")
+  totalSuccessConsequenceType ActionRollConsequenceType @default(NONE)
+  totalSuccessConsequenceAmount Int                     @default(0)
+  totalSuccessConsequenceText String                    @default("")
+  status             ActionRollStatus          @default(PENDING)
+  result             Int?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@index([campaignId, status])
+  @@index([playerUserId, status])
+  @@index([targetElementId])
+  @@index([targetUserId])
 }
 
 model Item {
