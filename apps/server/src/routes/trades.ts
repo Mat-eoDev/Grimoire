@@ -110,6 +110,56 @@ tradesRouter.post("/campaigns/:campaignId/inventory/player-give", async (request
   }
 });
 
+// POST /campaigns/:campaignId/inventory/give-npc — don à un PNJ / civil (retrait narratif)
+tradesRouter.post("/campaigns/:campaignId/inventory/give-npc", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    await requireMember(request.params.campaignId, auth.user.id);
+
+    const body = request.body as Record<string, unknown>;
+    const entryId = String(body.entryId ?? "");
+    const targetElementId = body.targetElementId ? String(body.targetElementId) : "";
+    const qty = Math.max(1, Number(body.qty ?? 1));
+
+    if (!entryId) throw new HttpError(400, "entryId requis");
+
+    const entry = await prisma.inventoryEntry.findUnique({
+      where: { id: entryId },
+      include: { item: true }
+    });
+    if (!entry || entry.userId !== auth.user.id || entry.campaignId !== request.params.campaignId) {
+      throw new HttpError(400, "Tu ne possedes pas cet objet");
+    }
+    if (entry.quantity < qty) throw new HttpError(400, "Quantite insuffisante");
+
+    // La cible n'a pas d'inventaire réel : on récupère juste son nom pour la narration.
+    let targetName = "un personnage de la scene";
+    if (targetElementId) {
+      const target = await prisma.sceneElement.findFirst({
+        where: { id: targetElementId, campaignId: request.params.campaignId }
+      });
+      if (target) targetName = target.name;
+    }
+
+    // Retire l'objet de l'inventaire du joueur (le don est purement narratif).
+    if (entry.quantity === qty) {
+      await prisma.inventoryEntry.delete({ where: { id: entry.id } });
+    } else {
+      await prisma.inventoryEntry.update({ where: { id: entry.id }, data: { quantity: entry.quantity - qty } });
+    }
+
+    sseBroadcast(request.params.campaignId, {
+      type: "inventory:gift-npc",
+      fromUserId: auth.user.id,
+      message: `${auth.user.username} donne ${entry.item.name} a ${targetName}.`
+    });
+
+    response.json({ ok: true, to: targetName, item: entry.item.name });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /campaigns/:campaignId/trades/pending — offres en attente pour l'utilisateur connecté
 tradesRouter.get("/campaigns/:campaignId/trades/pending", async (request, response, next) => {
   try {

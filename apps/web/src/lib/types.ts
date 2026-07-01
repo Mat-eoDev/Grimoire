@@ -80,6 +80,7 @@ export type CampaignDetail = {
       defense: number;
       posX: number;
       posY: number;
+      scale: number;
       asset: {
         id: string;
         name: string;
