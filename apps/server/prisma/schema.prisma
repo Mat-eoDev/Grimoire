@@ -203,6 +203,7 @@ model SceneElement {
   defense     Int              @default(0)
   posX        Float            @default(50)
   posY        Float            @default(50)
+  scale       Float            @default(1)
   assetId     String?
   asset       RevelationAsset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
   createdAt   DateTime         @default(now())

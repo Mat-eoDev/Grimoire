@@ -177,6 +177,9 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const [positions, setPositions] = useState<Map<string, ElementPos>>(() =>
     new Map(data.live.elements.map((el) => [el.id, { posX: el.posX, posY: el.posY }]))
   );
+  const [scales, setScales] = useState<Map<string, number>>(() =>
+    new Map(data.live.elements.map((el) => [el.id, el.scale ?? 1]))
+  );
 
   // Sync new elements from polling without overwriting live-dragged positions
   useEffect(() => {
@@ -186,6 +189,16 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
         if (!next.has(el.id)) next.set(el.id, { posX: el.posX, posY: el.posY });
       }
       // Remove positions for deleted elements
+      for (const id of next.keys()) {
+        if (!data.live.elements.some((el) => el.id === id)) next.delete(id);
+      }
+      return next;
+    });
+    setScales((prev) => {
+      const next = new Map(prev);
+      for (const el of data.live.elements) {
+        if (!next.has(el.id)) next.set(el.id, el.scale ?? 1);
+      }
       for (const id of next.keys()) {
         if (!data.live.elements.some((el) => el.id === id)) next.delete(id);
       }
@@ -207,12 +220,18 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
           elementId?: string;
           posX?: number;
           posY?: number;
+          scale?: number;
           actionRoll?: ActionRoll;
           actionRollId?: string;
         };
         if (event.type === "element:moved") {
           if (event.elementId && typeof event.posX === "number" && typeof event.posY === "number") {
             setPositions((prev) => new Map(prev).set(event.elementId!, { posX: event.posX!, posY: event.posY! }));
+          }
+        }
+        if (event.type === "element:scaled") {
+          if (event.elementId && typeof event.scale === "number") {
+            setScales((prev) => new Map(prev).set(event.elementId!, event.scale!));
           }
         }
         if (event.type === "action-roll:changed" && event.actionRoll) {
@@ -235,6 +254,17 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
       await apiFetch(`/campaigns/${data.campaign.id}/scene-elements/${elementId}/position`, {
         method: "PATCH",
         json: { posX, posY }
+      });
+    } catch {}
+  }, [data.campaign.id]);
+
+  const handleScaleChange = useCallback(async (elementId: string, scale: number) => {
+    const clamped = Math.max(0.5, Math.min(3, Math.round(scale * 100) / 100));
+    setScales((prev) => new Map(prev).set(elementId, clamped));
+    try {
+      await apiFetch(`/campaigns/${data.campaign.id}/scene-elements/${elementId}/scale`, {
+        method: "PATCH",
+        json: { scale: clamped }
       });
     } catch {}
   }, [data.campaign.id]);
@@ -325,6 +355,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
         data={data}
         visibleElements={visibleElements}
         positions={positions}
+        scales={scales}
         actionRolls={actionRolls}
         sceneStyle={sceneBackgroundStyle(data.live.scene.preset)}
         refreshKey={refreshKey}
@@ -371,6 +402,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
             <SceneCanvas
               elements={visibleElements}
               positions={positions}
+              scales={scales}
               onPositionChange={(id, pos) => setPositions((prev) => new Map(prev).set(id, pos))}
               onPositionDrop={handlePositionDrop}
               isGm
@@ -558,15 +590,19 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
                 <SceneElementGroup
                   title="Sur la scène"
                   elements={data.live.elements.filter((element) => element.isVisible)}
+                  scales={scales}
                   onVisibilityChange={setElementVisibility}
                   onRemove={removeElement}
+                  onScaleChange={handleScaleChange}
                 />
                 {hiddenCount > 0 && (
                   <SceneElementGroup
                     title="En coulisse"
                     elements={data.live.elements.filter((element) => !element.isVisible)}
+                    scales={scales}
                     onVisibilityChange={setElementVisibility}
                     onRemove={removeElement}
+                    onScaleChange={handleScaleChange}
                   />
                 )}
               </section>
@@ -862,18 +898,24 @@ function ActionRollGmPanel({
 function SceneElementGroup({
   title,
   elements,
+  scales,
   onVisibilityChange,
-  onRemove
+  onRemove,
+  onScaleChange
 }: {
   title: string;
   elements: CampaignDetail["live"]["elements"];
+  scales?: Map<string, number>;
   onVisibilityChange: (id: string, isVisible: boolean) => Promise<void>;
   onRemove: (id: string) => Promise<void>;
+  onScaleChange?: (id: string, scale: number) => void;
 }) {
   return (
     <section className="media-scene__group">
       <h3>{title} <span>{elements.length}</span></h3>
-      {elements.map((element) => (
+      {elements.map((element) => {
+        const scale = scales?.get(element.id) ?? element.scale ?? 1;
+        return (
         <article key={element.id} className="media-scene__element">
           <div className={`media-scene__icon media-scene__icon--${element.type.toLowerCase()}`}>
             {element.asset ? <img src={element.asset.imageDataUrl} alt="" /> : ELEMENT_ICONS[element.type]}
@@ -883,6 +925,14 @@ function SceneElementGroup({
             <span>{ELEMENT_LABELS[element.type]}</span>
             {element.type !== "NARRATION" && <span>{elementHpLabel(element)}</span>}
           </div>
+          {onScaleChange && element.type !== "NARRATION" && (
+            <div className="media-scene__size">
+              <span>Taille</span>
+              <button type="button" onClick={() => onScaleChange(element.id, scale - 0.25)} disabled={scale <= 0.5} aria-label="Réduire">−</button>
+              <b>{Math.round(scale * 100)}%</b>
+              <button type="button" onClick={() => onScaleChange(element.id, scale + 0.25)} disabled={scale >= 3} aria-label="Agrandir">+</button>
+            </div>
+          )}
           <div className="media-scene__actions">
             <button type="button" onClick={() => onVisibilityChange(element.id, !element.isVisible)}>
               {element.isVisible ? "Masquer" : "Afficher"}
@@ -890,7 +940,8 @@ function SceneElementGroup({
             <button type="button" onClick={() => onRemove(element.id)}>Supprimer</button>
           </div>
         </article>
-      ))}
+        );
+      })}
       {elements.length === 0 && <p className="live-empty">Aucun element.</p>}
     </section>
   );
@@ -899,12 +950,13 @@ function SceneElementGroup({
 type SceneCanvasProps = {
   elements: CampaignDetail["live"]["elements"];
   positions: Map<string, ElementPos>;
+  scales?: Map<string, number>;
   onPositionChange?: (id: string, pos: ElementPos) => void;
   onPositionDrop?: (id: string, posX: number, posY: number) => void;
   isGm?: boolean;
 };
 
-function SceneCanvas({ elements, positions, onPositionChange, onPositionDrop, isGm = false }: SceneCanvasProps) {
+function SceneCanvas({ elements, positions, scales, onPositionChange, onPositionDrop, isGm = false }: SceneCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ elementId: string; lastPos: ElementPos } | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -970,11 +1022,12 @@ function SceneCanvas({ elements, positions, onPositionChange, onPositionDrop, is
       {elements.map((element) => {
         const { posX, posY } = displayPos(element);
         const isDragging = draggingId === element.id;
+        const scale = (scales?.get(element.id) ?? element.scale ?? 1) * (isDragging ? 1.06 : 1);
         return (
           <div
             key={element.id}
             className={`scene-revelation scene-revelation--${element.type.toLowerCase()}${isGm ? " scene-revelation--draggable" : ""}${isDragging ? " scene-revelation--dragging" : ""}`}
-            style={{ left: `${posX}%`, top: `${posY}%`, transform: isDragging ? "translate(-50%, -50%) scale(1.06)" : "translate(-50%, -50%)" }}
+            style={{ left: `${posX}%`, top: `${posY}%`, transform: `translate(-50%, -50%) scale(${scale})` }}
             onPointerDown={isGm ? (e) => onPointerDown(e, element) : undefined}
             onPointerMove={isGm ? (e) => onPointerMove(e, element.id) : undefined}
             onPointerUp={isGm ? (e) => onPointerUp(e, element.id) : undefined}
@@ -992,8 +1045,8 @@ function SceneCanvas({ elements, positions, onPositionChange, onPositionDrop, is
   );
 }
 
-function SceneRevelations({ elements, positions }: { elements: CampaignDetail["live"]["elements"]; positions: Map<string, ElementPos> }) {
-  return <SceneCanvas elements={elements} positions={positions} isGm={false} />;
+function SceneRevelations({ elements, positions, scales }: { elements: CampaignDetail["live"]["elements"]; positions: Map<string, ElementPos>; scales?: Map<string, number> }) {
+  return <SceneCanvas elements={elements} positions={positions} scales={scales} isGm={false} />;
 }
 
 function PlayerHealth({
@@ -1038,6 +1091,7 @@ type PlayerViewProps = {
   data: CampaignDetail;
   visibleElements: CampaignDetail["live"]["elements"];
   positions: Map<string, ElementPos>;
+  scales: Map<string, number>;
   actionRolls: ActionRoll[];
   sceneStyle: CSSProperties;
   refreshKey: number;
@@ -1045,7 +1099,7 @@ type PlayerViewProps = {
 
 type PlayerTab = "scene" | "character" | "inventory";
 
-function PlayerView({ data, visibleElements, positions, actionRolls, sceneStyle, refreshKey }: PlayerViewProps) {
+function PlayerView({ data, visibleElements, positions, scales, actionRolls, sceneStyle, refreshKey }: PlayerViewProps) {
   const [tab, setTab] = useState<PlayerTab>("scene");
   const currentUserId = data.viewer.userId || data.members.find((member) => member.id === data.viewer.memberId)?.user.id || "";
 
@@ -1059,7 +1113,7 @@ function PlayerView({ data, visibleElements, positions, actionRolls, sceneStyle,
 
       {tab === "scene" && (
         <div className="player-stage">
-          <SceneRevelations elements={visibleElements} positions={positions} />
+          <SceneRevelations elements={visibleElements} positions={positions} scales={scales} />
           <div className="player-hud">
             <section className="live-player__story">
               <p className="live-kicker">{data.live.scene.title}</p>
