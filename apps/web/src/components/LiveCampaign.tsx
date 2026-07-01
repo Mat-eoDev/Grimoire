@@ -153,6 +153,7 @@ type ElementPos = { posX: number; posY: number };
 
 function elementHpLabel(element: Pick<CampaignDetail["live"]["elements"][number], "hp" | "maxHp" | "type">) {
   if (element.type === "NARRATION") return "";
+  if (element.maxHp <= 0) return "";
   return `PV ${element.hp} / ${element.maxHp}`;
 }
 
@@ -168,7 +169,8 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const [draftDescription, setDraftDescription] = useState("");
   const [draftQuantity, setDraftQuantity] = useState(1);
   const [draftAssetId, setDraftAssetId] = useState("");
-  const [libraryTab, setLibraryTab] = useState<"SCENE" | "JOUEURS" | keyof typeof ELEMENT_LABELS>("SCENE");
+  const [libraryTab, setLibraryTab] = useState<"JOUEURS" | keyof typeof ELEMENT_LABELS>("ENEMY");
+  const [gmTab, setGmTab] = useState<"scene" | "elements" | "rolls" | "group">("scene");
   const [search, setSearch] = useState("");
   const [actionRolls, setActionRolls] = useState<ActionRoll[]>(data.live.actionRolls ?? []);
 
@@ -330,35 +332,37 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
     );
   }
 
-  /*
-   * LEGACY GM VIEW (before the library redesign)
-   * Kept intentionally for product comparison:
-   * - preview first
-   * - context thumbnails below the preview
-   * - scene elements in a flat list
-   * - revelation form inside the right column
-   *
-   * This version was replaced because large image collections need one
-   * searchable library with tabs and a separate active-scene manager.
-   */
+  const visibleCount = data.live.elements.filter((element) => element.isVisible).length;
+  const hiddenCount = data.live.elements.length - visibleCount;
+  const enemyCount = visibleElements.filter((element) => element.type === "ENEMY").length;
+  const activeRollCount = actionRolls.filter((r) => r.status === "PENDING" || r.status === "ROLLED").length;
+
+  const GM_TABS: Array<{ id: typeof gmTab; label: string; badge?: number }> = [
+    { id: "scene", label: "Scène" },
+    { id: "elements", label: "Éléments", badge: visibleCount || undefined },
+    { id: "rolls", label: "Jets", badge: activeRollCount || undefined },
+    { id: "group", label: "Groupe", badge: data.live.players.length || undefined }
+  ];
+
   return (
-    <main className="live-gm">
+    <main className="live-gm gm">
       <header className="live-topbar">
         <strong>GRIMOIRE</strong>
         <span>{data.campaign.title}</span>
-        <span className="live-badge live-badge--danger">Partie en direct</span>
+        <span className="live-badge live-badge--danger">En direct</span>
         <Link to="/" className="live-link">Accueil</Link>
       </header>
-      <div className="media-gm">
-        <section className="media-gm__preview">
-          <div className="media-section-heading">
+
+      <div className="gm__body">
+        {/* Aperçu — ce que voient les joueurs */}
+        <section className="gm__stage">
+          <div className="gm__preview-head">
             <div>
-              <p className="live-kicker">Regie MJ</p>
-              <h1>Apercu joueurs en direct</h1>
-              <p className="live-muted">Compose la scene puis choisis ce que les joueurs voient.</p>
+              <p className="live-kicker">Régie</p>
+              <h1>Ce que voient les joueurs</h1>
             </div>
             <button type="button" onClick={publishScene} disabled={loading}>
-              {loading ? "Diffusion..." : "Diffuser la scene"}
+              {loading ? "Diffusion…" : "Diffuser la scène"}
             </button>
           </div>
           <div className="live-preview live-scene" style={sceneBackgroundStyle(preset)}>
@@ -371,186 +375,239 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
               onPositionDrop={handlePositionDrop}
               isGm
             />
-            {visibleElements.some((element) => element.type === "ENEMY") && (
+            {enemyCount > 0 && (
               <div className="live-preview__threat">
                 <span>Ennemis visibles</span>
-                <strong>{visibleElements.filter((element) => element.type === "ENEMY").length} groupe(s)</strong>
-                <button type="button">Lancer le combat</button>
+                <strong>{enemyCount} sur la scène</strong>
               </div>
             )}
           </div>
         </section>
 
-        <section className="media-library live-panel">
-          <div className="media-section-heading">
-            <div>
-              <p className="live-kicker">Bibliotheque</p>
-              <h2>Choisir un element</h2>
-            </div>
-            <input value={search} placeholder="Rechercher..." onChange={(event) => setSearch(event.target.value)} />
-          </div>
-          <div className="media-tabs">
-            <button type="button" className={libraryTab === "SCENE" ? "media-tab--active" : ""} onClick={() => setLibraryTab("SCENE")}>Contextes</button>
-            {(Object.keys(ELEMENT_LABELS) as Array<keyof typeof ELEMENT_LABELS>)
-              .filter((type) => type !== "PLAYER")
-              .map((type) => (
-                <button key={type} type="button" className={libraryTab === type ? "media-tab--active" : ""} onClick={() => setLibraryTab(type)}>
-                  {ELEMENT_LABELS[type]}
-                </button>
-              ))}
-            <button type="button" className={libraryTab === "JOUEURS" ? "media-tab--active" : ""} onClick={() => setLibraryTab("JOUEURS")}>Joueurs</button>
-          </div>
-          <div className="media-grid">
-            {libraryTab === "JOUEURS" && (
-              data.live.players.length === 0
-                ? <p className="live-empty" style={{ gridColumn: "1/-1" }}>Aucun joueur avec une fiche personnage.</p>
-                : data.live.players.map((player) => {
-                    const className = CHAR_CLASS[player.charId];
-                    const asset = data.live.assets.find((a) => a.type === "PLAYER" && a.name.toUpperCase() === className);
-                    return (
-                      <button
-                        key={player.userId}
-                        type="button"
-                        className="media-card media-card--asset"
-                        onClick={() => addPlayerToScene(player)}
-                        title={`Ajouter ${player.charName} sur la scène`}
-                      >
-                        {asset
-                          ? <img src={asset.imageDataUrl} alt={player.charName} />
-                          : <span style={{ fontSize: "2rem" }}>{ELEMENT_ICONS.PLAYER}</span>}
-                        <span>{player.charName}</span>
-                        <span style={{ fontSize: "0.72rem", opacity: 0.7 }}>{CHAR_LABELS[player.charId] ?? player.username}</span>
-                      </button>
-                    );
-                  })
-            )}
-            {libraryTab === "SCENE" && BACKGROUND_CONTEXTS
-              .filter((item) => item.label.toLowerCase().includes(search.toLowerCase()))
-              .map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`media-card media-card--context${preset === item.id ? " media-card--selected" : ""}`}
-                  onClick={() => { setPreset(item.id); setTitle(item.title); }}
-                >
-                  <img src={item.image} alt="" />
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            {libraryTab !== "SCENE" && data.live.assets
-              .filter((asset) => asset.type === libraryTab && asset.name.toLowerCase().includes(search.toLowerCase()))
-              .map((asset) => (
-                <button
-                  key={asset.id}
-                  type="button"
-                  className={`media-card media-card--asset${draftAssetId === asset.id ? " media-card--selected" : ""}`}
-                  onClick={() => selectAsset(asset.type, asset.id, asset.name)}
-                >
-                  <img src={asset.imageDataUrl} alt="" />
-                  <span>{asset.name}</span>
-                </button>
-              ))}
-            {libraryTab !== "SCENE" && libraryTab !== "JOUEURS" && libraryTab !== "PLAYER" && (
-              <button type="button" className="media-card media-card--fallback" onClick={() => prepareElement(libraryTab)}>
-                <b>{ELEMENT_ICONS[libraryTab]}</b>
-                <span>Sans image</span>
+        {/* Outils MJ — onglets */}
+        <div className="gm__side">
+          <nav className="gm__nav">
+            {GM_TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`gm__tab${gmTab === t.id ? " gm__tab--active" : ""}`}
+                onClick={() => setGmTab(t.id)}
+              >
+                {t.label}{t.badge ? ` · ${t.badge}` : ""}
               </button>
-            )}
-          </div>
-          {libraryTab === "SCENE" && (
-            <div className="live-scene-form">
-              <input value={title} onChange={(event) => setTitle(event.target.value)} />
-              <textarea value={text} onChange={(event) => setText(event.target.value)} rows={2} />
+            ))}
+          </nav>
+
+          {/* Onglet Scène : décor + narration */}
+          {gmTab === "scene" && (
+            <div className="gm__panel">
+              <div>
+                <h2 className="gm__panel-title">Décor & narration</h2>
+                <p className="gm__panel-lead">Choisis un lieu, écris l'ambiance, puis diffuse.</p>
+              </div>
+              <div className="live-scene-form">
+                <label>
+                  Titre de la scène
+                  <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ex : La taverne du Sanglier" />
+                </label>
+                <label>
+                  Narration visible
+                  <textarea value={text} onChange={(event) => setText(event.target.value)} rows={3} placeholder="Ce que lisent les joueurs…" />
+                </label>
+              </div>
+              <div className="media-section-heading">
+                <h2>Décors</h2>
+                <input value={search} placeholder="Rechercher un décor…" onChange={(event) => setSearch(event.target.value)} />
+              </div>
+              <div className="media-grid">
+                {BACKGROUND_CONTEXTS
+                  .filter((item) => item.label.toLowerCase().includes(search.toLowerCase()))
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`media-card media-card--context${preset === item.id ? " media-card--selected" : ""}`}
+                      onClick={() => { setPreset(item.id); if (!title.trim()) setTitle(item.title); }}
+                    >
+                      <img src={item.image} alt="" />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+              </div>
+              <button type="button" onClick={publishScene} disabled={loading}>
+                {loading ? "Diffusion…" : "Diffuser la scène"}
+              </button>
             </div>
           )}
-          {libraryTab === "NARRATION" && !draftType && (
-            <button type="button" className="media-library__compose" onClick={() => prepareElement("NARRATION")}>+ Ecrire une narration</button>
-          )}
-            {draftType && (
-              <div className="live-reveal-form">
-                <h3>Ajouter : {ELEMENT_LABELS[draftType]}</h3>
-                <label>
-                  Nom
-                  <input value={draftName} onChange={(event) => setDraftName(event.target.value)} />
-                </label>
-                {draftType === "NARRATION" && (
-                  <label>
-                    Proposition facultative
-                    <select
-                      value=""
-                      onChange={(event) => event.target.value && setDraftDescription(event.target.value)}
-                    >
-                      <option value="">Choisir un texte...</option>
-                      {NARRATION_SUGGESTIONS.slice(1).map((suggestion) => (
-                        <option key={suggestion} value={suggestion}>{suggestion}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <label>
-                  Texte visible
-                  <textarea value={draftDescription} onChange={(event) => setDraftDescription(event.target.value)} rows={3} />
-                </label>
-                {draftType === "ENEMY" && (
-                  <label>
-                    Quantite
-                    <input type="number" min={1} max={20} value={draftQuantity} onChange={(event) => setDraftQuantity(Number(event.target.value))} />
-                  </label>
-                )}
-                {draftType !== "NARRATION" && (
-                  <label>
-                    Image
-                    <select value={draftAssetId} onChange={(event) => setDraftAssetId(event.target.value)}>
-                      <option value="">Aucune image : pictogramme par defaut</option>
-                      {data.live.assets.filter((asset) => asset.type === draftType).map((asset) => (
-                        <option key={asset.id} value={asset.id}>{asset.name}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <div className="live-reveal-form__actions">
-                  <button type="button" className="live-text-button" onClick={() => setDraftType(null)}>Annuler</button>
-                  <button type="button" onClick={revealElement}>Ajouter visible</button>
-                </div>
-              </div>
-            )}
-        </section>
 
-        <aside className="media-scene live-panel">
-          <p className="live-kicker">Elements de la scene</p>
-          <h2>Gerer l'affichage</h2>
-          <p className="live-muted">Affiche, masque ou supprime ce qui a ete prepare.</p>
-          <SceneElementGroup
-            title="Visible"
-            elements={data.live.elements.filter((element) => element.isVisible)}
-            onVisibilityChange={setElementVisibility}
-            onRemove={removeElement}
-          />
-          <SceneElementGroup
-            title="Masque"
-            elements={data.live.elements.filter((element) => !element.isVisible)}
-            onVisibilityChange={setElementVisibility}
-            onRemove={removeElement}
-          />
-          <ActionRollGmPanel
-            campaignId={data.campaign.id}
-            members={data.members}
-            players={data.live.players}
-            elements={data.live.elements}
-            actionRolls={actionRolls}
-            onRollChange={async (roll) => {
-              setActionRolls((prev) => [roll, ...prev.filter((item) => item.id !== roll.id)]);
-              await onReload();
-            }}
-            onRollClose={async (rollId) => {
-              setActionRolls((prev) => prev.filter((roll) => roll.id !== rollId));
-              await onReload();
-            }}
-          />
-          <PlayerHealth players={data.live.players} onSelectPlayer={setSelectedPlayer} />
-          <button type="button" className="live-stop" onClick={onStop}>Terminer la partie</button>
-        </aside>
+          {/* Onglet Éléments : ajouter + gérer */}
+          {gmTab === "elements" && (
+            <div className="gm__panel">
+              <div>
+                <h2 className="gm__panel-title">Éléments de la scène</h2>
+                <p className="gm__panel-lead">Fais apparaître ennemis, PNJ, objets, joueurs — puis affiche ou masque.</p>
+              </div>
+
+              <div className="media-tabs">
+                {(Object.keys(ELEMENT_LABELS) as Array<keyof typeof ELEMENT_LABELS>)
+                  .filter((type) => type !== "PLAYER")
+                  .map((type) => (
+                    <button key={type} type="button" className={libraryTab === type ? "media-tab--active" : ""} onClick={() => setLibraryTab(type)}>
+                      {ELEMENT_LABELS[type]}
+                    </button>
+                  ))}
+                <button type="button" className={libraryTab === "JOUEURS" ? "media-tab--active" : ""} onClick={() => setLibraryTab("JOUEURS")}>Joueurs</button>
+              </div>
+
+              <div className="media-grid">
+                {libraryTab === "JOUEURS" && (
+                  data.live.players.length === 0
+                    ? <p className="live-empty" style={{ gridColumn: "1/-1" }}>Aucun joueur avec une fiche personnage.</p>
+                    : data.live.players.map((player) => {
+                        const className = CHAR_CLASS[player.charId];
+                        const asset = data.live.assets.find((a) => a.type === "PLAYER" && a.name.toUpperCase() === className);
+                        return (
+                          <button
+                            key={player.userId}
+                            type="button"
+                            className="media-card media-card--asset"
+                            onClick={() => addPlayerToScene(player)}
+                            title={`Ajouter ${player.charName} sur la scène`}
+                          >
+                            {asset
+                              ? <img src={asset.imageDataUrl} alt={player.charName} />
+                              : <span style={{ fontSize: "1.6rem" }}>{ELEMENT_ICONS.PLAYER}</span>}
+                            <span>{player.charName}</span>
+                            <span>{CHAR_LABELS[player.charId] ?? player.username}</span>
+                          </button>
+                        );
+                      })
+                )}
+                {libraryTab !== "JOUEURS" && data.live.assets
+                  .filter((asset) => asset.type === libraryTab)
+                  .map((asset) => (
+                    <button
+                      key={asset.id}
+                      type="button"
+                      className={`media-card media-card--asset${draftAssetId === asset.id ? " media-card--selected" : ""}`}
+                      onClick={() => selectAsset(asset.type, asset.id, asset.name)}
+                    >
+                      <img src={asset.imageDataUrl} alt="" />
+                      <span>{asset.name}</span>
+                    </button>
+                  ))}
+                {libraryTab !== "JOUEURS" && (
+                  <button type="button" className="media-card media-card--fallback" onClick={() => prepareElement(libraryTab)}>
+                    <b>{ELEMENT_ICONS[libraryTab]}</b>
+                    <span>{libraryTab === "NARRATION" ? "Écrire" : "Sans image"}</span>
+                  </button>
+                )}
+              </div>
+
+              {draftType && (
+                <div className="live-reveal-form">
+                  <h3>Ajouter : {ELEMENT_LABELS[draftType]}</h3>
+                  <label>
+                    Nom
+                    <input value={draftName} onChange={(event) => setDraftName(event.target.value)} />
+                  </label>
+                  {draftType === "NARRATION" && (
+                    <label>
+                      Proposition facultative
+                      <select
+                        value=""
+                        onChange={(event) => event.target.value && setDraftDescription(event.target.value)}
+                      >
+                        <option value="">Choisir un texte…</option>
+                        {NARRATION_SUGGESTIONS.slice(1).map((suggestion) => (
+                          <option key={suggestion} value={suggestion}>{suggestion}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label>
+                    Texte visible
+                    <textarea value={draftDescription} onChange={(event) => setDraftDescription(event.target.value)} rows={3} />
+                  </label>
+                  {draftType === "ENEMY" && (
+                    <label>
+                      Quantité
+                      <input type="number" min={1} max={20} value={draftQuantity} onChange={(event) => setDraftQuantity(Number(event.target.value))} />
+                    </label>
+                  )}
+                  {draftType !== "NARRATION" && (
+                    <label>
+                      Image
+                      <select value={draftAssetId} onChange={(event) => setDraftAssetId(event.target.value)}>
+                        <option value="">Aucune image : pictogramme par défaut</option>
+                        {data.live.assets.filter((asset) => asset.type === draftType).map((asset) => (
+                          <option key={asset.id} value={asset.id}>{asset.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <div className="live-reveal-form__actions">
+                    <button type="button" className="live-text-button" onClick={() => setDraftType(null)}>Annuler</button>
+                    <button type="button" onClick={revealElement}>Afficher aux joueurs</button>
+                  </div>
+                </div>
+              )}
+
+              <section className="media-scene">
+                <SceneElementGroup
+                  title="Sur la scène"
+                  elements={data.live.elements.filter((element) => element.isVisible)}
+                  onVisibilityChange={setElementVisibility}
+                  onRemove={removeElement}
+                />
+                {hiddenCount > 0 && (
+                  <SceneElementGroup
+                    title="En coulisse"
+                    elements={data.live.elements.filter((element) => !element.isVisible)}
+                    onVisibilityChange={setElementVisibility}
+                    onRemove={removeElement}
+                  />
+                )}
+              </section>
+            </div>
+          )}
+
+          {/* Onglet Jets */}
+          {gmTab === "rolls" && (
+            <div className="gm__panel">
+              <ActionRollGmPanel
+                campaignId={data.campaign.id}
+                members={data.members}
+                players={data.live.players}
+                elements={data.live.elements}
+                actionRolls={actionRolls}
+                onRollChange={async (roll) => {
+                  setActionRolls((prev) => [roll, ...prev.filter((item) => item.id !== roll.id)]);
+                  await onReload();
+                }}
+                onRollClose={async (rollId) => {
+                  setActionRolls((prev) => prev.filter((roll) => roll.id !== rollId));
+                  await onReload();
+                }}
+              />
+            </div>
+          )}
+
+          {/* Onglet Groupe */}
+          {gmTab === "group" && (
+            <div className="gm__panel">
+              <div>
+                <h2 className="gm__panel-title">Le groupe</h2>
+                <p className="gm__panel-lead">Touche un joueur pour voir ses stats, son sac et lui donner un objet.</p>
+              </div>
+              <PlayerHealth players={data.live.players} onSelectPlayer={setSelectedPlayer} />
+              <button type="button" className="live-stop" onClick={onStop}>Terminer la partie</button>
+            </div>
+          )}
+        </div>
       </div>
+
       {selectedPlayer && (
         <PlayerDetailModal
           campaignId={data.campaign.id}
@@ -710,14 +767,16 @@ function ActionRollGmPanel({
         <div className="action-roll__wizard">
           {status && <p className="action-roll__status">{status}</p>}
           <div className="action-roll__steps">
-            {[1, 2, 3, 4].map((item) => (
-              <button key={item} type="button" className={step === item ? "action-roll__step--active" : ""} onClick={() => setStep(item)}>
+            {[1, 2].map((item) => (
+              <button key={item} type="button" className={step >= item ? "action-roll__step--active" : ""} onClick={() => setStep(item)}>
                 {item}
               </button>
             ))}
           </div>
+
           {step === 1 && (
             <div className="action-roll__page">
+              <strong className="action-roll__section-title">1 · L'action</strong>
               <label>
                 Joueur
                 <select value={playerUserId} onChange={(event) => setPlayerUserId(event.target.value)}>
@@ -725,18 +784,14 @@ function ActionRollGmPanel({
                 </select>
               </label>
               <label>
-                Action tentee
-                <textarea value={actionText} onChange={(event) => setActionText(event.target.value)} rows={3} placeholder="Ex: attaque le marchand" />
+                Action tentée
+                <textarea value={actionText} onChange={(event) => setActionText(event.target.value)} rows={2} placeholder="Ex : attaque le marchand" />
               </label>
-            </div>
-          )}
-          {step === 2 && (
-            <div className="action-roll__page">
               <label>
-                Cible
+                Cible (facultatif)
                 <select value={target} onChange={(event) => setTarget(event.target.value)}>
                   <option value="NONE:">Aucune cible</option>
-                  <optgroup label="Elements">
+                  <optgroup label="Éléments">
                     {selectableElements.map((element) => (
                       <option key={element.id} value={`ELEMENT:${element.id}`}>{element.name}</option>
                     ))}
@@ -749,16 +804,18 @@ function ActionRollGmPanel({
                 </select>
               </label>
               <div className="action-roll__grid">
-                <label>De<select value={dieSides} onChange={(event) => setDieSides(Number(event.target.value))}>{[4, 6, 8, 10, 12, 20, 100].map((die) => <option key={die} value={die}>d{die}</option>)}</select></label>
-                <label>Echec total {"<="}<input type="number" value={totalFailureMax} onChange={(event) => setTotalFailureMax(Number(event.target.value))} /></label>
-                <label>Reussite {">="}<input type="number" value={successMin} onChange={(event) => setSuccessMin(Number(event.target.value))} /></label>
+                <label>Dé<select value={dieSides} onChange={(event) => setDieSides(Number(event.target.value))}>{[4, 6, 8, 10, 12, 20, 100].map((die) => <option key={die} value={die}>d{die}</option>)}</select></label>
+                <label>Échec {"<="}<input type="number" value={totalFailureMax} onChange={(event) => setTotalFailureMax(Number(event.target.value))} /></label>
+                <label>Réussite {">="}<input type="number" value={successMin} onChange={(event) => setSuccessMin(Number(event.target.value))} /></label>
                 <label>Totale {">="}<input type="number" value={totalSuccessMin} onChange={(event) => setTotalSuccessMin(Number(event.target.value))} /></label>
               </div>
             </div>
           )}
-          {step === 3 && (
+
+          {step === 2 && (
             <div className="action-roll__page">
-              <strong className="action-roll__section-title">Effets par palier</strong>
+              <strong className="action-roll__section-title">2 · Effets par palier (facultatif)</strong>
+              <p className="gm__panel-lead">Laisse sur « aucun effet » pour arbitrer toi-même.</p>
               <div className="action-roll__outcomes">
                 {OUTCOME_ORDER.map((outcome) => {
                   const item = consequences[outcome];
@@ -789,17 +846,12 @@ function ActionRollGmPanel({
               </div>
             </div>
           )}
-          {step === 4 && (
-            <div className="action-roll__page">
-              <strong>Pret a envoyer</strong>
-              <p>{players.find((player) => player.userId === playerUserId)?.charName ?? "Joueur"} devra lancer un d{dieSides}.</p>
-              <p>{actionText || "Action non renseignee"}</p>
-              <button type="button" onClick={createRoll} disabled={!playerUserId || !actionText.trim()}>Envoyer au joueur</button>
-            </div>
-          )}
+
           <div className="action-roll__nav">
-            <button type="button" className="live-text-button" onClick={() => setStep(Math.max(1, step - 1))}>Retour</button>
-            <button type="button" onClick={() => setStep(Math.min(4, step + 1))}>Suite</button>
+            {step === 2
+              ? <button type="button" className="live-text-button" onClick={() => setStep(1)}>Retour</button>
+              : <button type="button" className="live-text-button" onClick={() => setStep(2)}>Régler les effets</button>}
+            <button type="button" onClick={createRoll} disabled={!playerUserId || !actionText.trim()}>Envoyer au joueur</button>
           </div>
         </div>
       )}
@@ -889,10 +941,34 @@ function SceneCanvas({ elements, positions, onPositionChange, onPositionDrop, is
     onPositionDrop?.(elementId, posX, posY);
   }
 
+  // Éventaille les jetons qui partagent exactement la même position
+  // (ex. fraîchement révélés au centre 50/50) pour éviter qu'ils se superposent.
+  const posCounts = new Map<string, number>();
+  for (const el of elements) {
+    const p = getPos(el.id, el.posX, el.posY);
+    const key = `${Math.round(p.posX)}:${Math.round(p.posY)}`;
+    posCounts.set(key, (posCounts.get(key) ?? 0) + 1);
+  }
+  const posSeen = new Map<string, number>();
+  function displayPos(element: CampaignDetail["live"]["elements"][number]): ElementPos {
+    const base = getPos(element.id, element.posX, element.posY);
+    if (draggingId === element.id) return base;
+    const key = `${Math.round(base.posX)}:${Math.round(base.posY)}`;
+    const total = posCounts.get(key) ?? 1;
+    if (total <= 1) return base;
+    const i = posSeen.get(key) ?? 0;
+    posSeen.set(key, i + 1);
+    const angle = (i / total) * Math.PI * 2 - Math.PI / 2;
+    return {
+      posX: Math.max(10, Math.min(90, base.posX + Math.cos(angle) * 24)),
+      posY: Math.max(16, Math.min(86, base.posY + Math.sin(angle) * 22))
+    };
+  }
+
   return (
     <div ref={containerRef} className="scene-revelations">
       {elements.map((element) => {
-        const { posX, posY } = getPos(element.id, element.posX, element.posY);
+        const { posX, posY } = displayPos(element);
         const isDragging = draggingId === element.id;
         return (
           <div
@@ -978,65 +1054,64 @@ function PlayerView({ data, visibleElements, positions, actionRolls, sceneStyle,
       <header className="live-topbar">
         <strong>GRIMOIRE</strong>
         <span>{data.campaign.title}</span>
-        <div className="player-tabs">
-          <button
-            className={`player-tab ${tab === "scene" ? "player-tab--active" : ""}`}
-            onClick={() => setTab("scene")}
-          >
-            Scène
-          </button>
-          <button
-            className={`player-tab ${tab === "character" ? "player-tab--active" : ""}`}
-            onClick={() => setTab("character")}
-          >
-            Personnage
-          </button>
-          <button
-            className={`player-tab ${tab === "inventory" ? "player-tab--active" : ""}`}
-            onClick={() => setTab("inventory")}
-          >
-            Inventaire
-          </button>
-        </div>
+        <span className="live-badge live-badge--danger">En direct</span>
       </header>
 
       {tab === "scene" && (
-        <>
-          <section className="live-player__story">
-            <p className="live-kicker">{data.live.scene.title}</p>
-            <h1>{data.live.scene.text || "Le MJ prepare la suite de votre aventure..."}</h1>
-          </section>
-          <PlayerHealth players={data.live.players} />
+        <div className="player-stage">
           <SceneRevelations elements={visibleElements} positions={positions} />
+          <div className="player-hud">
+            <section className="live-player__story">
+              <p className="live-kicker">{data.live.scene.title}</p>
+              <h1>{data.live.scene.text || "Le MJ prépare la suite de votre aventure…"}</h1>
+            </section>
+            <PlayerHealth players={data.live.players} />
+          </div>
           <PlayerActionRollPanel
             campaignId={data.campaign.id}
             currentUserId={currentUserId}
             actionRolls={actionRolls}
           />
-          <section className="live-player__elements">
-            <p className="live-kicker">Presences dans la scene</p>
-            <div className="live-element-grid">
-              {visibleElements.map((element) => <ElementCard key={element.id} element={element} />)}
-              {visibleElements.length === 0 && <p className="live-empty">Rien de particulier ne retient votre attention.</p>}
-            </div>
-          </section>
-        </>
+        </div>
       )}
 
       {tab === "character" && (
-        <CharacterSheet campaignId={data.campaign.id} refreshKey={refreshKey} />
+        <div className="player-sheet">
+          <CharacterSheet campaignId={data.campaign.id} refreshKey={refreshKey} />
+        </div>
       )}
 
       {tab === "inventory" && (
-        <>
+        <div className="player-sheet">
           <Inventory campaignId={data.campaign.id} refreshKey={refreshKey} />
           <TradePanel
             campaignId={data.campaign.id}
             currentUserId={data.members.find((m) => m.id === data.viewer.memberId)?.user.id ?? ""}
             members={data.members}
           />
-        </>
+        </div>
       )}
+
+      <nav className="player-tabs">
+        <button
+          className={`player-tab ${tab === "scene" ? "player-tab--active" : ""}`}
+          onClick={() => setTab("scene")}
+        >
+          Scène
+        </button>
+        <button
+          className={`player-tab ${tab === "character" ? "player-tab--active" : ""}`}
+          onClick={() => setTab("character")}
+        >
+          Personnage
+        </button>
+        <button
+          className={`player-tab ${tab === "inventory" ? "player-tab--active" : ""}`}
+          onClick={() => setTab("inventory")}
+        >
+          Inventaire
+        </button>
+      </nav>
     </main>
   );
 }
