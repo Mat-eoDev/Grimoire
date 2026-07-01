@@ -1,0 +1,1307 @@
+<mxfile host="app.diagrams.net" agent="Codex" pages="15">
+  <diagram name="use-cases" id="use_cases">
+    <mxGraphModel dx="1471" dy="869" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" value="Cas d&#39;utilisation regroupes - Grimoire / NewMJ" vertex="1">
+          <mxGeometry height="48" width="620" x="40" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gm_3" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" value="Maitre du Jeu" vertex="1">
+          <mxGeometry height="150" width="100" x="70" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="player_4" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" value="Joueur" vertex="1">
+          <mxGeometry height="150" width="100" x="70" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="common_5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;verticalAlign=top;spacing=12;fontSize=12" value="&lt;b&gt;Actions communes&lt;/b&gt;&lt;br&gt;&lt;br&gt;- S&#39;inscrire / se connecter&lt;br&gt;- Consulter la campagne&lt;br&gt;- Recevoir les mises a jour temps reel" vertex="1">
+          <mxGeometry height="150" width="360" x="310" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="gmActions_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;spacing=12;fontSize=12" value="&lt;b&gt;Actions du Maitre du Jeu&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Creer une campagne&lt;br&gt;- Lancer / arreter la campagne&lt;br&gt;- Piloter la scene&lt;br&gt;- Afficher / masquer des elements&lt;br&gt;- Demander et resoudre un jet d&#39;action&lt;br&gt;- Attribuer des objets" vertex="1">
+          <mxGeometry height="235" width="390" x="310" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="playerActions_7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;spacing=12;fontSize=12" value="&lt;b&gt;Actions du joueur&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Rejoindre une campagne&lt;br&gt;- Se declarer pret&lt;br&gt;- Creer une fiche personnage&lt;br&gt;- Lancer un de demande par le MJ&lt;br&gt;- Consulter / utiliser l&#39;inventaire&lt;br&gt;- Donner ou echanger des objets&lt;br&gt;- Rediger des notes privees" vertex="1">
+          <mxGeometry height="255" width="390" x="310" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="app_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#334155;fontStyle=1;fontSize=14" value="Application&lt;br&gt;Grimoire / NewMJ" vertex="1">
+          <mxGeometry height="130" width="250" x="1030" y="405" as="geometry" />
+        </mxCell>
+        <mxCell id="e_9" edge="1" parent="1" source="gm_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="common_5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_10" edge="1" parent="1" source="player_4" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="common_5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_11" edge="1" parent="1" source="common_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="app_8" value="actions partagees">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_12" edge="1" parent="1" source="gm_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="gmActions_6" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_13" edge="1" parent="1" source="gmActions_6" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="app_8" value="actions MJ">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_14" edge="1" parent="1" source="player_4" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="playerActions_7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_15" edge="1" parent="1" source="playerActions_7" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="app_8" value="actions joueur">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="architecture-applicative" id="architecture_applicative">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="920" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Architecture applicative" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="user_3" value="Utilisateur&#xa;MJ ou joueur" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="60" y="410" width="160" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="frontgroup_4" value="Frontend - apps/web" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;dashed=1;fontStyle=1;fontColor=#334155;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1">
+          <mxGeometry x="280" y="105" width="310" height="650" as="geometry" />
+        </mxCell>
+        <mxCell id="backgroup_5" value="Backend - apps/server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;dashed=1;fontStyle=1;fontColor=#334155;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1">
+          <mxGeometry x="650" y="105" width="390" height="650" as="geometry" />
+        </mxCell>
+        <mxCell id="datagroup_6" value="Persistance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;dashed=1;fontStyle=1;fontColor=#334155;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1">
+          <mxGeometry x="1100" y="105" width="280" height="650" as="geometry" />
+        </mxCell>
+        <mxCell id="react_7" value="React" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="360" y="170" width="150" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="vite_8" value="Vite" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="360" y="250" width="150" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="pages_9" value="Pages&#xa;HomePage / CampaignPage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="335" y="330" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="comps_10" value="Composants UI&#xa;inventaire, personnage,&#xa;scene, echanges" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="330" y="430" width="210" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="apiclient_11" value="Client API&#xa;apiFetch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="360" y="560" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="express_12" value="Express" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="760" y="150" width="170" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="auth_13" value="Middleware auth&#xa;attachAuth / requireAuth" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="740" y="230" width="210" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="routes_14" value="Routes&#xa;/auth&#xa;/campaigns&#xa;/inventory&#xa;/trades" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="735" y="330" width="220" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="libs_15" value="Lib metier&#xa;session, password,&#xa;stats, sseHub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="745" y="490" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="prisma_16" value="Prisma ORM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="1160" y="280" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="db_17" value="PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="1160" y="450" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="e_18" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="react_7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_19" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="react_7" target="pages_9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_20" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="pages_9" target="comps_10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_21" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="comps_10" target="apiclient_11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_22" value="HTTP / JSON" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="apiclient_11" target="express_12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_23" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="express_12" target="auth_13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_24" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="auth_13" target="routes_14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_25" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="routes_14" target="libs_15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_26" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="routes_14" target="prisma_16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_27" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="libs_15" target="prisma_16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_28" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="prisma_16" target="db_17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_29" value="SSE events" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=1" edge="1" parent="1" source="routes_14" target="libs_15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t_30" value="Objectif : separer l&#39;interface, l&#39;API, les regles metier et les donnees." style="text;html=1;strokeColor=none;fillColor=none;whiteSpace=wrap;fontSize=12;align=left;verticalAlign=top" vertex="1" parent="1">
+          <mxGeometry x="280" y="790" width="760" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="mcd-mld-mpc" id="mcd_mld_mpc">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1040" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Modele de donnees simplifie" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="user_3" value="USER&#xa;email unique&#xa;username unique&#xa;passwordHash" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="140" width="190" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="session_4" value="SESSION&#xa;tokenHash&#xa;expiresAt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="310" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="campaign_5" value="CAMPAIGN&#xa;title&#xa;joinCode&#xa;status" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="360" y="140" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="member_6" value="CAMPAIGN_MEMBER&#xa;role GM / PLAYER&#xa;isReady" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="360" y="310" width="210" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="character_7" value="CHARACTER_SHEET&#xa;charName&#xa;stats" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="650" y="110" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="note_8" value="PLAYER_NOTE&#xa;content" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="650" y="250" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="scene_9" value="SCENE_ELEMENT&#xa;type&#xa;isVisible&#xa;position&#xa;stats" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="650" y="380" width="210" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="asset_10" value="REVELATION_ASSET&#xa;imageDataUrl" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="960" y="380" width="210" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="roll_11" value="ACTION_ROLL&#xa;status&#xa;result&#xa;consequences" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="960" y="120" width="210" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="item_12" value="ITEM&#xa;slug&#xa;type&#xa;equipable" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="560" width="190" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="inv_13" value="INVENTORY_ENTRY&#xa;quantity&#xa;equipped&#xa;bonus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="360" y="560" width="210" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="trade_14" value="TRADE_OFFER&#xa;fromUser / toUser&#xa;status" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="650" y="580" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_15" value="1 -&gt; 0..n" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="session_4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_16" value="dirige" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="campaign_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_17" value="participe" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="member_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_18" value="contient" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="campaign_5" target="member_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_19" value="possede" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="character_7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_20" value="regroupe" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="campaign_5" target="character_7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_21" value="redige" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="note_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_22" value="contient" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="campaign_5" target="note_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_23" value="affiche" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="campaign_5" target="scene_9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_24" value="illustre" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="asset_10" target="scene_9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_25" value="organise" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="campaign_5" target="roll_11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_26" value="reference" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="item_12" target="inv_13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_27" value="possede" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="inv_13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_28" value="contient" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="campaign_5" target="inv_13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_29" value="contient" style="endArrow=none;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="campaign_5" target="trade_14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note_30" value="Version complete : docs/uml/mcd-mpc.md&#xa;Ce schema resume les entites principales du MVP implemente." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1">
+          <mxGeometry x="960" y="600" width="420" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="deploiement-local" id="deploiement_local">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="840" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Deploiement local" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="dev_3" value="Poste developpeur" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="80" y="320" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="node_4" value="Runtime Node.js" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;dashed=1;fontStyle=1;fontColor=#334155;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1">
+          <mxGeometry x="340" y="120" width="330" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="web_5" value="Frontend Vite&#xa;npm run dev:web" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="420" y="210" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api_6" value="Backend Express&#xa;npm run dev:server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="420" y="360" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="docker_7" value="Docker Compose" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;dashed=1;fontStyle=1;fontColor=#334155;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1">
+          <mxGeometry x="780" y="120" width="330" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="db_8" value="PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="850" y="345" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="env_9" value=".env&#xa;DATABASE_URL&#xa;CLIENT_ORIGIN&#xa;SESSION_SECRET" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1">
+          <mxGeometry x="80" y="540" width="220" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="prisma_10" value="Prisma&#xa;generate / migrate / seed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="850" y="205" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="browser_11" value="Navigateur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+          <mxGeometry x="80" y="170" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="e_12" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="dev_3" target="env_9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_13" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="dev_3" target="web_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_14" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="dev_3" target="api_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_15" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="dev_3" target="db_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_16" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="browser_11" target="web_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_17" value="HTTP" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="web_5" target="api_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_18" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="api_6" target="prisma_10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_19" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="prisma_10" target="db_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_20" value="Prisma Client" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="api_6" target="db_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="sequence-authentification" id="sequence_authentification">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Sequence authentification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="participant_u_3" value="Utilisateur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_4" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="152" as="sourcePoint" />
+            <mxPoint x="130" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_w_5" value="Frontend React" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="320" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_6" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="152" as="sourcePoint" />
+            <mxPoint x="390" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_a_7" value="API Express" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="580" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_8" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="152" as="sourcePoint" />
+            <mxPoint x="650" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_p_9" value="Password / Session" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="850" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_10" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="152" as="sourcePoint" />
+            <mxPoint x="920" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_d_11" value="PostgreSQL via Prisma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1120" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_12" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1190" y="152" as="sourcePoint" />
+            <mxPoint x="1190" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_13" value="Saisit email, pseudo, mot de passe" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="190" as="sourcePoint" />
+            <mxPoint x="390" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_14" value="POST /auth/register" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="240" as="sourcePoint" />
+            <mxPoint x="650" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_15" value="Verifie email / pseudo" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="290" as="sourcePoint" />
+            <mxPoint x="1190" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_16" value="Hash du mot de passe" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="340" as="sourcePoint" />
+            <mxPoint x="920" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_17" value="Cree User" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="390" as="sourcePoint" />
+            <mxPoint x="1190" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_18" value="Cree session" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="440" as="sourcePoint" />
+            <mxPoint x="920" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_19" value="Enregistre tokenHash" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="920" y="490" as="sourcePoint" />
+            <mxPoint x="1190" y="490" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_20" value="Set-Cookie HttpOnly" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="540" as="sourcePoint" />
+            <mxPoint x="390" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_21" value="GET /auth/me" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="640" as="sourcePoint" />
+            <mxPoint x="650" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_22" value="Charge User + campagnes" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="690" as="sourcePoint" />
+            <mxPoint x="1190" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_23" value="SessionPayload" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="650" y="740" as="sourcePoint" />
+            <mxPoint x="390" y="740" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="security_24" value="Points de securite&#xa;- Mot de passe non stocke en clair&#xa;- Cookie HttpOnly&#xa;- Sessions persistantes en base&#xa;- requireAuth sur routes protegees" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1">
+          <mxGeometry x="70" y="780" width="430" height="110" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="sequence-campagne" id="sequence_campagne">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Sequence creation et entree dans une campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="participant_gm_3" value="Maitre du Jeu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="60" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_4" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="152" as="sourcePoint" />
+            <mxPoint x="130" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_j_5" value="Joueur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="230" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_6" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="152" as="sourcePoint" />
+            <mxPoint x="300" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_w_7" value="Frontend React" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="450" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_8" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="152" as="sourcePoint" />
+            <mxPoint x="520" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_a_9" value="API Express" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="720" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_10" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="152" as="sourcePoint" />
+            <mxPoint x="790" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_d_11" value="PostgreSQL via Prisma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1010" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_12" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1080" y="152" as="sourcePoint" />
+            <mxPoint x="1080" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_13" value="Cree une campagne" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="190" as="sourcePoint" />
+            <mxPoint x="520" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_14" value="POST /campaigns" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="240" as="sourcePoint" />
+            <mxPoint x="790" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_15" value="requireAuth + joinCode unique" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="290" as="sourcePoint" />
+            <mxPoint x="790" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_16" value="Cree Campaign DRAFT" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="340" as="sourcePoint" />
+            <mxPoint x="1080" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_17" value="Cree CampaignMember GM" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="390" as="sourcePoint" />
+            <mxPoint x="1080" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_18" value="Campagne + code" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="440" as="sourcePoint" />
+            <mxPoint x="520" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_19" value="Saisit le code" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="520" as="sourcePoint" />
+            <mxPoint x="520" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_20" value="POST /campaigns/join" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="570" as="sourcePoint" />
+            <mxPoint x="790" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_21" value="Recherche Campaign par joinCode" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="620" as="sourcePoint" />
+            <mxPoint x="1080" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_22" value="Upsert CampaignMember PLAYER" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="670" as="sourcePoint" />
+            <mxPoint x="1080" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_23" value="Campagne rejointe" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="720" as="sourcePoint" />
+            <mxPoint x="520" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="sequence-scene-sse" id="sequence_scene_sse">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="930" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Sequence scene temps reel avec SSE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="participant_gm_3" value="MJ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="40" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_4" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="152" as="sourcePoint" />
+            <mxPoint x="110" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_wgm_5" value="Frontend MJ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="240" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_6" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="310" y="152" as="sourcePoint" />
+            <mxPoint x="310" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_wj_7" value="Frontend Joueur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="450" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_8" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="152" as="sourcePoint" />
+            <mxPoint x="520" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_a_9" value="API Express" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="690" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_10" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="152" as="sourcePoint" />
+            <mxPoint x="760" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_sse_11" value="SSE Hub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="940" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_12" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1010" y="152" as="sourcePoint" />
+            <mxPoint x="1010" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_d_13" value="PostgreSQL via Prisma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1170" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_14" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1240" y="152" as="sourcePoint" />
+            <mxPoint x="1240" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_15" value="GET /campaigns/:id/stream" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="310" y="190" as="sourcePoint" />
+            <mxPoint x="760" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_16" value="Verifie membre campagne" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="235" as="sourcePoint" />
+            <mxPoint x="1240" y="235" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_17" value="Inscrit connexion MJ" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="280" as="sourcePoint" />
+            <mxPoint x="1010" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_18" value="GET /campaigns/:id/stream" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="340" as="sourcePoint" />
+            <mxPoint x="760" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_19" value="Inscrit connexion joueur" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="385" as="sourcePoint" />
+            <mxPoint x="1010" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_20" value="Deplace un element" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="455" as="sourcePoint" />
+            <mxPoint x="310" y="455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_21" value="PATCH position" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="310" y="500" as="sourcePoint" />
+            <mxPoint x="760" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_22" value="Verifie role MJ + update" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="545" as="sourcePoint" />
+            <mxPoint x="1240" y="545" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_23" value="Broadcast element:moved" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="590" as="sourcePoint" />
+            <mxPoint x="1010" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_24" value="Notification temps reel" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1010" y="635" as="sourcePoint" />
+            <mxPoint x="520" y="635" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_25" value="GET /campaigns/:id" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="700" as="sourcePoint" />
+            <mxPoint x="760" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_26" value="Charge campagne" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="745" as="sourcePoint" />
+            <mxPoint x="1240" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_27" value="Vue filtree pour joueur" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="760" y="790" as="sourcePoint" />
+            <mxPoint x="520" y="790" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="sequence-jet-action" id="sequence_jet_action">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="930" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Sequence jet d&#39;action" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="participant_gm_3" value="MJ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="40" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_4" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="152" as="sourcePoint" />
+            <mxPoint x="110" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_j_5" value="Joueur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="230" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_6" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="152" as="sourcePoint" />
+            <mxPoint x="300" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_wgm_7" value="Frontend MJ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="430" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_8" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="152" as="sourcePoint" />
+            <mxPoint x="500" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_wj_9" value="Frontend Joueur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="630" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_10" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="152" as="sourcePoint" />
+            <mxPoint x="700" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_a_11" value="API Express" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="860" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_12" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="152" as="sourcePoint" />
+            <mxPoint x="930" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_d_13" value="PostgreSQL via Prisma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1090" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_14" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1160" y="152" as="sourcePoint" />
+            <mxPoint x="1160" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_sse_15" value="SSE Hub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1290" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_16" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1360" y="152" as="sourcePoint" />
+            <mxPoint x="1360" y="840" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_17" value="Configure un jet" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="185" as="sourcePoint" />
+            <mxPoint x="500" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_18" value="POST /action-rolls" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="230" as="sourcePoint" />
+            <mxPoint x="930" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_19" value="Verifie MJ, seuils et cible" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="275" as="sourcePoint" />
+            <mxPoint x="1160" y="275" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_20" value="Cree ActionRoll PENDING" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="320" as="sourcePoint" />
+            <mxPoint x="1160" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_21" value="action-roll:changed" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="365" as="sourcePoint" />
+            <mxPoint x="1360" y="365" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_22" value="Le joueur recoit le jet" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1360" y="410" as="sourcePoint" />
+            <mxPoint x="700" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_23" value="Lance le de" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="480" as="sourcePoint" />
+            <mxPoint x="700" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_24" value="POST /roll" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="525" as="sourcePoint" />
+            <mxPoint x="930" y="525" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_25" value="Enregistre result + ROLLED" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="570" as="sourcePoint" />
+            <mxPoint x="1160" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_26" value="action-roll:changed" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="615" as="sourcePoint" />
+            <mxPoint x="1360" y="615" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_27" value="Valide la resolution" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="685" as="sourcePoint" />
+            <mxPoint x="500" y="685" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_28" value="POST /resolve" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="500" y="730" as="sourcePoint" />
+            <mxPoint x="930" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_29" value="Applique consequence" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="775" as="sourcePoint" />
+            <mxPoint x="1160" y="775" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_30" value="campaign:changed" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="930" y="820" as="sourcePoint" />
+            <mxPoint x="1360" y="820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="sequence-echange-objets" id="sequence_echange_objets">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Sequence inventaire et echange d&#39;objets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="participant_gm_3" value="MJ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="50" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_4" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="152" as="sourcePoint" />
+            <mxPoint x="120" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_a1_5" value="Joueur expediteur" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="260" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_6" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="330" y="152" as="sourcePoint" />
+            <mxPoint x="330" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_a2_7" value="Joueur destinataire" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="490" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_8" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="152" as="sourcePoint" />
+            <mxPoint x="560" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_api_9" value="API Express" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="740" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_10" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="152" as="sourcePoint" />
+            <mxPoint x="810" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_db_11" value="PostgreSQL via Prisma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="990" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_12" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1060" y="152" as="sourcePoint" />
+            <mxPoint x="1060" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="participant_sse_13" value="SSE Hub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="1210" y="110" width="140" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="ep_14" value="" style="endArrow=none;html=1;rounded=0;dashed=1;strokeWidth=1" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1280" y="152" as="sourcePoint" />
+            <mxPoint x="1280" y="815" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_15" value="POST /inventory/give" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="190" as="sourcePoint" />
+            <mxPoint x="810" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_16" value="Verifie role MJ + joueur" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="235" as="sourcePoint" />
+            <mxPoint x="1060" y="235" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_17" value="Cree InventoryEntry" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="280" as="sourcePoint" />
+            <mxPoint x="1060" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_18" value="POST /trades" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="330" y="365" as="sourcePoint" />
+            <mxPoint x="810" y="365" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_19" value="Verifie possession objet" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="410" as="sourcePoint" />
+            <mxPoint x="1060" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_20" value="Cree TradeOffer PENDING" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="455" as="sourcePoint" />
+            <mxPoint x="1060" y="455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_21" value="trade:offered" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="500" as="sourcePoint" />
+            <mxPoint x="1280" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_22" value="Notification offre" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1280" y="545" as="sourcePoint" />
+            <mxPoint x="560" y="545" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_23" value="POST /trades/:id/accept" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="625" as="sourcePoint" />
+            <mxPoint x="810" y="625" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_24" value="Verifie destinataire + statut" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="670" as="sourcePoint" />
+            <mxPoint x="1060" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_25" value="Transfere les objets" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="715" as="sourcePoint" />
+            <mxPoint x="1060" y="715" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ep_26" value="trade:accepted" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="810" y="760" as="sourcePoint" />
+            <mxPoint x="1280" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="activite-lancement-campagne" id="activite_lancement_campagne">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Activite - lancement de campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="start_3" value="Debut" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="360" y="105" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="login_4" value="Le MJ se connecte" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="300" y="190" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="create_5" value="Le MJ cree une campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="300" y="290" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="code_6" value="L&#39;application genere un code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="300" y="390" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="share_7" value="Le MJ partage le code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="300" y="490" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="join_8" value="Les joueurs rejoignent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="300" y="590" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="character_9" value="Les joueurs creent leur fiche" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="300" y="690" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ready_10" value="Les joueurs se declarent prets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="300" y="790" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="check_11" value="Tous les joueurs&#xa;sont prets ?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00" vertex="1" parent="1">
+          <mxGeometry x="320" y="890" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="launch_12" value="Le MJ lance la campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="590" y="910" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="active_13" value="Campagne ACTIVE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="590" y="1010" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wait_14" value="Attente des joueurs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="40" y="910" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e_15" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="start_3" target="login_4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_16" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="login_4" target="create_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_17" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="create_5" target="code_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_18" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="code_6" target="share_7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_19" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="share_7" target="join_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_20" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="join_8" target="character_9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_21" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="character_9" target="ready_10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_22" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="ready_10" target="check_11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_23" value="Oui" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="check_11" target="launch_12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_24" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="launch_12" target="active_13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_25" value="Non" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="check_11" target="wait_14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_26" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="wait_14" target="ready_10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="etat-campagne" id="etat_campagne">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Etats - campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="start_3" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="80" y="260" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="draft_4" value="DRAFT&#xa;Brouillon&#xa;Les joueurs peuvent rejoindre&#xa;et se declarer prets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="210" y="210" width="230" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="active_5" value="ACTIVE&#xa;Campagne active&#xa;Scene, jets, inventaire&#xa;et echanges utilisables" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="520" y="210" width="240" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="closed_6" value="CLOSED&#xa;Campagne terminee&#xa;Nouvelle entree bloquee" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="520" y="430" width="240" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="end_7" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="850" y="465" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e_8" value="Creation par le MJ" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="start_3" target="draft_4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_9" value="Tous prets + lancement" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="draft_4" target="active_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_10" value="Arret par le MJ" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="active_5" target="closed_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_11" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="closed_6" target="end_7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="etat-offre-echange" id="etat_offre_echange">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1050" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Etats - offre d&#39;echange" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="start_3" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;fontColor=#ffffff;strokeColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="70" y="290" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="pending_4" value="PENDING&#xa;Offre en attente" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="210" y="260" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="accepted_5" value="ACCEPTED&#xa;Objets transferes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="550" y="150" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="refused_6" value="REFUSED&#xa;Offre refusee" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="550" y="280" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="cancelled_7" value="CANCELLED&#xa;Offre annulee" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="550" y="410" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e_8" value="Creation" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="start_3" target="pending_4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_9" value="Acceptation" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="pending_4" target="accepted_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_10" value="Refus" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="pending_4" target="refused_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_11" value="Annulation" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="pending_4" target="cancelled_7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="cartographie-api" id="cartographie_api">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Cartographie API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="api_3" value="Authentification&#xa;&#xa;POST /auth/register&#xa;POST /auth/login&#xa;POST /auth/logout&#xa;GET /auth/me" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;align=left;verticalAlign=top;spacing=8;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="60" y="130" width="330" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="api_4" value="Campagnes&#xa;&#xa;POST /campaigns&#xa;POST /campaigns/join&#xa;GET /campaigns/:campaignId&#xa;POST /campaigns/:campaignId/ready&#xa;POST /campaigns/:campaignId/launch&#xa;POST /campaigns/:campaignId/stop" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;align=left;verticalAlign=top;spacing=8;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="410" y="130" width="330" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="api_5" value="Scene et temps reel&#xa;&#xa;GET /campaigns/:id/stream&#xa;PUT /campaigns/:id/live-scene&#xa;POST /campaigns/:id/scene-elements&#xa;PATCH /campaigns/:id/scene-elements/:elementId&#xa;PATCH /campaigns/:id/scene-elements/:elementId/position&#xa;DELETE /campaigns/:id/scene-elements/:elementId" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;align=left;verticalAlign=top;spacing=8;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="810" y="130" width="330" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="api_6" value="Jets d&#39;action&#xa;&#xa;GET /campaigns/:id/action-rolls/active&#xa;POST /campaigns/:id/action-rolls&#xa;POST /campaigns/:id/action-rolls/:rollId/roll&#xa;POST /campaigns/:id/action-rolls/:rollId/reroll&#xa;POST /campaigns/:id/action-rolls/:rollId/cancel&#xa;POST /campaigns/:id/action-rolls/:rollId/resolve" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;align=left;verticalAlign=top;spacing=8;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="60" y="470" width="330" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="api_7" value="Notes et personnages&#xa;&#xa;GET /campaigns/:id/notes&#xa;PUT /campaigns/:id/notes&#xa;POST /campaigns/:id/character&#xa;GET /campaigns/:id/character" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;align=left;verticalAlign=top;spacing=8;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="410" y="470" width="330" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="api_8" value="Inventaire&#xa;&#xa;GET /campaigns/:id/items&#xa;GET /campaigns/:id/inventory&#xa;GET /campaigns/:id/inventory/all&#xa;POST /campaigns/:id/inventory/give&#xa;PATCH /campaigns/:id/inventory/:entryId/equip&#xa;DELETE /campaigns/:id/inventory/:entryId&#xa;POST /campaigns/:id/inventory/:entryId/use" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;align=left;verticalAlign=top;spacing=8;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="810" y="470" width="330" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="api_9" value="Echanges&#xa;&#xa;POST /campaigns/:id/inventory/player-give&#xa;GET /campaigns/:id/trades/pending&#xa;POST /campaigns/:id/trades&#xa;POST /campaigns/:id/trades/:tradeId/accept&#xa;POST /campaigns/:id/trades/:tradeId/refuse&#xa;POST /campaigns/:id/trades/:tradeId/cancel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#64748b;align=left;verticalAlign=top;spacing=8;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="60" y="810" width="330" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="note_10" value="Toutes les routes metier passent par requireAuth et verifient l&#39;appartenance a la campagne lorsque necessaire." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1">
+          <mxGeometry x="410" y="830" width="650" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="securite" id="securite">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1350" pageHeight="780" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Schema de securite" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="user_3" value="Utilisateur" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="70" y="310" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cookie_4" value="Cookie HttpOnly&#xa;session token" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1">
+          <mxGeometry x="280" y="300" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="express_5" value="API Express" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="540" y="310" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="auth_6" value="Middleware attachAuth" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="780" y="210" width="210" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="require_7" value="requireAuth" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+          <mxGeometry x="780" y="400" width="210" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="role_8" value="Controle role&#xa;GM / PLAYER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="1060" y="210" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="filter_9" value="Filtrage donnees&#xa;isVisible, joueur cible" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="1060" y="400" width="190" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="prisma_10" value="Prisma" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="780" y="570" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="db_11" value="PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+          <mxGeometry x="1050" y="570" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e_12" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="user_3" target="cookie_4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_13" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="cookie_4" target="express_5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_14" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="express_5" target="auth_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_15" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="express_5" target="require_7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_16" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="auth_6" target="prisma_10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_17" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="require_7" target="role_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_18" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="role_8" target="filter_9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_19" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="filter_9" target="prisma_10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_20" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="prisma_10" target="db_11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="measures_21" value="Mesures presentes&#xa;- Hash scrypt&#xa;- timingSafeEqual&#xa;- sessions stockees en base&#xa;- cookie HttpOnly&#xa;- controles serveur sur les roles&#xa;- filtrage cote backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1">
+          <mxGeometry x="70" y="520" width="470" height="160" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="evolutions-v2" id="evolutions_v2">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1350" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" value="Evolutions V2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="520" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="mvp_3" value="MVP actuel" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="90" y="330" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="evo_4" value="Table Scene&#xa;historique narratif" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="410" y="120" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_5" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mvp_3" target="evo_4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="evo_6" value="Module Combat&#xa;rounds, participants,&#xa;initiative" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="700" y="120" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_7" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mvp_3" target="evo_6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="evo_8" value="Module Recompense&#xa;XP, or, objets,&#xa;histoire" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="990" y="120" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_9" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mvp_3" target="evo_8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="evo_10" value="Invitation email&#xa;token + expiration" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="410" y="420" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_11" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mvp_3" target="evo_10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="evo_12" value="Referentiels&#xa;races et classes en base" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="700" y="420" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_13" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mvp_3" target="evo_12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="evo_14" value="CI/CD&#xa;tests et deploiement&#xa;automatise" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="990" y="420" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e_15" value="" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mvp_3" target="evo_14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note_16" value="A presenter comme limites maitrisees : ces elements sont des evolutions, pas des fonctionnalites deja terminees." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1">
+          <mxGeometry x="410" y="620" width="800" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+<diagram name="workflow-mj-joueurs" id="workflow_mj_joueurs"><mxGraphModel dx="1700" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1100" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="title_2" value="Deroulement d'une campagne - MJ, code, scenes, actions et lancers de de" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" vertex="1" parent="1"><mxGeometry x="40" y="30" width="920" height="50" as="geometry"/></mxCell><mxCell id="laneMj_3" value="Maitre du Jeu" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;fontStyle=1;fontSize=14;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1"><mxGeometry x="40" y="110" width="470" height="910" as="geometry"/></mxCell><mxCell id="laneApp_4" value="Application Grimoire / NewMJ" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;fontStyle=1;fontSize=14;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1"><mxGeometry x="560" y="110" width="470" height="910" as="geometry"/></mxCell><mxCell id="lanePlayers_5" value="Joueurs 1..n" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;fontStyle=1;fontSize=14;align=left;verticalAlign=top;spacing=10" vertex="1" parent="1"><mxGeometry x="1080" y="110" width="560" height="910" as="geometry"/></mxCell><mxCell id="mj_6" value="Cree et lance la campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" vertex="1" parent="1"><mxGeometry x="130" y="170" width="270" height="70" as="geometry"/></mxCell><mxCell id="app_7" value="Genere un code de campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" vertex="1" parent="1"><mxGeometry x="660" y="170" width="270" height="70" as="geometry"/></mxCell><mxCell id="mj_8" value="Donne le code aux joueurs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" vertex="1" parent="1"><mxGeometry x="130" y="280" width="270" height="70" as="geometry"/></mxCell><mxCell id="players_9" value="Rejoignent la campagne avec le code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" vertex="1" parent="1"><mxGeometry x="1180" y="280" width="320" height="70" as="geometry"/></mxCell><mxCell id="app_10" value="Associe chaque joueur a la campagne" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" vertex="1" parent="1"><mxGeometry x="660" y="390" width="270" height="70" as="geometry"/></mxCell><mxCell id="players_11" value="Visualisent la campagne et attendent les actions proposees" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" vertex="1" parent="1"><mxGeometry x="1160" y="500" width="360" height="80" as="geometry"/></mxCell><mxCell id="loop_12" value="&lt;b&gt;Boucle de narration pendant la partie&lt;/b&gt;&lt;br&gt;Le MJ garde le controle du rythme et peut repeter ces etapes autant que necessaire." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;dashed=1;fontStyle=1;align=left;verticalAlign=top;spacing=8" vertex="1" parent="1"><mxGeometry x="70" y="615" width="1510" height="360" as="geometry"/></mxCell><mxCell id="mj_13" value="Choisit une scene en background" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" vertex="1" parent="1"><mxGeometry x="130" y="680" width="270" height="70" as="geometry"/></mxCell><mxCell id="app_14" value="Met a jour la scene visible" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" vertex="1" parent="1"><mxGeometry x="660" y="680" width="270" height="70" as="geometry"/></mxCell><mxCell id="players_15" value="Voient le decor propose" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" vertex="1" parent="1"><mxGeometry x="1180" y="680" width="320" height="70" as="geometry"/></mxCell><mxCell id="mj_16" value="Ajoute a volonte : ennemis, PNJ, objets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" vertex="1" parent="1"><mxGeometry x="130" y="790" width="270" height="80" as="geometry"/></mxCell><mxCell id="app_17" value="Enregistre les elements et leur visibilite" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" vertex="1" parent="1"><mxGeometry x="660" y="790" width="270" height="80" as="geometry"/></mxCell><mxCell id="players_18" value="Voient uniquement les elements publies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" vertex="1" parent="1"><mxGeometry x="1180" y="790" width="320" height="80" as="geometry"/></mxCell><mxCell id="mj_19" value="Propose une action a resoudre" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" vertex="1" parent="1"><mxGeometry x="130" y="900" width="270" height="70" as="geometry"/></mxCell><mxCell id="app_20" value="Cree une demande de lancer de de" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" vertex="1" parent="1"><mxGeometry x="660" y="900" width="270" height="70" as="geometry"/></mxCell><mxCell id="players_21" value="Lance le de et envoie le resultat" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" vertex="1" parent="1"><mxGeometry x="1180" y="900" width="320" height="70" as="geometry"/></mxCell><mxCell id="app_22" value="Calcule l'issue et applique la consequence" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" vertex="1" parent="1"><mxGeometry x="660" y="1000" width="270" height="70" as="geometry"/></mxCell><mxCell id="mj_23" value="Continue la narration ou adapte la scene" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" vertex="1" parent="1"><mxGeometry x="130" y="1000" width="270" height="70" as="geometry"/></mxCell><mxCell id="players_24" value="Voient le resultat : narration, degats, objet ou changement de scene" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" vertex="1" parent="1"><mxGeometry x="1180" y="1000" width="320" height="80" as="geometry"/></mxCell><mxCell id="e_25" value="creation" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mj_6" target="app_7"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_26" value="code" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="app_7" target="mj_8"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_27" value="partage hors application" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mj_8" target="players_9"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_28" value="POST /campaigns/join" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="players_9" target="app_10"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_29" value="acces campagne" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="app_10" target="players_11"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_30" value="choix background" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mj_13" target="app_14"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_31" value="publication" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="app_14" target="players_15"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_32" value="attente" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="players_15" target="players_11"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_33" value="ennemi / PNJ / objet" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mj_16" target="app_17"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_34" value="filtrage visible" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="app_17" target="players_18"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_35" value="observation" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="players_18" target="players_11"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_36" value="demande de jet" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="mj_19" target="app_20"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_37" value="notification action" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="app_20" target="players_21"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_38" value="resultat du de" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="players_21" target="app_22"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_39" value="mise a jour" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="app_22" target="players_24"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_40" value="resultat pour arbitrage" style="endArrow=block;html=1;rounded=1;strokeWidth=2" edge="1" parent="1" source="app_22" target="mj_23"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e_41" value="nouvelle scene ou nouvelle action" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=1" edge="1" parent="1" source="mj_23" target="mj_13"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="note_42" value="A expliquer a l'oral : l'application ne remplace pas le MJ. Elle sert de support visuel, gere les acces joueurs, synchronise la scene et structure les lancers de de." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8;fontSize=12" vertex="1" parent="1"><mxGeometry x="1030" y="170" width="520" height="90" as="geometry"/></mxCell></root></mxGraphModel></diagram></mxfile>

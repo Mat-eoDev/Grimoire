@@ -1,447 +1,865 @@
-# Analyse du projet - MCD et MPC
+# Grimoire / NewMJ - MCD, MLD et MPC
+
+Date de mise a jour : 2026-07-01
 
 ## Source d'analyse
 
-Le depot ne contient pas encore de code applicatif, de schema SQL ou de modele ORM.
-Le present livrable est donc derive du besoin fonctionnel decrit dans `projet.txt`.
+Ce document est aligne sur le schema Prisma actuel :
 
-## Hypothese sur le terme "MPC"
+- `apps/server/prisma/schema.prisma`
+- base cible : PostgreSQL
+- ORM : Prisma
+- backend : Node.js / Express
 
-Le document de referentiel present dans `docs/dossier professionel/ATTENDUE DU REFFERENTIEL.docx`
-ne donne pas de definition explicite du terme `MPC`.
+Le precedent document etait base sur le besoin initial. Il n'etait plus a jour car le projet contient maintenant un modele de donnees reel avec les entites suivantes :
 
-Dans un contexte de modelisation de donnees, le livrable attendu est generalement :
+- utilisateurs et sessions
+- campagnes et membres
+- fiches personnages
+- notes privees
+- elements de scene
+- jets d'action
+- inventaire
+- echanges d'objets
+- assets visuels
 
-- `MCD` : modele conceptuel de donnees
-- `MLD` ou `MPD` : modele logique / physique de donnees
+## Precision sur le terme MPC
 
-Pour eviter l'ambiguite, ce document te fournit :
+Dans les attendus de dossier, le terme `MPC` est souvent utilise de maniere variable selon les centres. Dans ce document, il est interprete comme le modele physique cible, proche d'un `MPD`.
 
-- un `MCD` metier
-- un `MPC` interprete ici comme un `modele physique cible`, equivalent a un `MPD`
+Le document contient donc :
 
-## Hypotheses de conception
+- un `MCD` : modele conceptuel de donnees, oriente metier
+- un `MLD` : modele logique relationnel
+- un `MPC / MPD` : modele physique aligne avec Prisma et PostgreSQL
 
+## Regles de gestion principales
+
+- Un utilisateur possede un compte unique identifie par son email et son pseudo.
 - Un utilisateur peut etre MJ dans une campagne et joueur dans une autre.
 - Une campagne possede un MJ principal.
-- Les personnages joueurs, PNJ et monstres sont regroupes dans une entite technique commune `ActeurDeJeu`.
-- Un `ActeurDeJeu` de type `PLAYER_CHARACTER` appartient a un joueur de la campagne.
-- Un combat est rattache a une campagne et peut etre rattache a une scene.
-- Les visuels diffuses aux joueurs sont traces pour gerer la visibilite.
-- Une recompense peut etre attribuee a un personnage ou au groupe de campagne.
+- Une campagne contient plusieurs membres.
+- Un membre a un role dans la campagne : `GM` ou `PLAYER`.
+- Un utilisateur ne peut etre membre qu'une seule fois dans une meme campagne.
+- Une campagne peut etre en brouillon, active ou fermee.
+- Un joueur peut avoir une seule fiche personnage par campagne.
+- Un joueur peut avoir une note privee par campagne.
+- Le MJ controle les elements visibles dans la scene.
+- Les joueurs ne voient que les elements de scene dont `isVisible` vaut `true`.
+- Les jets d'action sont rattaches a une campagne et a un joueur.
+- Un jet d'action peut cibler un joueur ou un element de scene.
+- Une consequence de jet peut ajouter de la narration, infliger des degats ou supprimer une cible.
+- Les objets sont references dans un catalogue.
+- L'inventaire associe un objet a un joueur dans une campagne.
+- Les echanges d'objets sont rattaches a une campagne et passent par un statut.
 
-## MCD
+## MCD - Entites conceptuelles
 
-### Entites principales
+### Utilisateur
 
-- `Utilisateur` : compte de connexion.
-- `Campagne` : partie geree par le MJ.
-- `ParticipationCampagne` : association entre un utilisateur et une campagne, avec son role.
-- `InvitationCampagne` : invitation d'un joueur dans une campagne.
-- `Race` : referentiel de races.
-- `Metier` : referentiel de metiers / classes.
-- `ActeurDeJeu` : personnage joueur, PNJ ou monstre.
-- `Scene` : unite narrative d'une campagne.
-- `SupportVisuel` : image, decor ou carte associee a une scene.
-- `DiffusionVisuelle` : trace de ce qu'un joueur a le droit de voir.
-- `PresenceScene` : apparition d'un acteur dans une scene.
-- `Combat` : affrontement lance par le MJ.
-- `ParticipantCombat` : participant concret d'un combat.
-- `ActionCombat` : action ou resolution effectuee pendant un combat.
-- `Recompense` : recompense definie par le MJ.
-- `AttributionRecompense` : attribution d'une recompense a un personnage ou au groupe.
+Compte applicatif permettant de se connecter a l'application.
 
-### Cardinalites et regles metier
+Attributs principaux :
 
-- Un `Utilisateur` participe a 0,n campagnes.
-- Une `Campagne` possede 1,n participations.
-- Une `Campagne` a exactement 1 MJ principal actif.
-- Une `ParticipationCampagne` de role `JOUEUR` peut posseder 0,n acteurs de type `PLAYER_CHARACTER`.
-- Une `Campagne` contient 0,n scenes, 0,n acteurs et 0,n combats.
-- Une `Scene` peut afficher 0,n supports visuels et 0,n acteurs.
-- Un `Combat` contient 2,n participants.
-- Une `ActionCombat` est validee par le MJ.
-- Une `Recompense` peut etre attribuee a 0,n personnages ou 0,1 groupe de campagne.
+- identifiant
+- email
+- pseudo
+- mot de passe chiffre
+- statut du compte
+- dates de creation et modification
 
-### Diagramme conceptuel
+### Session
+
+Session serveur permettant de maintenir l'authentification avec un cookie `HttpOnly`.
+
+Attributs principaux :
+
+- identifiant
+- token chiffre
+- date d'expiration
+- date de creation
+
+### Campagne
+
+Partie de jeu de role geree par un maitre du jeu.
+
+Attributs principaux :
+
+- identifiant
+- titre
+- code de participation
+- statut
+- date de lancement
+- date de cloture
+- scene courante
+
+### Membre de campagne
+
+Association entre un utilisateur et une campagne.
+
+Attributs principaux :
+
+- role dans la campagne
+- etat pret / non pret
+- date d'arrivee
+
+### Fiche personnage
+
+Personnage joue par un utilisateur dans une campagne.
+
+Attributs principaux :
+
+- nom
+- type visuel de personnage
+- points de vie
+- attaque
+- defense
+- vitesse
+- magie
+- niveau
+
+### Note joueur
+
+Note privee d'un utilisateur dans une campagne.
+
+Attributs principaux :
+
+- contenu
+- date de modification
+
+### Element de scene
+
+Element affiche ou gere dans la scene courante : ennemi, PNJ, objet, narration ou joueur.
+
+Attributs principaux :
+
+- type
+- nom
+- description
+- quantite
+- visibilite
+- statistiques de combat
+- position dans la scene
+- asset visuel associe
+
+### Jet d'action
+
+Demande de jet lancee par le MJ et resolue par un joueur.
+
+Attributs principaux :
+
+- joueur concerne
+- texte de l'action
+- type de de
+- seuils de resultat
+- cible
+- consequences
+- statut
+- resultat
+
+### Objet
+
+Element du catalogue d'objets disponible dans l'application.
+
+Attributs principaux :
+
+- identifiant technique
+- nom
+- type
+- image
+- description
+- caractere equipable
+
+### Entree d'inventaire
+
+Association entre un joueur, un objet et une campagne.
+
+Attributs principaux :
+
+- quantite
+- etat equipe / non equipe
+- bonus de statistiques
+- effet de soin
+
+### Offre d'echange
+
+Proposition d'echange d'objet entre deux joueurs d'une meme campagne.
+
+Attributs principaux :
+
+- expediteur
+- destinataire
+- objet propose
+- quantite proposee
+- objet demande
+- quantite demandee
+- statut
+
+### Asset de revelation
+
+Image stockee pour illustrer un element de scene.
+
+Attributs principaux :
+
+- type
+- nom
+- image encodage data URL
+
+## MCD - Diagramme conceptuel
 
 ```mermaid
 erDiagram
     UTILISATEUR {
         uuid id PK
-        string pseudo
-        string email
+        string email UK
+        string username UK
         string password_hash
-        string statut_compte
+        string status
+        datetime created_at
+        datetime updated_at
+    }
+
+    SESSION {
+        uuid id PK
+        string token_hash UK
+        datetime expires_at
         datetime created_at
     }
 
     CAMPAGNE {
         uuid id PK
-        string titre
-        string statut
-        text description
+        string title
+        string join_code UK
+        string status
+        datetime started_at
+        datetime ended_at
+        string scene_preset
+        string scene_title
+        text scene_text
         datetime created_at
+        datetime updated_at
     }
 
-    PARTICIPATION_CAMPAGNE {
+    MEMBRE_CAMPAGNE {
         uuid id PK
-        string role_campagne
-        string statut_participation
+        string role
+        boolean is_ready
         datetime joined_at
     }
 
-    INVITATION_CAMPAGNE {
+    FICHE_PERSONNAGE {
         uuid id PK
-        string email_cible
-        string token
-        string statut
-        datetime expires_at
+        int char_id
+        string char_name
+        int hp
+        int max_hp
+        int attack
+        int defense
+        int speed
+        int magic
+        int level
+        datetime updated_at
     }
 
-    RACE {
-        int id PK
-        string code
-        string nom
-    }
-
-    METIER {
-        int id PK
-        string code
-        string nom
-    }
-
-    ACTEUR_DE_JEU {
+    NOTE_JOUEUR {
         uuid id PK
-        string type_acteur
-        string nom
-        int niveau
-        int hp_max
-        int hp_current
-        text notes_mj
+        text content
+        datetime updated_at
     }
 
-    SCENE {
+    ELEMENT_SCENE {
         uuid id PK
-        string titre
-        string statut
-        int ordre_affichage
-        text resume
-    }
-
-    SUPPORT_VISUEL {
-        uuid id PK
-        string libelle
-        string media_type
-        string asset_url
-    }
-
-    DIFFUSION_VISUELLE {
-        uuid id PK
-        datetime diffuse_le
-    }
-
-    PRESENCE_SCENE {
-        uuid id PK
-        string role_narratif
-        string visibilite
-    }
-
-    COMBAT {
-        uuid id PK
-        string statut
-        int numero_round
-        boolean valide_par_mj
-        datetime started_at
-        datetime ended_at
-    }
-
-    PARTICIPANT_COMBAT {
-        uuid id PK
-        string camp
-        int initiative
-        int hp_courant
-        string statut
-    }
-
-    ACTION_COMBAT {
-        uuid id PK
-        string type_action
-        string libelle
-        int valeur_degats
-        int valeur_soin
-        text resultat
-        datetime performed_at
-    }
-
-    RECOMPENSE {
-        uuid id PK
-        string type_recompense
-        string libelle
-        decimal valeur
+        string type
+        string name
         text description
+        int quantity
+        boolean is_visible
+        int hp
+        int max_hp
+        int attack
+        int defense
+        float pos_x
+        float pos_y
+        datetime created_at
+        datetime updated_at
     }
 
-    ATTRIBUTION_RECOMPENSE {
+    JET_ACTION {
         uuid id PK
-        decimal quantite
-        datetime granted_at
+        text action_text
+        int die_sides
+        int total_failure_max
+        int success_min
+        int total_success_min
+        string target_type
+        string consequence_type
+        int consequence_amount
+        text consequence_text
+        string status
+        int result
+        datetime created_at
+        datetime updated_at
     }
 
-    UTILISATEUR ||--o{ PARTICIPATION_CAMPAGNE : participe
-    CAMPAGNE ||--|{ PARTICIPATION_CAMPAGNE : contient
-    CAMPAGNE ||--o{ INVITATION_CAMPAGNE : envoie
-    UTILISATEUR ||--o{ INVITATION_CAMPAGNE : expedie
+    OBJET {
+        uuid id PK
+        string slug UK
+        string name
+        string type
+        string image_file
+        text description
+        boolean equipable
+        datetime created_at
+    }
 
-    CAMPAGNE ||--o{ ACTEUR_DE_JEU : gere
-    PARTICIPATION_CAMPAGNE ||--o{ ACTEUR_DE_JEU : possede
-    RACE ||--o{ ACTEUR_DE_JEU : caracterise
-    METIER ||--o{ ACTEUR_DE_JEU : specialise
+    ENTREE_INVENTAIRE {
+        uuid id PK
+        int quantity
+        boolean equipped
+        int bonus_max_hp
+        int bonus_attack
+        int bonus_defense
+        int bonus_speed
+        int bonus_magic
+        int effect_hp
+        datetime created_at
+    }
 
-    CAMPAGNE ||--o{ SCENE : structure
-    SCENE ||--o{ SUPPORT_VISUEL : affiche
-    SUPPORT_VISUEL ||--o{ DIFFUSION_VISUELLE : diffuse
-    PARTICIPATION_CAMPAGNE ||--o{ DIFFUSION_VISUELLE : recoit
+    OFFRE_ECHANGE {
+        uuid id PK
+        uuid from_user_id
+        uuid to_user_id
+        uuid offered_entry_id
+        int offered_qty
+        uuid requested_entry_id
+        int requested_qty
+        string status
+        datetime created_at
+        datetime updated_at
+    }
 
-    SCENE ||--o{ PRESENCE_SCENE : met_en_jeu
-    ACTEUR_DE_JEU ||--o{ PRESENCE_SCENE : apparait
+    ASSET_REVELATION {
+        uuid id PK
+        string type
+        string name
+        text image_data_url
+        datetime created_at
+        datetime updated_at
+    }
 
-    CAMPAGNE ||--o{ COMBAT : lance
-    SCENE o|--o{ COMBAT : contextualise
-    COMBAT ||--|{ PARTICIPANT_COMBAT : contient
-    ACTEUR_DE_JEU ||--o{ PARTICIPANT_COMBAT : incarne
-    COMBAT ||--o{ ACTION_COMBAT : journalise
-    PARTICIPANT_COMBAT ||--o{ ACTION_COMBAT : execute
+    UTILISATEUR ||--o{ SESSION : ouvre
+    UTILISATEUR ||--o{ CAMPAGNE : dirige
+    UTILISATEUR ||--o{ MEMBRE_CAMPAGNE : participe
+    CAMPAGNE ||--o{ MEMBRE_CAMPAGNE : contient
 
-    CAMPAGNE ||--o{ RECOMPENSE : definit
-    RECOMPENSE ||--o{ ATTRIBUTION_RECOMPENSE : attribue
-    ACTEUR_DE_JEU o|--o{ ATTRIBUTION_RECOMPENSE : recoit
-    CAMPAGNE o|--o{ ATTRIBUTION_RECOMPENSE : recoit_en_groupe
+    UTILISATEUR ||--o{ FICHE_PERSONNAGE : possede
+    CAMPAGNE ||--o{ FICHE_PERSONNAGE : regroupe
+
+    UTILISATEUR ||--o{ NOTE_JOUEUR : redige
+    CAMPAGNE ||--o{ NOTE_JOUEUR : contient
+
+    CAMPAGNE ||--o{ ELEMENT_SCENE : affiche
+    ASSET_REVELATION ||--o{ ELEMENT_SCENE : illustre
+
+    CAMPAGNE ||--o{ JET_ACTION : organise
+    UTILISATEUR ||--o{ JET_ACTION : joue
+
+    CAMPAGNE ||--o{ ENTREE_INVENTAIRE : contient
+    UTILISATEUR ||--o{ ENTREE_INVENTAIRE : possede
+    OBJET ||--o{ ENTREE_INVENTAIRE : reference
+
+    CAMPAGNE ||--o{ OFFRE_ECHANGE : contient
 ```
 
-## Regles de gestion a citer dans le dossier
+## MLD - Modele logique relationnel
 
-- Un utilisateur ne peut etre present qu'une seule fois par campagne.
-- Un seul MJ actif doit etre defini par campagne.
-- Seuls les membres d'une campagne peuvent recevoir une diffusion visuelle.
-- Un personnage joueur doit appartenir a un membre de campagne de role `JOUEUR`.
-- Un PNJ ou un monstre appartient a une campagne mais n'a pas de proprietaire joueur.
-- Un combat ne peut pas etre clos sans validation du MJ.
-- Une recompense peut etre modifiee par le MJ avant attribution.
-- Une attribution de recompense doit viser soit un personnage, soit la campagne entiere.
+Notation :
 
-## MPC / MPD cible
+- `PK` : cle primaire
+- `FK` : cle etrangere
+- `UK` : contrainte d'unicite
 
-Le schema physique ci-dessous est prevu pour une base relationnelle de type PostgreSQL.
-Les types restent adaptables si tu pars sur MySQL ou SQLite.
+### USER
 
-### 1. `users`
+`USER` (
+`id` PK,
+`email` UK,
+`username` UK,
+`passwordHash`,
+`status`,
+`createdAt`,
+`updatedAt`
+)
 
-- `id UUID PRIMARY KEY`
-- `email VARCHAR(190) NOT NULL UNIQUE`
-- `username VARCHAR(80) NOT NULL UNIQUE`
-- `password_hash TEXT NOT NULL`
-- `status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'`
-- `created_at TIMESTAMP NOT NULL`
-- `updated_at TIMESTAMP NOT NULL`
+### SESSION
 
-### 2. `campaigns`
+`SESSION` (
+`id` PK,
+`tokenHash` UK,
+`userId` FK -> `USER.id`,
+`expiresAt`,
+`createdAt`
+)
 
-- `id UUID PRIMARY KEY`
-- `gm_user_id UUID NOT NULL REFERENCES users(id)`
-- `title VARCHAR(120) NOT NULL`
-- `description TEXT NULL`
-- `status VARCHAR(20) NOT NULL CHECK (status IN ('DRAFT','ACTIVE','PAUSED','CLOSED'))`
-- `created_at TIMESTAMP NOT NULL`
-- `updated_at TIMESTAMP NOT NULL`
+### CAMPAIGN
 
-### 3. `campaign_members`
+`CAMPAIGN` (
+`id` PK,
+`gmUserId` FK -> `USER.id`,
+`title`,
+`joinCode` UK,
+`status`,
+`startedAt`,
+`endedAt`,
+`createdAt`,
+`updatedAt`,
+`scenePreset`,
+`sceneTitle`,
+`sceneText`
+)
 
-- `id UUID PRIMARY KEY`
-- `campaign_id UUID NOT NULL REFERENCES campaigns(id)`
-- `user_id UUID NOT NULL REFERENCES users(id)`
-- `role VARCHAR(20) NOT NULL CHECK (role IN ('GM','PLAYER'))`
-- `status VARCHAR(20) NOT NULL CHECK (status IN ('INVITED','ACTIVE','LEFT','BANNED'))`
-- `joined_at TIMESTAMP NULL`
-- `UNIQUE (campaign_id, user_id)`
+### CAMPAIGN_MEMBER
 
-Contrainte metier recommandee :
+`CAMPAIGN_MEMBER` (
+`id` PK,
+`campaignId` FK -> `CAMPAIGN.id`,
+`userId` FK -> `USER.id`,
+`role`,
+`isReady`,
+`joinedAt`,
+UK (`campaignId`, `userId`)
+)
 
-- index unique partiel sur `campaign_id` pour garantir un seul `GM` actif
+### CHARACTER_SHEET
 
-### 4. `campaign_invitations`
+`CHARACTER_SHEET` (
+`id` PK,
+`userId` FK -> `USER.id`,
+`campaignId` FK -> `CAMPAIGN.id`,
+`charId`,
+`charName`,
+`hp`,
+`maxHp`,
+`attack`,
+`defense`,
+`speed`,
+`magic`,
+`level`,
+`updatedAt`,
+UK (`userId`, `campaignId`)
+)
 
-- `id UUID PRIMARY KEY`
-- `campaign_id UUID NOT NULL REFERENCES campaigns(id)`
-- `invited_by_user_id UUID NOT NULL REFERENCES users(id)`
-- `target_email VARCHAR(190) NOT NULL`
-- `token CHAR(64) NOT NULL UNIQUE`
-- `status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING','ACCEPTED','EXPIRED','CANCELLED'))`
-- `expires_at TIMESTAMP NOT NULL`
-- `created_at TIMESTAMP NOT NULL`
+### PLAYER_NOTE
 
-### 5. `races`
+`PLAYER_NOTE` (
+`id` PK,
+`userId` FK -> `USER.id`,
+`campaignId` FK -> `CAMPAIGN.id`,
+`content`,
+`updatedAt`,
+UK (`userId`, `campaignId`)
+)
 
-- `id SERIAL PRIMARY KEY`
-- `code VARCHAR(40) NOT NULL UNIQUE`
-- `name VARCHAR(80) NOT NULL UNIQUE`
-- `description TEXT NULL`
+### SCENE_ELEMENT
 
-### 6. `classes`
+`SCENE_ELEMENT` (
+`id` PK,
+`campaignId` FK -> `CAMPAIGN.id`,
+`type`,
+`name`,
+`description`,
+`quantity`,
+`isVisible`,
+`hp`,
+`maxHp`,
+`attack`,
+`defense`,
+`posX`,
+`posY`,
+`assetId` FK -> `REVELATION_ASSET.id`,
+`createdAt`,
+`updatedAt`
+)
 
-- `id SERIAL PRIMARY KEY`
-- `code VARCHAR(40) NOT NULL UNIQUE`
-- `name VARCHAR(80) NOT NULL UNIQUE`
-- `description TEXT NULL`
+### ACTION_ROLL
 
-### 7. `game_actors`
+`ACTION_ROLL` (
+`id` PK,
+`campaignId` FK -> `CAMPAIGN.id`,
+`playerUserId`,
+`actionText`,
+`dieSides`,
+`totalFailureMax`,
+`successMin`,
+`totalSuccessMin`,
+`targetType`,
+`targetElementId`,
+`targetUserId`,
+`consequenceType`,
+`consequenceAmount`,
+`consequenceText`,
+`totalFailureConsequenceType`,
+`totalFailureConsequenceAmount`,
+`totalFailureConsequenceText`,
+`failureConsequenceType`,
+`failureConsequenceAmount`,
+`failureConsequenceText`,
+`successConsequenceType`,
+`successConsequenceAmount`,
+`successConsequenceText`,
+`totalSuccessConsequenceType`,
+`totalSuccessConsequenceAmount`,
+`totalSuccessConsequenceText`,
+`status`,
+`result`,
+`createdAt`,
+`updatedAt`
+)
 
-- `id UUID PRIMARY KEY`
-- `campaign_id UUID NOT NULL REFERENCES campaigns(id)`
-- `owner_member_id UUID NULL REFERENCES campaign_members(id)`
-- `actor_type VARCHAR(30) NOT NULL CHECK (actor_type IN ('PLAYER_CHARACTER','NPC','MONSTER'))`
-- `name VARCHAR(120) NOT NULL`
-- `race_id INT NULL REFERENCES races(id)`
-- `class_id INT NULL REFERENCES classes(id)`
-- `level INT NOT NULL DEFAULT 1`
-- `hp_max INT NOT NULL DEFAULT 0`
-- `hp_current INT NOT NULL DEFAULT 0`
-- `stats_json JSONB NOT NULL DEFAULT '{}'::jsonb`
-- `mj_notes TEXT NULL`
-- `is_active BOOLEAN NOT NULL DEFAULT TRUE`
-- `created_at TIMESTAMP NOT NULL`
-- `updated_at TIMESTAMP NOT NULL`
+### ITEM
 
-Contraintes metier recommandees :
+`ITEM` (
+`id` PK,
+`slug` UK,
+`name`,
+`type`,
+`imageFile`,
+`description`,
+`equipable`,
+`createdAt`
+)
 
-- si `actor_type = 'PLAYER_CHARACTER'` alors `owner_member_id IS NOT NULL`
-- si `actor_type IN ('NPC','MONSTER')` alors `owner_member_id IS NULL`
+### INVENTORY_ENTRY
 
-### 8. `scenes`
+`INVENTORY_ENTRY` (
+`id` PK,
+`campaignId` FK -> `CAMPAIGN.id`,
+`userId` FK -> `USER.id`,
+`itemId` FK -> `ITEM.id`,
+`quantity`,
+`equipped`,
+`bonusMaxHp`,
+`bonusAttack`,
+`bonusDefense`,
+`bonusSpeed`,
+`bonusMagic`,
+`effectHp`,
+`createdAt`
+)
 
-- `id UUID PRIMARY KEY`
-- `campaign_id UUID NOT NULL REFERENCES campaigns(id)`
-- `title VARCHAR(120) NOT NULL`
-- `summary TEXT NULL`
-- `gm_notes TEXT NULL`
-- `display_order INT NOT NULL DEFAULT 0`
-- `status VARCHAR(20) NOT NULL CHECK (status IN ('PREPARED','LIVE','ARCHIVED'))`
-- `created_at TIMESTAMP NOT NULL`
-- `updated_at TIMESTAMP NOT NULL`
+### TRADE_OFFER
 
-### 9. `scene_visuals`
+`TRADE_OFFER` (
+`id` PK,
+`campaignId` FK -> `CAMPAIGN.id`,
+`fromUserId`,
+`toUserId`,
+`offeredEntryId`,
+`offeredQty`,
+`requestedEntryId`,
+`requestedQty`,
+`status`,
+`createdAt`,
+`updatedAt`
+)
 
-- `id UUID PRIMARY KEY`
-- `scene_id UUID NOT NULL REFERENCES scenes(id)`
-- `label VARCHAR(120) NOT NULL`
-- `media_type VARCHAR(20) NOT NULL CHECK (media_type IN ('IMAGE','MAP','BACKGROUND'))`
-- `asset_url TEXT NOT NULL`
-- `created_at TIMESTAMP NOT NULL`
+### REVELATION_ASSET
 
-### 10. `visual_shares`
+`REVELATION_ASSET` (
+`id` PK,
+`type`,
+`name`,
+`imageDataUrl`,
+`createdAt`,
+`updatedAt`
+)
 
-- `id UUID PRIMARY KEY`
-- `visual_id UUID NOT NULL REFERENCES scene_visuals(id)`
-- `member_id UUID NOT NULL REFERENCES campaign_members(id)`
-- `granted_by_user_id UUID NOT NULL REFERENCES users(id)`
-- `granted_at TIMESTAMP NOT NULL`
-- `UNIQUE (visual_id, member_id)`
+## MPC / MPD - Modele physique aligne Prisma
 
-### 11. `scene_actor_links`
+### Enums
 
-- `id UUID PRIMARY KEY`
-- `scene_id UUID NOT NULL REFERENCES scenes(id)`
-- `actor_id UUID NOT NULL REFERENCES game_actors(id)`
-- `narrative_role VARCHAR(30) NULL`
-- `visibility_scope VARCHAR(20) NOT NULL CHECK (visibility_scope IN ('GM_ONLY','ALL_PLAYERS'))`
-- `UNIQUE (scene_id, actor_id)`
+```text
+AccountStatus = ACTIVE | DISABLED
+CampaignStatus = DRAFT | ACTIVE | CLOSED
+MemberRole = GM | PLAYER
+SceneElementType = ENEMY | NPC | OBJECT | NARRATION | PLAYER
+ItemType = WEAPON | SHIELD | CONSUMABLE | MISC
+TradeStatus = PENDING | ACCEPTED | REFUSED | CANCELLED
+ActionRollStatus = PENDING | ROLLED | RESOLVED | CANCELLED
+ActionRollTargetType = NONE | PLAYER | ELEMENT
+ActionRollConsequenceType = NONE | NARRATION | DAMAGE_TARGET | DAMAGE_PLAYER | DELETE_TARGET
+```
 
-### 12. `combats`
+### Tables et contraintes
 
-- `id UUID PRIMARY KEY`
-- `campaign_id UUID NOT NULL REFERENCES campaigns(id)`
-- `scene_id UUID NULL REFERENCES scenes(id)`
-- `initiated_by_user_id UUID NOT NULL REFERENCES users(id)`
-- `status VARCHAR(20) NOT NULL CHECK (status IN ('PLANNED','LIVE','PAUSED','ENDED'))`
-- `round_no INT NOT NULL DEFAULT 1`
-- `mj_validated BOOLEAN NOT NULL DEFAULT FALSE`
-- `started_at TIMESTAMP NULL`
-- `ended_at TIMESTAMP NULL`
+#### User
 
-### 13. `combat_participants`
+- `id String @id @default(uuid())`
+- `email String @unique`
+- `username String @unique`
+- `passwordHash String`
+- `status AccountStatus @default(ACTIVE)`
+- `createdAt DateTime @default(now())`
+- `updatedAt DateTime @updatedAt`
 
-- `id UUID PRIMARY KEY`
-- `combat_id UUID NOT NULL REFERENCES combats(id)`
-- `actor_id UUID NOT NULL REFERENCES game_actors(id)`
-- `side VARCHAR(20) NOT NULL CHECK (side IN ('PLAYERS','OPPONENTS','NEUTRAL'))`
-- `initiative INT NULL`
-- `current_hp INT NOT NULL`
-- `status VARCHAR(20) NOT NULL CHECK (status IN ('READY','ACTIVE','KO','DEAD','FLED'))`
-- `UNIQUE (combat_id, actor_id)`
+Relations :
 
-### 14. `combat_actions`
+- 1 utilisateur -> 0,n sessions
+- 1 utilisateur -> 0,n campagnes en tant que MJ
+- 1 utilisateur -> 0,n adhesions de campagne
+- 1 utilisateur -> 0,n fiches personnage
+- 1 utilisateur -> 0,n notes
+- 1 utilisateur -> 0,n entrees d'inventaire
 
-- `id UUID PRIMARY KEY`
-- `combat_id UUID NOT NULL REFERENCES combats(id)`
-- `source_participant_id UUID NOT NULL REFERENCES combat_participants(id)`
-- `target_participant_id UUID NULL REFERENCES combat_participants(id)`
-- `action_type VARCHAR(30) NOT NULL CHECK (action_type IN ('ATTACK','SPELL','ITEM','DEFEND','MANUAL_ADJUST','FLEE'))`
-- `action_label VARCHAR(120) NOT NULL`
-- `damage_value INT NULL`
-- `healing_value INT NULL`
-- `result_text TEXT NULL`
-- `validated_by_user_id UUID NOT NULL REFERENCES users(id)`
-- `performed_at TIMESTAMP NOT NULL`
+#### Session
 
-### 15. `rewards`
+- `id String @id @default(uuid())`
+- `tokenHash String @unique`
+- `userId String`
+- `expiresAt DateTime`
+- `createdAt DateTime @default(now())`
 
-- `id UUID PRIMARY KEY`
-- `campaign_id UUID NOT NULL REFERENCES campaigns(id)`
-- `created_by_user_id UUID NOT NULL REFERENCES users(id)`
-- `reward_type VARCHAR(20) NOT NULL CHECK (reward_type IN ('XP','ITEM','GOLD','STORY','CUSTOM'))`
-- `label VARCHAR(120) NOT NULL`
-- `description TEXT NULL`
-- `numeric_value NUMERIC(10,2) NULL`
-- `created_at TIMESTAMP NOT NULL`
+Index :
 
-### 16. `reward_assignments`
+- `userId`
+- `expiresAt`
 
-- `id UUID PRIMARY KEY`
-- `reward_id UUID NOT NULL REFERENCES rewards(id)`
-- `campaign_id UUID NOT NULL REFERENCES campaigns(id)`
-- `actor_id UUID NULL REFERENCES game_actors(id)`
-- `granted_by_user_id UUID NOT NULL REFERENCES users(id)`
-- `combat_id UUID NULL REFERENCES combats(id)`
-- `scene_id UUID NULL REFERENCES scenes(id)`
-- `quantity NUMERIC(10,2) NOT NULL DEFAULT 1`
-- `granted_at TIMESTAMP NOT NULL`
+Suppression :
 
-Contrainte metier recommandee :
+- suppression en cascade si l'utilisateur est supprime
 
-- `actor_id IS NULL` signifie attribution au groupe de campagne
+#### Campaign
 
-## Lecture rapide du modele
+- `id String @id @default(uuid())`
+- `gmUserId String`
+- `title String`
+- `joinCode String @unique`
+- `status CampaignStatus @default(DRAFT)`
+- `startedAt DateTime?`
+- `endedAt DateTime?`
+- `createdAt DateTime @default(now())`
+- `updatedAt DateTime @updatedAt`
+- `scenePreset String @default("RUINS")`
+- `sceneTitle String @default("Les ruines sous la pluie")`
+- `sceneText String @default("Un grondement sourd traverse les pierres anciennes.")`
 
-- `users`, `campaigns`, `campaign_members` couvrent l'authentification et les roles.
-- `game_actors` couvre a la fois les personnages joueurs, PNJ et monstres.
-- `scenes`, `scene_visuals`, `visual_shares` couvrent la narration et la visibilite.
-- `combats`, `combat_participants`, `combat_actions` couvrent la gestion de combat.
-- `rewards`, `reward_assignments` couvrent la proposition et l'attribution des recompenses.
+Relations :
+
+- 1 campagne -> 1 MJ principal
+- 1 campagne -> 0,n membres
+- 1 campagne -> 0,n fiches personnage
+- 1 campagne -> 0,n elements de scene
+- 1 campagne -> 0,n jets d'action
+- 1 campagne -> 0,n inventaires
+- 1 campagne -> 0,n offres d'echange
+
+#### CampaignMember
+
+- `id String @id @default(uuid())`
+- `campaignId String`
+- `userId String`
+- `role MemberRole`
+- `isReady Boolean @default(false)`
+- `joinedAt DateTime @default(now())`
+
+Contraintes :
+
+- `@@unique([campaignId, userId])`
+- `@@index([userId])`
+- `@@index([campaignId, role])`
+
+#### CharacterSheet
+
+- `id String @id @default(uuid())`
+- `userId String`
+- `campaignId String`
+- `charId Int`
+- `charName String`
+- `hp Int @default(0)`
+- `maxHp Int @default(0)`
+- `attack Int @default(0)`
+- `defense Int @default(0)`
+- `speed Int @default(0)`
+- `magic Int @default(0)`
+- `level Int @default(1)`
+- `updatedAt DateTime @updatedAt`
+
+Contraintes :
+
+- `@@unique([userId, campaignId])`
+- `@@index([userId, campaignId])`
+
+#### PlayerNote
+
+- `id String @id @default(uuid())`
+- `userId String`
+- `campaignId String`
+- `content String @default("")`
+- `updatedAt DateTime @updatedAt`
+
+Contraintes :
+
+- `@@unique([userId, campaignId])`
+- `@@index([userId, campaignId])`
+
+#### SceneElement
+
+- `id String @id @default(uuid())`
+- `campaignId String`
+- `type SceneElementType`
+- `name String`
+- `description String @default("")`
+- `quantity Int @default(1)`
+- `isVisible Boolean @default(true)`
+- `hp Int @default(0)`
+- `maxHp Int @default(0)`
+- `attack Int @default(0)`
+- `defense Int @default(0)`
+- `posX Float @default(50)`
+- `posY Float @default(50)`
+- `assetId String?`
+- `createdAt DateTime @default(now())`
+- `updatedAt DateTime @updatedAt`
+
+Contraintes :
+
+- `@@index([campaignId, isVisible])`
+- `@@index([assetId])`
+
+#### ActionRoll
+
+- `id String @id @default(uuid())`
+- `campaignId String`
+- `playerUserId String`
+- `actionText String`
+- `dieSides Int @default(20)`
+- `totalFailureMax Int @default(4)`
+- `successMin Int @default(12)`
+- `totalSuccessMin Int @default(18)`
+- `targetType ActionRollTargetType @default(NONE)`
+- `targetElementId String?`
+- `targetUserId String?`
+- consequences par type de resultat
+- `status ActionRollStatus @default(PENDING)`
+- `result Int?`
+- `createdAt DateTime @default(now())`
+- `updatedAt DateTime @updatedAt`
+
+Contraintes :
+
+- `@@index([campaignId, status])`
+- `@@index([playerUserId, status])`
+- `@@index([targetElementId])`
+- `@@index([targetUserId])`
+
+#### Item
+
+- `id String @id @default(uuid())`
+- `slug String @unique`
+- `name String`
+- `type ItemType`
+- `imageFile String`
+- `description String @default("")`
+- `equipable Boolean @default(false)`
+- `createdAt DateTime @default(now())`
+
+Contraintes :
+
+- `@@index([type])`
+
+#### InventoryEntry
+
+- `id String @id @default(uuid())`
+- `campaignId String`
+- `userId String`
+- `itemId String`
+- `quantity Int @default(1)`
+- `equipped Boolean @default(false)`
+- `bonusMaxHp Int @default(0)`
+- `bonusAttack Int @default(0)`
+- `bonusDefense Int @default(0)`
+- `bonusSpeed Int @default(0)`
+- `bonusMagic Int @default(0)`
+- `effectHp Int @default(0)`
+- `createdAt DateTime @default(now())`
+
+Contraintes :
+
+- `@@index([campaignId, userId])`
+- `@@index([itemId])`
+
+#### TradeOffer
+
+- `id String @id @default(uuid())`
+- `campaignId String`
+- `fromUserId String`
+- `toUserId String`
+- `offeredEntryId String`
+- `offeredQty Int @default(1)`
+- `requestedEntryId String?`
+- `requestedQty Int @default(1)`
+- `status TradeStatus @default(PENDING)`
+- `createdAt DateTime @default(now())`
+- `updatedAt DateTime @updatedAt`
+
+Contraintes :
+
+- `@@index([campaignId, toUserId, status])`
+- `@@index([campaignId, fromUserId, status])`
+
+#### RevelationAsset
+
+- `id String @id @default(uuid())`
+- `type SceneElementType`
+- `name String`
+- `imageDataUrl String`
+- `createdAt DateTime @default(now())`
+- `updatedAt DateTime @updatedAt`
+
+Contraintes :
+
+- `@@index([type])`
+
+## Ecarts avec le besoin initial
+
+Certaines entites du besoin initial ne sont pas presentes comme tables dediees dans le schema actuel :
+
+- `InvitationCampagne` : remplacee dans l'application par un code de participation `joinCode`.
+- `Scene` : la campagne porte actuellement la scene courante avec `scenePreset`, `sceneTitle`, `sceneText`.
+- `Combat` : la logique de confrontation est representee par les jets d'action `ActionRoll`.
+- `Reward` / `AttributionRecompense` : la recompense est actuellement couverte par les objets et l'inventaire.
+- `Race` / `Metier` : les personnages utilisent actuellement `charId` et des statistiques calculees cote serveur.
+
+Ces choix sont acceptables pour un MVP, mais doivent etre expliques au jury comme des arbitrages de perimetre.
+
+## Points a citer dans le dossier professionnel
+
+- Le modele respecte une separation claire entre compte, campagne, role et donnees de jeu.
+- Les droits sont modelises par `CampaignMember.role`.
+- Les donnees visibles par les joueurs sont filtrees par `SceneElement.isVisible`.
+- L'authentification repose sur des sessions serveur stockees en base.
+- Les objets et inventaires permettent une evolution vers une gestion plus complete des recompenses.
+- Les jets d'action permettent une resolution semi-assistee en laissant le MJ garder le controle.
+
+## Ameliorations possibles du modele
+
+Pour une version plus avancee, il serait pertinent d'ajouter :
+
+- une table `Invitation` avec token d'invitation et expiration
+- une table `Scene` pour historiser les scenes au lieu de stocker uniquement la scene courante
+- une table `Combat` pour gerer les combats longs, rounds et participants
+- une table `Reward` pour distinguer clairement recompenses et objets
+- des tables `Race` et `Class` si les races et metiers deviennent administrables
+- des cles etrangeres explicites sur `TradeOffer.fromUserId`, `TradeOffer.toUserId`, `offeredEntryId`, `requestedEntryId`
+- des cles etrangeres explicites sur `ActionRoll.playerUserId`, `targetUserId`, `targetElementId`
 
 ## Conclusion
 
-Pour ton dossier professionnel, ce modele est coherent avec le MVP decrit dans `projet.txt` et
-montre que tu sais :
+Le modele actuel est coherent avec le MVP implemente. Il permet de demontrer :
 
-- analyser le besoin
-- isoler les entites metier
-- gerer les roles et les droits
-- proposer une persistance relationnelle exploitable
-- preparer la suite du developpement
-
-Si tu veux, l'etape suivante logique est de te produire soit :
-
-- un `MLD` formel en notation relationnelle
-- un `script SQL PostgreSQL`
-- un `schema Prisma`
-- ou un `diagramme UML de cas d'utilisation` pour le dossier
+- la conception d'un modele relationnel
+- la gestion des roles et des droits
+- la securisation des sessions
+- la persistance des campagnes et des donnees de jeu
+- l'utilisation d'un ORM pour acceder a PostgreSQL
+- une architecture evolutive vers des scenes, combats et recompenses plus detailles
