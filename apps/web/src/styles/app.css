@@ -720,6 +720,7 @@ label, legend {
 .trade-mode-btn--active { background: var(--paper); color: var(--ink); box-shadow: var(--shadow-sm); }
 .trade-form__label { font-size: 0.85rem; }
 .trade-form__msg { font-size: 0.85rem; color: var(--seal); font-weight: 600; }
+.trade-form__hint { font-size: 0.78rem; color: var(--ink-soft); font-style: italic; margin: -0.2rem 0 0.1rem; }
 
 /* ============================================================
    MODALE JOUEUR (MJ) + DONNER OBJET

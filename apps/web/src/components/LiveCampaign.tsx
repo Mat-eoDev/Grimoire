@@ -1142,6 +1142,9 @@ function PlayerView({ data, visibleElements, positions, scales, actionRolls, sce
             campaignId={data.campaign.id}
             currentUserId={data.members.find((m) => m.id === data.viewer.memberId)?.user.id ?? ""}
             members={data.members}
+            npcTargets={visibleElements
+              .filter((el) => el.type === "NPC" || el.type === "ENEMY")
+              .map((el) => ({ id: el.id, name: el.name, type: el.type }))}
           />
         </div>
       )}

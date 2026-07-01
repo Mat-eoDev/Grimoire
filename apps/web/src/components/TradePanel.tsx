@@ -2,15 +2,16 @@ import { useEffect, useState, useCallback } from "react";
 import { apiFetch, API_URL } from "../lib/api";
 import type { TradeOffer, InventoryEntry, CampaignMemberView } from "../lib/types";
 
+type NpcTarget = { id: string; name: string; type: string };
+
 type Props = {
   campaignId: string;
   currentUserId: string;
   members: CampaignMemberView[];
+  npcTargets?: NpcTarget[];
 };
 
-type OtherInventory = { userId: string; entries: InventoryEntry[] };
-
-export function TradePanel({ campaignId, currentUserId, members }: Props) {
+export function TradePanel({ campaignId, currentUserId, members, npcTargets = [] }: Props) {
   const [trades, setTrades] = useState<TradeOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export function TradePanel({ campaignId, currentUserId, members }: Props) {
   const outgoing = trades.filter((t) => t.fromUserId === currentUserId);
 
   if (loading) return null;
-  if (trades.length === 0 && players.length === 0) return null;
+  if (trades.length === 0 && players.length === 0 && npcTargets.length === 0) return null;
 
   return (
     <div className="trade-panel">
@@ -80,8 +81,8 @@ export function TradePanel({ campaignId, currentUserId, members }: Props) {
         </section>
       )}
 
-      {players.length > 0 && (
-        <TradeForm campaignId={campaignId} currentUserId={currentUserId} players={players} onDone={load} />
+      {(players.length > 0 || npcTargets.length > 0) && (
+        <TradeForm campaignId={campaignId} currentUserId={currentUserId} players={players} npcTargets={npcTargets} onDone={load} />
       )}
     </div>
   );
@@ -147,13 +148,19 @@ type TradeFormProps = {
   campaignId: string;
   currentUserId: string;
   players: CampaignMemberView[];
+  npcTargets: NpcTarget[];
   onDone: () => void;
 };
 
-function TradeForm({ campaignId, currentUserId, players, onDone }: TradeFormProps) {
+function TradeForm({ campaignId, players, npcTargets, onDone }: TradeFormProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"gift" | "trade">("gift");
-  const [targetId, setTargetId] = useState(players[0]?.user.id ?? "");
+  const firstTarget = players[0]
+    ? `player:${players[0].user.id}`
+    : npcTargets[0]
+      ? `npc:${npcTargets[0].id}`
+      : "";
+  const [target, setTarget] = useState(firstTarget);
   const [myEntries, setMyEntries] = useState<InventoryEntry[]>([]);
   const [theirEntries, setTheirEntries] = useState<InventoryEntry[]>([]);
   const [offeredEntryId, setOfferedEntryId] = useState("");
@@ -163,6 +170,10 @@ function TradeForm({ campaignId, currentUserId, players, onDone }: TradeFormProp
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
+  const isNpc = target.startsWith("npc:");
+  const targetId = target.split(":")[1] ?? "";
+  const effectiveMode = isNpc ? "gift" : mode;
+
   useEffect(() => {
     if (!open) return;
     apiFetch<{ entries: InventoryEntry[] }>(`/campaigns/${campaignId}/inventory`)
@@ -171,19 +182,25 @@ function TradeForm({ campaignId, currentUserId, players, onDone }: TradeFormProp
   }, [open, campaignId]);
 
   useEffect(() => {
-    if (!open || !targetId) return;
+    if (!open || !targetId || isNpc) { setTheirEntries([]); return; }
     setTheirEntries([]);
     setRequestedEntryId("");
     apiFetch<{ entries: InventoryEntry[] }>(`/campaigns/${campaignId}/players/${targetId}/inventory`)
       .then((d) => { setTheirEntries(d.entries); if (d.entries[0]) setRequestedEntryId(d.entries[0].id); })
       .catch(() => {});
-  }, [open, targetId, campaignId]);
+  }, [open, targetId, isNpc, campaignId]);
 
   async function submit() {
     setBusy(true);
     setMsg("");
     try {
-      if (mode === "gift") {
+      if (isNpc) {
+        const data = await apiFetch<{ to: string; item: string }>(
+          `/campaigns/${campaignId}/inventory/give-npc`,
+          { method: "POST", json: { entryId: offeredEntryId, targetElementId: targetId, qty: offeredQty } }
+        );
+        setMsg(`✓ ${data.item} donné à ${data.to}.`);
+      } else if (mode === "gift") {
         const data = await apiFetch<{ to: string }>(
           `/campaigns/${campaignId}/inventory/player-give`,
           { method: "POST", json: { entryId: offeredEntryId, toUserId: targetId, qty: offeredQty } }
@@ -222,19 +239,32 @@ function TradeForm({ campaignId, currentUserId, players, onDone }: TradeFormProp
   return (
     <div className="trade-form">
       <div className="trade-form__mode">
-        <button className={`trade-mode-btn${mode === "gift" ? " trade-mode-btn--active" : ""}`} onClick={() => setMode("gift")}>🎁 Don</button>
-        <button className={`trade-mode-btn${mode === "trade" ? " trade-mode-btn--active" : ""}`} onClick={() => setMode("trade")}>⚖️ Échange</button>
+        <button className={`trade-mode-btn${effectiveMode === "gift" ? " trade-mode-btn--active" : ""}`} onClick={() => setMode("gift")}>🎁 Don</button>
+        <button className={`trade-mode-btn${effectiveMode === "trade" ? " trade-mode-btn--active" : ""}`} onClick={() => !isNpc && setMode("trade")} disabled={isNpc}>⚖️ Échange</button>
       </div>
 
       <label className="trade-form__label">
-        Joueur
-        <select value={targetId} onChange={(e) => setTargetId(e.target.value)}>
-          {players.map((p) => <option key={p.user.id} value={p.user.id}>{p.user.username}</option>)}
+        Destinataire
+        <select value={target} onChange={(e) => setTarget(e.target.value)}>
+          {players.length > 0 && (
+            <optgroup label="Joueurs">
+              {players.map((p) => <option key={p.user.id} value={`player:${p.user.id}`}>{p.user.username}</option>)}
+            </optgroup>
+          )}
+          {npcTargets.length > 0 && (
+            <optgroup label="Personnages de la scène">
+              {npcTargets.map((n) => <option key={n.id} value={`npc:${n.id}`}>{n.name}</option>)}
+            </optgroup>
+          )}
         </select>
       </label>
 
+      {isNpc && (
+        <p className="trade-form__hint">Don narratif : l'objet quitte ton sac (le personnage n'a pas d'inventaire réel).</p>
+      )}
+
       <label className="trade-form__label">
-        {mode === "gift" ? "Objet à donner" : "Mon objet"}
+        {effectiveMode === "gift" ? "Objet à donner" : "Mon objet"}
         {myEntries.length === 0
           ? <span style={{ color: "var(--ink-soft)", fontSize: "0.82rem" }}>Inventaire vide</span>
           : <select value={offeredEntryId} onChange={(e) => setOfferedEntryId(e.target.value)}>
@@ -244,13 +274,13 @@ function TradeForm({ campaignId, currentUserId, players, onDone }: TradeFormProp
 
       {offeredEntry && offeredEntry.quantity > 1 && (
         <label className="trade-form__label">
-          Quantité à {mode === "gift" ? "donner" : "offrir"}
+          Quantité à {effectiveMode === "gift" ? "donner" : "offrir"}
           <input type="number" min={1} max={offeredEntry.quantity} value={offeredQty}
             onChange={(e) => setOfferedQty(Math.max(1, Math.min(offeredEntry.quantity, Number(e.target.value))))} />
         </label>
       )}
 
-      {mode === "trade" && (
+      {effectiveMode === "trade" && (
         <>
           <label className="trade-form__label">
             Objet demandé (de {players.find((p) => p.user.id === targetId)?.user.username})
@@ -275,8 +305,8 @@ function TradeForm({ campaignId, currentUserId, players, onDone }: TradeFormProp
 
       <div className="trade-form__actions">
         <button className="trade-btn trade-btn--cancel" onClick={() => setOpen(false)}>Annuler</button>
-        <button className="trade-btn trade-btn--accept" disabled={busy || !offeredEntryId || (mode === "trade" && !requestedEntryId)} onClick={submit}>
-          {busy ? "..." : mode === "gift" ? "Donner" : "Proposer"}
+        <button className="trade-btn trade-btn--accept" disabled={busy || !offeredEntryId || (effectiveMode === "trade" && !requestedEntryId)} onClick={submit}>
+          {busy ? "..." : effectiveMode === "gift" ? "Donner" : "Proposer"}
         </button>
       </div>
     </div>
