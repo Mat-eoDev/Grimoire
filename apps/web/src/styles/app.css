@@ -1023,13 +1023,29 @@ label, legend {
 .media-scene__element {
   display: grid;
   grid-template-columns: 44px 1fr;
-  grid-template-areas: "icon body" "actions actions";
+  grid-template-areas: "icon body" "size size" "actions actions";
   gap: 0.4rem 0.7rem;
   padding: 0.6rem;
   background: var(--paper-2);
   border: 1px solid var(--line-soft);
   border-radius: var(--r-sm);
 }
+.media-scene__size {
+  grid-area: size;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.media-scene__size > span { font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+.media-scene__size > b { font-family: var(--font-mono); font-size: 0.82rem; min-width: 3ch; text-align: center; }
+.media-scene__size button {
+  width: 30px; height: 30px; min-height: 30px; padding: 0;
+  border-radius: 8px;
+  font-size: 1rem; line-height: 1;
+  background: var(--paper-sunk); color: var(--ink); box-shadow: none;
+}
+.media-scene__size button:hover { background: var(--line); }
+.media-scene__size button:disabled { opacity: 0.4; }
 .media-scene__icon { grid-area: icon; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px; background: var(--paper); border: 1px solid var(--line-soft); font-weight: 700; overflow: hidden; }
 .media-scene__icon img { width: 100%; height: 100%; object-fit: contain; }
 .media-scene__icon--enemy { color: var(--danger); }

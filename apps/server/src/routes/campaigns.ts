@@ -423,6 +423,7 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
             defense: element.defense,
             posX: element.posX,
             posY: element.posY,
+            scale: element.scale,
             asset: element.asset
           })),
         assets: revelationAssets,
@@ -629,6 +630,42 @@ campaignsRouter.patch("/campaigns/:campaignId/scene-elements/:elementId/position
       elementId: element.id,
       posX: clamped.posX,
       posY: clamped.posY
+    });
+
+    response.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+});
+
+campaignsRouter.patch("/campaigns/:campaignId/scene-elements/:elementId/scale", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+    const rawScale = Number(body.scale);
+
+    if (!Number.isFinite(rawScale)) {
+      throw new HttpError(400, "Taille invalide");
+    }
+
+    await requireGmCampaign(request.params.campaignId, auth.user.id);
+
+    const element = await prisma.sceneElement.findFirst({
+      where: { id: request.params.elementId, campaignId: request.params.campaignId }
+    });
+    if (!element) throw new HttpError(404, "Element de scene introuvable");
+
+    const scale = Math.max(0.5, Math.min(3, rawScale));
+
+    await prisma.sceneElement.update({
+      where: { id: element.id },
+      data: { scale }
+    });
+
+    sseBroadcast(request.params.campaignId, {
+      type: "element:scaled",
+      elementId: element.id,
+      scale
     });
 
     response.status(204).end();
