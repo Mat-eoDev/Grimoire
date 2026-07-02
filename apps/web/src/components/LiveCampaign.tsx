@@ -694,6 +694,11 @@ function ActionRollGmPanel({
   const [consequences, setConsequences] = useState<ActionRoll["consequences"]>(() => defaultConsequences());
   const [status, setStatus] = useState("");
 
+  const [attackerId, setAttackerId] = useState("");
+  const [attackTargetUserId, setAttackTargetUserId] = useState("");
+  const [attackDamage, setAttackDamage] = useState(3);
+  const [attackStatus, setAttackStatus] = useState("");
+
   const selectableElements = elements.filter((element) => element.type !== "NARRATION");
 
   useEffect(() => {
@@ -769,8 +774,51 @@ function ActionRollGmPanel({
     await onRollClose(roll.id);
   }
 
+  async function handleEnemyAttack() {
+    if (!attackerId || !attackTargetUserId) return;
+    setAttackStatus("");
+    try {
+      await apiFetch(`/campaigns/${campaignId}/scene-elements/${attackerId}/attack`, {
+        method: "POST",
+        json: { targetUserId: attackTargetUserId, amount: attackDamage }
+      });
+      setAttackStatus("Attaque infligée ✓");
+      setTimeout(() => setAttackStatus(""), 2500);
+    } catch (error) {
+      setAttackStatus(error instanceof Error ? error.message : "Attaque impossible");
+    }
+  }
+
   return (
     <section className="action-roll live-panel">
+      <div className="enemy-attack" style={{ marginBottom: "1rem", paddingBottom: "1rem", borderBottom: "1px solid var(--paper-sunk, rgba(0,0,0,0.12))" }}>
+        <p className="live-kicker">Attaque ennemie</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
+          <label>Attaquant
+            <select value={attackerId} onChange={(event) => setAttackerId(event.target.value)}>
+              <option value="">Choisir…</option>
+              {selectableElements.map((element) => (
+                <option key={element.id} value={element.id}>{element.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>Joueur cible
+            <select value={attackTargetUserId} onChange={(event) => setAttackTargetUserId(event.target.value)}>
+              <option value="">Choisir…</option>
+              {players.map((player) => (
+                <option key={player.userId} value={player.userId}>{player.charName} ({player.hp}/{player.maxHp})</option>
+              ))}
+            </select>
+          </label>
+          <label>Dégâts
+            <input type="number" min={1} max={999} value={attackDamage} onChange={(event) => setAttackDamage(Math.max(1, Number(event.target.value)))} />
+          </label>
+        </div>
+        <button type="button" onClick={handleEnemyAttack} disabled={!attackerId || !attackTargetUserId} style={{ marginTop: "0.6rem" }}>
+          Infliger l'attaque
+        </button>
+        {attackStatus && <p className="action-roll__status">{attackStatus}</p>}
+      </div>
       <p className="live-kicker">Resolution d'action</p>
       {activeRoll ? (
         <div className="action-roll__active">

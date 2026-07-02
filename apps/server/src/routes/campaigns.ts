@@ -519,6 +519,60 @@ campaignsRouter.post("/campaigns/:campaignId/scene-elements", async (request, re
   }
 });
 
+// Un element (ennemi / PNJ) attaque un joueur : le MJ inflige des degats a un personnage.
+campaignsRouter.post("/campaigns/:campaignId/scene-elements/:elementId/attack", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    const body = request.body as Record<string, unknown>;
+    const targetUserId = assertString(body.targetUserId, "targetUserId");
+    const amount = Math.max(1, toInteger(body.amount, 1));
+
+    await requireGmCampaign(request.params.campaignId, auth.user.id);
+
+    const attacker = await prisma.sceneElement.findFirst({
+      where: { id: request.params.elementId, campaignId: request.params.campaignId }
+    });
+    if (!attacker) {
+      throw new HttpError(404, "Element attaquant introuvable");
+    }
+    if (attacker.type === SceneElementType.NARRATION) {
+      throw new HttpError(400, "Un element de narration ne peut pas attaquer");
+    }
+
+    const sheet = await prisma.characterSheet.findUnique({
+      where: { userId_campaignId: { userId: targetUserId, campaignId: request.params.campaignId } },
+      include: { user: { select: { username: true } } }
+    });
+    if (!sheet) {
+      throw new HttpError(404, "Personnage cible introuvable");
+    }
+
+    const newHp = Math.max(0, sheet.hp - amount);
+    await prisma.characterSheet.update({
+      where: { id: sheet.id },
+      data: { hp: newHp }
+    });
+
+    // Trace visible dans la scene (journal de combat).
+    await prisma.sceneElement.create({
+      data: {
+        campaignId: request.params.campaignId,
+        type: SceneElementType.NARRATION,
+        name: "Attaque",
+        description: `${attacker.name} attaque ${sheet.charName || sheet.user.username} (-${amount} PV)`,
+        quantity: 1,
+        isVisible: true
+      }
+    });
+
+    sseBroadcast(request.params.campaignId, { type: "campaign:changed" });
+
+    response.json({ ok: true, targetUserId, hp: newHp });
+  } catch (error) {
+    next(error);
+  }
+});
+
 campaignsRouter.patch("/campaigns/:campaignId/scene-elements/:elementId", async (request, response, next) => {
   try {
     const auth = requireAuth(request);
