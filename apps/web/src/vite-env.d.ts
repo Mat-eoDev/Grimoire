@@ -11,6 +11,7 @@ declare module "@3d-dice/dice-box" {
     friction?: number;
     restitution?: number;
     enableShadows?: boolean;
+    offscreen?: boolean;
   };
 
   export default class DiceBox {

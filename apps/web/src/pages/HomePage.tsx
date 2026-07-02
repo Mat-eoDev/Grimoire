@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../lib/api";
 import type { CampaignSummaryResponse, SessionPayload } from "../lib/types";
@@ -20,6 +20,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -28,7 +29,7 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [title, setTitle] = useState("");
-  const [joinCode, setJoinCode] = useState("");
+  const [joinCode, setJoinCode] = useState(() => (searchParams.get("code") ?? "").toUpperCase());
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 

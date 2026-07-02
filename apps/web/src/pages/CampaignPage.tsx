@@ -38,6 +38,7 @@ export function CampaignPage({ session, onLogout }: Props) {
   const [actionLoading, setActionLoading] = useState(false);
   const [readyLoading, setReadyLoading]   = useState(false);
   const [copied, setCopied]           = useState(false);
+  const [inviteFeedback, setInviteFeedback] = useState<string | null>(null);
   const [refreshKey, setRefreshKey]   = useState(0);
 
   const [character, setCharacter] = useState<CharacterChoice | null>(() => {
@@ -109,6 +110,32 @@ export function CampaignPage({ session, onLogout }: Props) {
     navigator.clipboard.writeText(data.campaign.joinCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleInvite() {
+    if (!data) return;
+    const url = `${window.location.origin}/?code=${data.campaign.joinCode}`;
+    const text = `Rejoins ma campagne "${data.campaign.title}" sur Grimoire ! Code : ${data.campaign.joinCode}`;
+
+    // Partage natif (Messages, Teams, Mail…) si disponible.
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Invitation Grimoire", text, url });
+        return;
+      } catch (err) {
+        // L'utilisateur a annulé le partage : on ne fait rien de plus.
+        if (err instanceof Error && err.name === "AbortError") return;
+      }
+    }
+
+    // Repli : copie du lien dans le presse-papier.
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setInviteFeedback("Lien d'invitation copié ✓");
+    } catch {
+      setInviteFeedback(url);
+    }
+    setTimeout(() => setInviteFeedback(null), 4000);
   }
 
   function handleCharacterConfirm(choice: CharacterChoice) {
@@ -319,9 +346,11 @@ export function CampaignPage({ session, onLogout }: Props) {
               Invite les derniers joueurs, vérifie le statut et lance la campagne au bon moment.
             </p>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "auto" }}>
-              <button type="button" className="camp-actions-mj__btn">Inviter des joueurs</button>
-              <button type="button" className="camp-actions-mj__btn">Paramètres</button>
+              <button type="button" className="camp-actions-mj__btn" onClick={handleInvite}>Inviter des joueurs</button>
             </div>
+            {inviteFeedback && (
+              <p className="camp-actions-mj__sub" style={{ marginTop: "0.6rem", wordBreak: "break-all" }}>{inviteFeedback}</p>
+            )}
           </div>
 
         </div>
