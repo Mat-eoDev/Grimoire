@@ -798,11 +798,13 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls", async (request, resp
       throw new HttpError(400, "Type de consequence invalide");
     }
 
+    // Le lanceur est un membre de la campagne : un joueur, ou le MJ lui-meme
+    // lorsqu'un element (PNJ/ennemi) attaque et que c'est le MJ qui lance le de.
     const playerMember = await prisma.campaignMember.findUnique({
       where: { campaignId_userId: { campaignId: request.params.campaignId, userId: playerUserId } }
     });
-    if (!playerMember || playerMember.role !== MemberRole.PLAYER) {
-      throw new HttpError(400, "Joueur invalide pour ce jet");
+    if (!playerMember) {
+      throw new HttpError(400, "Lanceur invalide pour ce jet");
     }
 
     if (targetType === ActionRollTargetType.ELEMENT) {

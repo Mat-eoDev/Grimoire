@@ -623,6 +623,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
             <div className="gm__panel">
               <ActionRollGmPanel
                 campaignId={data.campaign.id}
+                gmUserId={data.viewer.userId}
                 members={data.members}
                 players={data.live.players}
                 elements={data.live.elements}
@@ -635,6 +636,12 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
                   setActionRolls((prev) => prev.filter((roll) => roll.id !== rollId));
                   await onReload();
                 }}
+              />
+              <PlayerActionRollPanel
+                campaignId={data.campaign.id}
+                currentUserId={data.viewer.userId}
+                actionRolls={actionRolls}
+                onlyOwnRoll
               />
             </div>
           )}
@@ -667,6 +674,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
 
 function ActionRollGmPanel({
   campaignId,
+  gmUserId,
   members,
   players,
   elements,
@@ -675,6 +683,7 @@ function ActionRollGmPanel({
   onRollClose
 }: {
   campaignId: string;
+  gmUserId: string;
   members: CampaignDetail["members"];
   players: CampaignDetail["live"]["players"];
   elements: CampaignDetail["live"]["elements"];
@@ -684,7 +693,7 @@ function ActionRollGmPanel({
 }) {
   const activeRoll = actionRolls[0] ?? null;
   const [step, setStep] = useState(1);
-  const [playerUserId, setPlayerUserId] = useState(players[0]?.userId ?? "");
+  const [attacker, setAttacker] = useState(players[0] ? `PLAYER:${players[0].userId}` : "");
   const [actionText, setActionText] = useState("");
   const [dieSides, setDieSides] = useState(20);
   const [totalFailureMax, setTotalFailureMax] = useState(4);
@@ -694,21 +703,13 @@ function ActionRollGmPanel({
   const [consequences, setConsequences] = useState<ActionRoll["consequences"]>(() => defaultConsequences());
   const [status, setStatus] = useState("");
 
-  const [attackerId, setAttackerId] = useState("");
-  const [attackTargetUserId, setAttackTargetUserId] = useState("");
-  const [attackDamage, setAttackDamage] = useState(3);
-  const [attackStatus, setAttackStatus] = useState("");
-
   const selectableElements = elements.filter((element) => element.type !== "NARRATION");
 
   useEffect(() => {
-    if (!playerUserId && players[0]) {
-      setPlayerUserId(players[0].userId);
+    if (!attacker && players[0]) {
+      setAttacker(`PLAYER:${players[0].userId}`);
     }
-    if (playerUserId && players.length > 0 && !players.some((player) => player.userId === playerUserId)) {
-      setPlayerUserId(players[0].userId);
-    }
-  }, [playerUserId, players]);
+  }, [attacker, players]);
 
   function resetForm() {
     setStep(1);
@@ -725,15 +726,25 @@ function ActionRollGmPanel({
   }
 
   async function createRoll() {
-    if (!playerUserId || !actionText.trim()) return;
+    if (!attacker || !actionText.trim()) return;
+    const [attackerKind, attackerRefId] = attacker.split(":");
+    // Si l'attaquant est un element (PNJ/ennemi), c'est le MJ qui lance le de.
+    const rollerUserId = attackerKind === "ELEMENT" ? gmUserId : attackerRefId;
+    if (!rollerUserId) return;
+    const attackerElement = attackerKind === "ELEMENT"
+      ? selectableElements.find((element) => element.id === attackerRefId)
+      : null;
+    const finalActionText = attackerElement
+      ? `${attackerElement.name} : ${actionText.trim()}`
+      : actionText.trim();
     const [targetType, targetId] = target.split(":");
     setStatus("Creation...");
     try {
       const data = await apiFetch<{ actionRoll: ActionRoll }>(`/campaigns/${campaignId}/action-rolls`, {
         method: "POST",
         json: {
-          playerUserId,
-          actionText: actionText.trim(),
+          playerUserId: rollerUserId,
+          actionText: finalActionText,
           dieSides,
           totalFailureMax,
           successMin,
@@ -774,51 +785,8 @@ function ActionRollGmPanel({
     await onRollClose(roll.id);
   }
 
-  async function handleEnemyAttack() {
-    if (!attackerId || !attackTargetUserId) return;
-    setAttackStatus("");
-    try {
-      await apiFetch(`/campaigns/${campaignId}/scene-elements/${attackerId}/attack`, {
-        method: "POST",
-        json: { targetUserId: attackTargetUserId, amount: attackDamage }
-      });
-      setAttackStatus("Attaque infligée ✓");
-      setTimeout(() => setAttackStatus(""), 2500);
-    } catch (error) {
-      setAttackStatus(error instanceof Error ? error.message : "Attaque impossible");
-    }
-  }
-
   return (
     <section className="action-roll live-panel">
-      <div className="enemy-attack" style={{ marginBottom: "1rem", paddingBottom: "1rem", borderBottom: "1px solid var(--paper-sunk, rgba(0,0,0,0.12))" }}>
-        <p className="live-kicker">Attaque ennemie</p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
-          <label>Attaquant
-            <select value={attackerId} onChange={(event) => setAttackerId(event.target.value)}>
-              <option value="">Choisir…</option>
-              {selectableElements.map((element) => (
-                <option key={element.id} value={element.id}>{element.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>Joueur cible
-            <select value={attackTargetUserId} onChange={(event) => setAttackTargetUserId(event.target.value)}>
-              <option value="">Choisir…</option>
-              {players.map((player) => (
-                <option key={player.userId} value={player.userId}>{player.charName} ({player.hp}/{player.maxHp})</option>
-              ))}
-            </select>
-          </label>
-          <label>Dégâts
-            <input type="number" min={1} max={999} value={attackDamage} onChange={(event) => setAttackDamage(Math.max(1, Number(event.target.value)))} />
-          </label>
-        </div>
-        <button type="button" onClick={handleEnemyAttack} disabled={!attackerId || !attackTargetUserId} style={{ marginTop: "0.6rem" }}>
-          Infliger l'attaque
-        </button>
-        {attackStatus && <p className="action-roll__status">{attackStatus}</p>}
-      </div>
       <p className="live-kicker">Resolution d'action</p>
       {activeRoll ? (
         <div className="action-roll__active">
@@ -871,9 +839,14 @@ function ActionRollGmPanel({
             <div className="action-roll__page">
               <strong className="action-roll__section-title">1 · L'action</strong>
               <label>
-                Joueur
-                <select value={playerUserId} onChange={(event) => setPlayerUserId(event.target.value)}>
-                  {players.map((player) => <option key={player.userId} value={player.userId}>{player.charName}</option>)}
+                Qui agit
+                <select value={attacker} onChange={(event) => setAttacker(event.target.value)}>
+                  <optgroup label="Joueurs">
+                    {players.map((player) => <option key={player.userId} value={`PLAYER:${player.userId}`}>{player.charName}</option>)}
+                  </optgroup>
+                  <optgroup label="Ennemis / PNJ (le MJ lance le dé)">
+                    {selectableElements.map((element) => <option key={element.id} value={`ELEMENT:${element.id}`}>{element.name}</option>)}
+                  </optgroup>
                 </select>
               </label>
               <label>
@@ -944,7 +917,7 @@ function ActionRollGmPanel({
             {step === 2
               ? <button type="button" className="live-text-button" onClick={() => setStep(1)}>Retour</button>
               : <button type="button" className="live-text-button" onClick={() => setStep(2)}>Régler les effets</button>}
-            <button type="button" onClick={createRoll} disabled={!playerUserId || !actionText.trim()}>Envoyer au joueur</button>
+            <button type="button" onClick={createRoll} disabled={!attacker || !actionText.trim()}>Envoyer le jet</button>
           </div>
         </div>
       )}
@@ -1233,11 +1206,13 @@ function PlayerView({ data, visibleElements, positions, scales, actionRolls, sce
 function PlayerActionRollPanel({
   campaignId,
   currentUserId,
-  actionRolls
+  actionRolls,
+  onlyOwnRoll = false
 }: {
   campaignId: string;
   currentUserId: string;
   actionRolls: ActionRoll[];
+  onlyOwnRoll?: boolean;
 }) {
   const [localRolls, setLocalRolls] = useState(actionRolls);
   const [error, setError] = useState("");
@@ -1247,7 +1222,12 @@ function PlayerActionRollPanel({
   const diceBoxRef = useRef<unknown>(null);
   const diceBoxReadyRef = useRef<Promise<unknown> | null>(null);
   const activeRolls = localRolls.filter((item) => item.status === "PENDING" || item.status === "ROLLED");
-  const roll = activeRolls.find((item) => item.playerUserId === currentUserId) ?? activeRolls[0] ?? null;
+  // En vue MJ (onlyOwnRoll) : on n'affiche que les jets ou le MJ est le lanceur (attaques d'ennemis).
+  // En vue joueur : son propre jet en priorite, sinon le jet actif courant (pour le voir se derouler).
+  const roll = onlyOwnRoll
+    ? (activeRolls.find((item) => item.playerUserId === currentUserId) ?? null)
+    : (activeRolls.find((item) => item.playerUserId === currentUserId) ?? activeRolls[0] ?? null);
+  const canRoll = roll !== null && roll.playerUserId === currentUserId;
 
   useEffect(() => {
     setLocalRolls((prev) => {
@@ -1373,10 +1353,12 @@ function PlayerActionRollPanel({
         <span>Totale {">="} {roll.totalSuccessMin}</span>
       </div>
       {rollStatus && <p className="player-roll-card__status">{rollStatus}</p>}
-      {roll.status === "PENDING" ? (
+      {roll.status === "PENDING" && canRoll ? (
         <button type="button" onClick={() => rollDice(roll)} disabled={isRolling}>
           {isRolling ? "Le de roule..." : `Lancer le d${roll.dieSides}`}
         </button>
+      ) : roll.status === "PENDING" ? (
+        <p className="player-roll-card__status">En attente du lancer…</p>
       ) : (
         <div className="player-roll-card__result">
           <span>Resultat</span>
