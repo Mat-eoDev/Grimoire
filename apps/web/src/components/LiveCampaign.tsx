@@ -168,6 +168,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const [draftName, setDraftName] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
   const [draftQuantity, setDraftQuantity] = useState(1);
+  const [draftHp, setDraftHp] = useState(10);
   const [draftAssetId, setDraftAssetId] = useState("");
   const [libraryTab, setLibraryTab] = useState<"JOUEURS" | keyof typeof ELEMENT_LABELS>("ENEMY");
   const [gmTab, setGmTab] = useState<"scene" | "elements" | "rolls" | "group">("scene");
@@ -311,10 +312,12 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
         name: draftName.trim(),
         description: draftDescription.trim(),
         quantity: draftType === "ENEMY" ? draftQuantity : 1,
+        hp: draftType === "NARRATION" ? undefined : draftHp,
         assetId: draftAssetId || undefined
       }
     });
     setDraftType(null);
+    setDraftHp(10);
     await onReload();
   }
 
@@ -566,6 +569,12 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
                     <label>
                       Quantité
                       <input type="number" min={1} max={20} value={draftQuantity} onChange={(event) => setDraftQuantity(Number(event.target.value))} />
+                    </label>
+                  )}
+                  {draftType !== "NARRATION" && (
+                    <label>
+                      Points de vie (PV)
+                      <input type="number" min={0} max={9999} value={draftHp} onChange={(event) => setDraftHp(Math.max(0, Number(event.target.value)))} />
                     </label>
                   )}
                   {draftType !== "NARRATION" && (
