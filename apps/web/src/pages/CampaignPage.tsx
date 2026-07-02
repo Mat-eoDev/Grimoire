@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router-dom";
 
 import { CharacterSelect, type CharacterChoice } from "../components/CharacterSelect";
 import { CharacterSheet } from "../components/CharacterSheet";
-import { PlayerNotes } from "../components/PlayerNotes";
 import { TradePanel } from "../components/TradePanel";
 import { LiveCampaign } from "../components/LiveCampaign";
 import { apiFetch } from "../lib/api";
@@ -339,7 +338,6 @@ export function CampaignPage({ session, onLogout }: Props) {
             currentUserId={session?.user.id ?? ""}
             members={data.members}
           />
-          <PlayerNotes campaignId={campaignId} />
         </>
       )}
 
