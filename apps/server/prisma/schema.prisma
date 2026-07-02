@@ -64,6 +64,7 @@ enum ActionRollConsequenceType {
   DAMAGE_TARGET
   DAMAGE_PLAYER
   DELETE_TARGET
+  HEAL_PLAYER
 }
 
 model User {
