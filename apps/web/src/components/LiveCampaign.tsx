@@ -868,7 +868,7 @@ function ActionRollGmPanel({
                 Qui agit
                 <select value={attacker} onChange={(event) => setAttacker(event.target.value)}>
                   <optgroup label="Joueurs">
-                    {players.map((player) => <option key={player.userId} value={`PLAYER:${player.userId}`}>{player.charName}</option>)}
+                    {players.filter((player) => player.hp > 0).map((player) => <option key={player.userId} value={`PLAYER:${player.userId}`}>{player.charName}</option>)}
                   </optgroup>
                   <optgroup label="Ennemis / PNJ (le MJ lance le dé)">
                     {selectableElements.map((element) => <option key={element.id} value={`ELEMENT:${element.id}`}>{element.name}</option>)}

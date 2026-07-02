@@ -817,6 +817,16 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls", async (request, resp
       throw new HttpError(400, "Lanceur invalide pour ce jet");
     }
 
+    // Un personnage a terre (0 PV) ne peut pas agir tant qu'il n'est pas soigne.
+    // (Le MJ n'a pas de fiche : rollerSheet = null -> autorise pour les attaques d'ennemis.)
+    const rollerSheet = await prisma.characterSheet.findUnique({
+      where: { userId_campaignId: { userId: playerUserId, campaignId: request.params.campaignId } },
+      select: { hp: true }
+    });
+    if (rollerSheet && rollerSheet.hp <= 0) {
+      throw new HttpError(400, "Ce personnage est a terre (0 PV) : il doit etre soigne avant d'agir");
+    }
+
     if (targetType === ActionRollTargetType.ELEMENT) {
       if (!targetElementId) throw new HttpError(400, "Cible element manquante");
       const target = await prisma.sceneElement.findFirst({
@@ -880,6 +890,14 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/roll", async (
     if (!existing) throw new HttpError(404, "Demande de jet introuvable");
     if (existing.playerUserId !== auth.user.id) throw new HttpError(403, "Ce jet est destine a un autre joueur");
     if (existing.status !== ActionRollStatus.PENDING) throw new HttpError(400, "Ce jet n'est pas en attente");
+
+    const rollerSheet = await prisma.characterSheet.findUnique({
+      where: { userId_campaignId: { userId: existing.playerUserId, campaignId: request.params.campaignId } },
+      select: { hp: true }
+    });
+    if (rollerSheet && rollerSheet.hp <= 0) {
+      throw new HttpError(400, "Ce personnage est a terre (0 PV) : il doit etre soigne avant d'agir");
+    }
 
     const requestedResult = toInteger(body.result, 0);
     const result = requestedResult >= 1 && requestedResult <= existing.dieSides
