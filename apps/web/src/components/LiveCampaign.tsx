@@ -1233,12 +1233,14 @@ function PlayerActionRollPanel({
           container: `#${diceContainerId}`,
           assetPath: "/assets/",
           themeColor: "#d9b36c",
-          scale: 6,
+          scale: 9,
           gravity: 1,
           mass: 1,
           friction: 0.8,
           restitution: 0.1,
-          enableShadows: true
+          enableShadows: true,
+          // Rendu "onscreen" (pas d'OffscreenCanvas) : plus fiable, le de s'affiche a chaque fois.
+          offscreen: false
         });
         await box.init();
         diceBoxRef.current = box;
