@@ -1,3 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import cors from "cors";
 import express from "express";
 
@@ -10,6 +14,19 @@ import { tradesRouter } from "./routes/trades.js";
 import { HttpError } from "./lib/http.js";
 
 export const app = express();
+
+// Derriere le proxy HTTPS de l'hebergeur (Render) : indispensable pour les cookies "secure".
+app.set("trust proxy", 1);
+
+// En production, le serveur sert aussi le build du front React (meme origine => pas de souci CORS/cookies).
+// apps/server/dist/src/app.js -> ../../../web/dist
+const webDistPath = path.resolve(fileURLToPath(new URL(".", import.meta.url)), "../../../web/dist");
+const hasWebBuild = fs.existsSync(path.join(webDistPath, "index.html"));
+
+if (hasWebBuild) {
+  // Fichiers statiques (JS/CSS, images, assets des des 3D) servis sans passer par l'auth.
+  app.use(express.static(webDistPath));
+}
 
 app.use(
   cors({
@@ -31,6 +48,14 @@ app.use("/auth", authRouter);
 app.use("/", campaignsRouter);
 app.use("/", inventoryRouter);
 app.use("/", tradesRouter);
+
+// Fallback SPA : toute autre route GET renvoie index.html (react-router gere la navigation cote client).
+// Place APRES les routes d'API pour ne pas les intercepter.
+if (hasWebBuild) {
+  app.get("*", (_request, response) => {
+    response.sendFile(path.join(webDistPath, "index.html"));
+  });
+}
 
 app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
   if (error instanceof HttpError) {

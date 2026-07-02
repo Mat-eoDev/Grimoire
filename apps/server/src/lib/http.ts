@@ -1,5 +1,7 @@
 import type { Response } from "express";
 
+import { env } from "../env.js";
+
 export class HttpError extends Error {
   statusCode: number;
 
@@ -72,7 +74,7 @@ export function setSessionCookie(response: Response, cookieName: string, token: 
   response.cookie(cookieName, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: env.isProd,
     path: "/",
     maxAge: 1000 * 60 * 60 * 24 * 7
   });
@@ -82,7 +84,7 @@ export function clearSessionCookie(response: Response, cookieName: string) {
   response.cookie(cookieName, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: env.isProd,
     path: "/",
     expires: new Date(0)
   });

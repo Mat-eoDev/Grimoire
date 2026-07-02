@@ -1,0 +1,20 @@
+# Configuration de deploiement Render (Blueprint).
+# App unique : le serveur Express sert l'API + le build React (meme origine).
+services:
+  - type: web
+    name: grimoire
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm run render-build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # A renseigner dans le dashboard Render : la chaine de connexion PostgreSQL de Neon
+      # (elle doit contenir ?sslmode=require).
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_COOKIE_NAME
+        value: newmj_session
