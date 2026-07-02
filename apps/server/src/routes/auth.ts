@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { env } from "../env.js";
 import { clearSessionCookie, HttpError, assertString, setSessionCookie } from "../lib/http.js";
+import { sendWelcomeEmail } from "../lib/mailer.js";
 import { hashPassword, verifyPassword } from "../lib/password.js";
 import { prisma } from "../lib/prisma.js";
 import { createSession, destroySessionById } from "../lib/session.js";
@@ -46,6 +47,9 @@ authRouter.post("/register", async (request, response, next) => {
 
     const { token } = await createSession(user.id);
     setSessionCookie(response, env.sessionCookieName, token);
+
+    // Envoi du mail de bienvenue en arriere-plan (n'impacte pas la reponse ni l'inscription).
+    void sendWelcomeEmail({ to: user.email, username: user.username });
 
     response.status(201).json({ user });
   } catch (error) {

@@ -15,6 +15,11 @@ export const env = {
   port: Number(process.env.PORT ?? 4000),
   databaseUrl: readString("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/newmj?schema=public"),
   clientOrigin: readString("CLIENT_ORIGIN", "http://localhost:5173"),
-  sessionCookieName: readString("SESSION_COOKIE_NAME", "newmj_session")
+  sessionCookieName: readString("SESSION_COOKIE_NAME", "newmj_session"),
+  // Emails (optionnel) : si BREVO_API_KEY est absent, l'envoi est simplement ignore.
+  brevoApiKey: process.env.BREVO_API_KEY ?? "",
+  mailFrom: process.env.MAIL_FROM ?? "",
+  mailFromName: process.env.MAIL_FROM_NAME ?? "Grimoire",
+  appUrl: process.env.APP_URL ?? ""
 };
 
