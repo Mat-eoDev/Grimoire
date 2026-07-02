@@ -18,3 +18,12 @@ services:
         sync: false
       - key: SESSION_COOKIE_NAME
         value: newmj_session
+      # Email de bienvenue (optionnel) — a renseigner dans le dashboard Render.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: Grimoire
+      - key: APP_URL
+        sync: false
