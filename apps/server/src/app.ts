@@ -44,10 +44,10 @@ app.get("/health", (_request, response) => {
   });
 });
 
-app.use("/auth", authRouter);
-app.use("/", campaignsRouter);
-app.use("/", inventoryRouter);
-app.use("/", tradesRouter);
+app.use("/api/auth", authRouter);
+app.use("/api", campaignsRouter);
+app.use("/api", inventoryRouter);
+app.use("/api", tradesRouter);
 
 // Fallback SPA : toute autre route GET renvoie index.html (react-router gere la navigation cote client).
 // Place APRES les routes d'API pour ne pas les intercepter.

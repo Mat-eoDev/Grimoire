@@ -1,5 +1,5 @@
 export const API_URL =
-  import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "" : "http://localhost:4000");
+  import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? "/api" : "http://localhost:4000/api");
 
 type ApiOptions = RequestInit & {
   json?: unknown;
