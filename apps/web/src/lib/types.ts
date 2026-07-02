@@ -119,11 +119,11 @@ export type ActionRoll = {
     hp: number;
     maxHp: number;
   } | null;
-  consequenceType: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET";
+  consequenceType: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET" | "HEAL_PLAYER";
   consequenceAmount: number;
   consequenceText: string;
   consequences: Record<ActionRollOutcome, {
-    type: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET";
+    type: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET" | "HEAL_PLAYER";
     amount: number;
     text: string;
   }>;

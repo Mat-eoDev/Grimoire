@@ -961,6 +961,9 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
     if (!outcome) throw new HttpError(400, "Resultat de jet introuvable");
     const consequence = getStoredOutcomeConsequences(existing)[outcome];
 
+    // Nom du personnage tombe a 0 PV lors de cette resolution (pour l'annonce a tous).
+    let downedName: string | null = null;
+
     if (consequence.type === ActionRollConsequenceType.NARRATION && consequence.text.trim()) {
       await prisma.sceneElement.create({
         data: {
@@ -990,10 +993,12 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
           where: { userId_campaignId: { userId: existing.targetUserId, campaignId: request.params.campaignId } }
         });
         if (sheet) {
+          const newHp = Math.max(0, sheet.hp - consequence.amount);
           await prisma.characterSheet.update({
             where: { id: sheet.id },
-            data: { hp: Math.max(0, sheet.hp - consequence.amount) }
+            data: { hp: newHp }
           });
+          if (newHp === 0 && sheet.hp > 0) downedName = sheet.charName;
         }
       }
     }
@@ -1006,9 +1011,26 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
         where: { userId_campaignId: { userId: targetUserId, campaignId: request.params.campaignId } }
       });
       if (sheet) {
+        const newHp = Math.max(0, sheet.hp - consequence.amount);
         await prisma.characterSheet.update({
           where: { id: sheet.id },
-          data: { hp: Math.max(0, sheet.hp - consequence.amount) }
+          data: { hp: newHp }
+        });
+        if (newHp === 0 && sheet.hp > 0) downedName = sheet.charName;
+      }
+    }
+
+    if (consequence.type === ActionRollConsequenceType.HEAL_PLAYER) {
+      const targetUserId = existing.targetType === ActionRollTargetType.PLAYER && existing.targetUserId
+        ? existing.targetUserId
+        : existing.playerUserId;
+      const sheet = await prisma.characterSheet.findUnique({
+        where: { userId_campaignId: { userId: targetUserId, campaignId: request.params.campaignId } }
+      });
+      if (sheet) {
+        await prisma.characterSheet.update({
+          where: { id: sheet.id },
+          data: { hp: Math.min(sheet.maxHp, sheet.hp + consequence.amount) }
         });
       }
     }
@@ -1031,6 +1053,9 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
 
     sseBroadcast(request.params.campaignId, { type: "action-roll:closed", actionRollId: roll.id });
     sseBroadcast(request.params.campaignId, { type: "campaign:changed" });
+    if (downedName) {
+      sseBroadcast(request.params.campaignId, { type: "player:down", name: downedName });
+    }
     response.json({ actionRoll: await serializeActionRoll(roll) });
   } catch (error) {
     next(error);

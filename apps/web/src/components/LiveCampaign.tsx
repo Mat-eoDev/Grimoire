@@ -133,7 +133,8 @@ const CONSEQUENCE_LABELS: Record<ActionRoll["consequenceType"], string> = {
   NARRATION: "Ajouter une narration",
   DAMAGE_TARGET: "Retirer des PV a la cible",
   DAMAGE_PLAYER: "Retirer des PV au joueur",
-  DELETE_TARGET: "Supprimer la cible"
+  DELETE_TARGET: "Supprimer la cible",
+  HEAL_PLAYER: "Soigner le joueur (+PV)"
 };
 
 const OUTCOME_ORDER: Array<NonNullable<ActionRoll["outcome"]>> = ["TOTAL_FAILURE", "FAILURE", "SUCCESS", "TOTAL_SUCCESS"];
@@ -174,6 +175,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const [gmTab, setGmTab] = useState<"scene" | "elements" | "rolls" | "group">("scene");
   const [search, setSearch] = useState("");
   const [actionRolls, setActionRolls] = useState<ActionRoll[]>(data.live.actionRolls ?? []);
+  const [downedMessage, setDownedMessage] = useState<string | null>(null);
 
   const [positions, setPositions] = useState<Map<string, ElementPos>>(() =>
     new Map(data.live.elements.map((el) => [el.id, { posX: el.posX, posY: el.posY }]))
@@ -224,6 +226,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
           scale?: number;
           actionRoll?: ActionRoll;
           actionRollId?: string;
+          name?: string;
         };
         if (event.type === "element:moved") {
           if (event.elementId && typeof event.posX === "number" && typeof event.posY === "number") {
@@ -243,6 +246,10 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
           void onReload();
         }
         if (event.type === "campaign:changed") {
+          void onReload();
+        }
+        if (event.type === "player:down" && event.name) {
+          setDownedMessage(event.name);
           void onReload();
         }
       } catch {}
@@ -352,17 +359,31 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
     await onReload();
   }
 
+  const deathBanner = downedMessage ? (
+    <div role="alert" style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.6)" }}>
+      <div style={{ maxWidth: 420, margin: "1rem", background: "#1a1206", color: "#f3e4c4", border: "1px solid #c9922b", borderRadius: 16, padding: "1.75rem", textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
+        <div style={{ fontSize: "2.4rem" }}>☠️</div>
+        <h2 style={{ margin: "0.5rem 0", color: "#e9c877" }}>{downedMessage} est tombé au combat !</h2>
+        <p style={{ opacity: 0.85, lineHeight: 1.5 }}>Un allié peut tenter de le soigner… ou son histoire s'arrête ici.</p>
+        <button type="button" onClick={() => setDownedMessage(null)} style={{ marginTop: "1rem", padding: "0.6rem 1.6rem", background: "#c9922b", color: "#1a1206", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer" }}>Fermer</button>
+      </div>
+    </div>
+  ) : null;
+
   if (!isGm) {
     return (
-      <PlayerView
-        data={data}
-        visibleElements={visibleElements}
-        positions={positions}
-        scales={scales}
-        actionRolls={actionRolls}
-        sceneStyle={sceneBackgroundStyle(data.live.scene.preset)}
-        refreshKey={refreshKey}
-      />
+      <>
+        {deathBanner}
+        <PlayerView
+          data={data}
+          visibleElements={visibleElements}
+          positions={positions}
+          scales={scales}
+          actionRolls={actionRolls}
+          sceneStyle={sceneBackgroundStyle(data.live.scene.preset)}
+          refreshKey={refreshKey}
+        />
+      </>
     );
   }
 
@@ -380,6 +401,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
 
   return (
     <main className="live-gm gm">
+      {deathBanner}
       <header className="live-topbar">
         <strong>GRIMOIRE</strong>
         <span>{data.campaign.title}</span>
