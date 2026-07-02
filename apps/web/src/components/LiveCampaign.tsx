@@ -703,7 +703,11 @@ function ActionRollGmPanel({
   const [consequences, setConsequences] = useState<ActionRoll["consequences"]>(() => defaultConsequences());
   const [status, setStatus] = useState("");
 
-  const selectableElements = elements.filter((element) => element.type !== "NARRATION");
+  // Elements pouvant agir/etre cibles en tant qu'element : ni narration, ni avatar-joueur
+  // (un joueur se cible via le groupe "Joueurs", pas comme un element).
+  const selectableElements = elements.filter(
+    (element) => element.type !== "NARRATION" && element.type !== "PLAYER"
+  );
 
   useEffect(() => {
     if (!attacker && players[0]) {
@@ -863,8 +867,8 @@ function ActionRollGmPanel({
                     ))}
                   </optgroup>
                   <optgroup label="Joueurs">
-                    {members.filter((member) => member.role === "PLAYER").map((member) => (
-                      <option key={member.user.id} value={`PLAYER:${member.user.id}`}>{member.user.username}</option>
+                    {players.map((player) => (
+                      <option key={player.userId} value={`PLAYER:${player.userId}`}>{player.charName}</option>
                     ))}
                   </optgroup>
                 </select>
