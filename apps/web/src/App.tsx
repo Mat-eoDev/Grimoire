@@ -5,6 +5,7 @@ import { apiFetch } from "./lib/api";
 import type { SessionPayload } from "./lib/types";
 import { CampaignPage } from "./pages/CampaignPage";
 import { HomePage } from "./pages/HomePage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 export function App() {
   const [session, setSession] = useState<SessionPayload | null>(null);
@@ -44,6 +45,7 @@ export function App() {
         path="/campaigns/:campaignId"
         element={<CampaignPage session={session} onLogout={logout} />}
       />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
     </Routes>
   );
 }

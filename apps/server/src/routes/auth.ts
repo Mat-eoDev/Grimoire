@@ -1,8 +1,10 @@
+import { createHash, randomBytes } from "node:crypto";
+
 import { Router } from "express";
 
 import { env } from "../env.js";
 import { clearSessionCookie, HttpError, assertString, setSessionCookie } from "../lib/http.js";
-import { sendWelcomeEmail } from "../lib/mailer.js";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "../lib/mailer.js";
 import { hashPassword, verifyPassword } from "../lib/password.js";
 import { prisma } from "../lib/prisma.js";
 import { createSession, destroySessionById } from "../lib/session.js";
@@ -82,6 +84,70 @@ authRouter.post("/login", async (request, response, next) => {
         status: user.status
       }
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+authRouter.post("/forgot-password", async (request, response, next) => {
+  try {
+    const body = request.body as Record<string, unknown>;
+    const email = assertString(body.email, "email").toLowerCase();
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    // On envoie l'email seulement si le compte existe, mais on repond toujours
+    // pareil pour ne pas reveler quelles adresses ont un compte.
+    if (user) {
+      const token = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 heure
+
+      // On invalide les anciennes demandes de ce compte.
+      await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+      await prisma.passwordResetToken.create({
+        data: { userId: user.id, tokenHash, expiresAt }
+      });
+
+      const base = env.appUrl || env.clientOrigin;
+      const resetUrl = `${base}/reset-password?token=${token}`;
+      void sendPasswordResetEmail({ to: user.email, username: user.username, resetUrl });
+    }
+
+    response.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+authRouter.post("/reset-password", async (request, response, next) => {
+  try {
+    const body = request.body as Record<string, unknown>;
+    const token = assertString(body.token, "token");
+    const password = assertString(body.password, "password");
+
+    if (password.length < 8) {
+      throw new HttpError(400, "Le mot de passe doit contenir au moins 8 caracteres");
+    }
+
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
+
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new HttpError(400, "Lien invalide ou expire. Refais une demande.");
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: record.userId },
+        data: { passwordHash: hashPassword(password) }
+      }),
+      // Le lien est consomme et toute session active est revoquee (deconnexion partout).
+      prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } }),
+      prisma.session.deleteMany({ where: { userId: record.userId } })
+    ]);
+
+    response.json({ ok: true });
   } catch (error) {
     next(error);
   }
