@@ -6,7 +6,12 @@
     "apps/server",
     "apps/web"
   ],
+  "engines": {
+    "node": ">=18.18"
+  },
   "scripts": {
+    "start": "node apps/server/dist/src/server.js",
+    "render-build": "npm install --include=dev && npm run prisma:generate && npm run build && npm run prisma:deploy && npm run prisma:seed",
     "dev:server": "npm --workspace @newmj/server run dev",
     "dev:web": "npm --workspace @newmj/web run dev",
     "build": "npm --workspace @newmj/server run build && npm --workspace @newmj/web run build",

@@ -11,6 +11,7 @@ function readString(key: string, fallback?: string): string {
 }
 
 export const env = {
+  isProd: process.env.NODE_ENV === "production",
   port: Number(process.env.PORT ?? 4000),
   databaseUrl: readString("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/newmj?schema=public"),
   clientOrigin: readString("CLIENT_ORIGIN", "http://localhost:5173"),
