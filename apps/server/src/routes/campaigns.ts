@@ -184,20 +184,30 @@ async function serializeActionRoll(roll: {
   createdAt: Date;
   updatedAt: Date;
 }) {
-  const [player, targetPlayer, targetElement] = await Promise.all([
+  const [player, targetPlayer, targetElement, rollerSheet, targetSheet] = await Promise.all([
     prisma.user.findUnique({ where: { id: roll.playerUserId }, select: { id: true, username: true } }),
     roll.targetUserId
       ? prisma.user.findUnique({ where: { id: roll.targetUserId }, select: { id: true, username: true } })
       : Promise.resolve(null),
     roll.targetElementId
       ? prisma.sceneElement.findUnique({ where: { id: roll.targetElementId }, select: { id: true, name: true, type: true, hp: true, maxHp: true } })
+      : Promise.resolve(null),
+    prisma.characterSheet.findUnique({
+      where: { userId_campaignId: { userId: roll.playerUserId, campaignId: roll.campaignId } },
+      select: { charName: true }
+    }),
+    roll.targetUserId
+      ? prisma.characterSheet.findUnique({
+          where: { userId_campaignId: { userId: roll.targetUserId, campaignId: roll.campaignId } },
+          select: { charName: true }
+        })
       : Promise.resolve(null)
   ]);
 
   return {
     id: roll.id,
     playerUserId: roll.playerUserId,
-    playerUsername: player?.username ?? "Joueur",
+    playerUsername: rollerSheet?.charName || player?.username || "Joueur",
     actionText: roll.actionText,
     dieSides: roll.dieSides,
     totalFailureMax: roll.totalFailureMax,
@@ -206,7 +216,7 @@ async function serializeActionRoll(roll: {
     targetType: roll.targetType,
     targetElementId: roll.targetElementId,
     targetUserId: roll.targetUserId,
-    targetName: targetElement?.name ?? targetPlayer?.username ?? "",
+    targetName: targetElement?.name ?? targetSheet?.charName ?? targetPlayer?.username ?? "",
     targetElement,
     consequenceType: roll.consequenceType,
     consequenceAmount: roll.consequenceAmount,
