@@ -41,6 +41,80 @@ export async function sendWelcomeEmail({ to, username }: WelcomeArgs): Promise<v
   }
 }
 
+type ResetArgs = {
+  to: string;
+  username: string;
+  resetUrl: string;
+};
+
+/**
+ * Envoie l'email de reinitialisation de mot de passe. Meme regle que sendWelcomeEmail :
+ * ignore si non configure, ne jette jamais.
+ */
+export async function sendPasswordResetEmail({ to, username, resetUrl }: ResetArgs): Promise<void> {
+  if (!env.brevoApiKey || !env.mailFrom) {
+    return;
+  }
+
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": env.brevoApiKey,
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        sender: { email: env.mailFrom, name: env.mailFromName },
+        to: [{ email: to, name: username }],
+        subject: "Les cles de ton Grimoire 🗝️",
+        htmlContent: resetHtml(username, resetUrl)
+      })
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error(`Email de reset non envoye (HTTP ${response.status}): ${detail}`);
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de l'email de reset:", error);
+  }
+}
+
+function resetHtml(username: string, resetUrl: string): string {
+  return `
+  <div style="margin:0;padding:0;background:#0f0b06;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f0b06;padding:32px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fbf7ee;border:1px solid #e4d7ba;border-radius:16px;overflow:hidden;font-family:Georgia,'Times New Roman',serif;color:#2a2115;">
+            <tr>
+              <td style="background:#1a1206;padding:28px 32px;text-align:center;">
+                <div style="font-size:34px;line-height:1;">🗝️</div>
+                <h1 style="margin:10px 0 0;color:#e9c877;font-size:26px;letter-spacing:.04em;">GRIMOIRE</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:32px;">
+                <h2 style="margin:0 0 16px;font-size:22px;color:#3a2c17;">Tu as perdu les cles de ton Grimoire, ${escapeHtml(username)} ?</h2>
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#4a3c28;">
+                  Pas d'inquietude, cela arrive meme aux plus grands conteurs. Les sceaux qui protegent
+                  ton grimoire peuvent etre refondus. Clique ci-dessous pour forger un nouveau mot de passe.
+                </p>
+                <a href="${resetUrl}" style="display:inline-block;margin-top:8px;padding:12px 28px;background:#c9922b;color:#1a1206;text-decoration:none;border-radius:10px;font-weight:700;letter-spacing:.02em;">Recuperer mes cles ici</a>
+                <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#8a7a5c;">
+                  Ce lien expire dans 1 heure. Si tu n'es pas a l'origine de cette demande, ignore
+                  simplement ce message : ton grimoire reste scelle.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+}
+
 function welcomeHtml(username: string): string {
   const appLink = env.appUrl || env.clientOrigin;
   const cta = appLink

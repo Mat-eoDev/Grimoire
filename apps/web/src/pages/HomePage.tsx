@@ -10,7 +10,7 @@ type Props = {
   onLogout: () => Promise<void>;
 };
 
-type AuthMode = "login" | "register";
+type AuthMode = "login" | "register" | "forgot";
 
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: "En attente",
@@ -27,6 +27,7 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   const [title, setTitle] = useState("");
   const [joinCode, setJoinCode] = useState(() => (searchParams.get("code") ?? "").toUpperCase());
@@ -44,6 +45,20 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
       await apiFetch(path, { method: "POST", json: payload });
       await onSessionRefresh();
       setEmail(""); setUsername(""); setPassword("");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Erreur");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleForgot(event: FormEvent) {
+    event.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      await apiFetch("/auth/forgot-password", { method: "POST", json: { email } });
+      setForgotSent(true);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Erreur");
     } finally {
@@ -96,26 +111,72 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
         <div className="auth-card">
           <p className="auth-brand">GRIMOIRE</p>
           <h1 className="auth-title">
-            {mode === "login" ? "Welcome back" : "Create your story"}
+            {mode === "login" ? "Welcome back" : mode === "register" ? "Create your story" : "Clés perdues ?"}
           </h1>
 
           <div className="auth-tabs">
             <button
               type="button"
               className={`auth-tab${mode === "login" ? " auth-tab--active" : ""}`}
-              onClick={() => { setMode("login"); setAuthError(null); }}
+              onClick={() => { setMode("login"); setAuthError(null); setForgotSent(false); }}
             >
               Login
             </button>
             <button
               type="button"
               className={`auth-tab${mode === "register" ? " auth-tab--active" : ""}`}
-              onClick={() => { setMode("register"); setAuthError(null); }}
+              onClick={() => { setMode("register"); setAuthError(null); setForgotSent(false); }}
             >
               Sign up
             </button>
           </div>
 
+          {mode === "forgot" ? (
+            forgotSent ? (
+              <div className="auth-form">
+                <p style={{ fontSize: "0.92rem", lineHeight: 1.6, marginBottom: "1rem", opacity: 0.85 }}>
+                  Si un compte existe pour cette adresse, un email contenant un lien de récupération vient d'être envoyé.
+                  Pense à vérifier tes spams. Le lien est valable 1 heure.
+                </p>
+                <button type="button" className="auth-link" onClick={() => { setMode("login"); setForgotSent(false); }}>
+                  ← Retour à la connexion
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgot} className="auth-form">
+                <p style={{ fontSize: "0.92rem", lineHeight: 1.6, marginBottom: "1rem", opacity: 0.85 }}>
+                  Entre ton adresse email : on t'enverra un lien pour forger un nouveau mot de passe.
+                </p>
+                <div className="auth-field">
+                  <label className="auth-label">Email</label>
+                  <div className="auth-input-wrap">
+                    <span className="auth-icon">@</span>
+                    <input
+                      className="auth-input"
+                      type="email"
+                      placeholder="ton@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                {authError && <p className="auth-error">{authError}</p>}
+                <button type="submit" className="auth-submit" disabled={authLoading}>
+                  {authLoading ? "..." : "Envoyer le lien"}
+                </button>
+                <button
+                  type="button"
+                  className="auth-link"
+                  style={{ marginTop: "0.75rem" }}
+                  onClick={() => { setMode("login"); setAuthError(null); }}
+                >
+                  ← Retour à la connexion
+                </button>
+              </form>
+            )
+          ) : (
+          <>
           <form onSubmit={handleAuth} className="auth-form">
             {mode === "register" && (
               <div className="auth-field">
@@ -187,6 +248,19 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
               </>
             )}
           </p>
+          {mode === "login" && (
+            <p className="auth-switch">
+              <button
+                type="button"
+                className="auth-link"
+                onClick={() => { setMode("forgot"); setAuthError(null); setForgotSent(false); }}
+              >
+                Mot de passe oublié ?
+              </button>
+            </p>
+          )}
+          </>
+          )}
         </div>
       </div>
     );
