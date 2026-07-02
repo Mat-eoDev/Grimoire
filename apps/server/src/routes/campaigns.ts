@@ -475,7 +475,7 @@ campaignsRouter.post("/campaigns/:campaignId/scene-elements", async (request, re
     const description = optionalString(body.description) ?? "";
     const quantity = Number(body.quantity ?? 1);
     const assetId = optionalString(body.assetId);
-    const hp = Math.max(0, toInteger(body.hp, type === "ENEMY" ? 10 : 0));
+    const hp = Math.max(0, toInteger(body.hp, type === "NARRATION" ? 0 : 10));
     const maxHp = Math.max(hp, toInteger(body.maxHp, hp));
     const attack = Math.max(0, toInteger(body.attack, 0));
     const defense = Math.max(0, toInteger(body.defense, 0));
