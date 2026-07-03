@@ -34,7 +34,7 @@ app.use(
     credentials: true
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
 app.use(attachAuth);
 
 app.get("/health", (_request, response) => {
