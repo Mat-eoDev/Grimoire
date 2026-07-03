@@ -881,7 +881,6 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls", async (request, resp
 campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/roll", async (request, response, next) => {
   try {
     const auth = requireAuth(request);
-    const body = request.body as Record<string, unknown>;
     await requireCampaignMember(request.params.campaignId, auth.user.id);
 
     const existing = await prisma.actionRoll.findFirst({
@@ -899,10 +898,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/roll", async (
       throw new HttpError(400, "Ce personnage est a terre (0 PV) : il doit etre soigne avant d'agir");
     }
 
-    const requestedResult = toInteger(body.result, 0);
-    const result = requestedResult >= 1 && requestedResult <= existing.dieSides
-      ? requestedResult
-      : Math.floor(Math.random() * existing.dieSides) + 1;
+    // Le de est tire cote serveur uniquement : le client ne peut pas imposer son resultat.
+    const result = Math.floor(Math.random() * existing.dieSides) + 1;
     const roll = await prisma.actionRoll.update({
       where: { id: existing.id },
       data: { status: ActionRollStatus.ROLLED, result }
