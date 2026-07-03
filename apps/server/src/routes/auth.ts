@@ -15,9 +15,9 @@ export const authRouter = Router();
 authRouter.post("/register", async (request, response, next) => {
   try {
     const body = request.body as Record<string, unknown>;
-    const email = assertString(body.email, "email").toLowerCase();
-    const username = assertString(body.username, "username");
-    const password = assertString(body.password, "password");
+    const email = assertString(body.email, "email", 254).toLowerCase();
+    const username = assertString(body.username, "username", 32);
+    const password = assertString(body.password, "password", 200);
 
     if (password.length < 8) {
       throw new HttpError(400, "Le mot de passe doit contenir au moins 8 caracteres");
@@ -62,8 +62,8 @@ authRouter.post("/register", async (request, response, next) => {
 authRouter.post("/login", async (request, response, next) => {
   try {
     const body = request.body as Record<string, unknown>;
-    const email = assertString(body.email, "email").toLowerCase();
-    const password = assertString(body.password, "password");
+    const email = assertString(body.email, "email", 254).toLowerCase();
+    const password = assertString(body.password, "password", 200);
 
     const user = await prisma.user.findUnique({
       where: { email }
@@ -123,8 +123,8 @@ authRouter.post("/forgot-password", async (request, response, next) => {
 authRouter.post("/reset-password", async (request, response, next) => {
   try {
     const body = request.body as Record<string, unknown>;
-    const token = assertString(body.token, "token");
-    const password = assertString(body.password, "password");
+    const token = assertString(body.token, "token", 256);
+    const password = assertString(body.password, "password", 200);
 
     if (password.length < 8) {
       throw new HttpError(400, "Le mot de passe doit contenir au moins 8 caracteres");

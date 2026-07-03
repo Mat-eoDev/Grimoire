@@ -28,15 +28,21 @@ export function parseCookies(header?: string) {
   }, {});
 }
 
-export function assertString(value: unknown, fieldName: string) {
+export function assertString(value: unknown, fieldName: string, maxLength = 2000) {
   if (typeof value !== "string" || !value.trim()) {
     throw new HttpError(400, `Champ invalide: ${fieldName}`);
   }
 
-  return value.trim();
+  const trimmed = value.trim();
+
+  if (trimmed.length > maxLength) {
+    throw new HttpError(400, `Champ trop long: ${fieldName} (max ${maxLength} caracteres)`);
+  }
+
+  return trimmed;
 }
 
-export function optionalString(value: unknown) {
+export function optionalString(value: unknown, maxLength = 5000) {
   if (value == null || value === "") {
     return undefined;
   }
@@ -45,7 +51,13 @@ export function optionalString(value: unknown) {
     throw new HttpError(400, "Valeur texte invalide");
   }
 
-  return value.trim();
+  const trimmed = value.trim();
+
+  if (trimmed.length > maxLength) {
+    throw new HttpError(400, `Valeur texte trop longue (max ${maxLength} caracteres)`);
+  }
+
+  return trimmed;
 }
 
 export function optionalNumber(value: unknown) {
