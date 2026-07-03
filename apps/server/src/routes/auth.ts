@@ -5,7 +5,7 @@ import { Router } from "express";
 import { env } from "../env.js";
 import { clearSessionCookie, HttpError, assertString, setSessionCookie } from "../lib/http.js";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "../lib/mailer.js";
-import { hashPassword, verifyPassword } from "../lib/password.js";
+import { hashPassword, verifyPasswordOrDummy } from "../lib/password.js";
 import { prisma } from "../lib/prisma.js";
 import { createSession, destroySessionById } from "../lib/session.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -84,7 +84,11 @@ authRouter.post("/login", loginLimiter, async (request, response, next) => {
       where: { email }
     });
 
-    if (!user || !verifyPassword(password, user.passwordHash)) {
+    // Toujours executer la verification (avec un hash bidon si l'email est inconnu)
+    // pour egaliser le temps de reponse et empecher l'enumeration d'emails.
+    const passwordValid = verifyPasswordOrDummy(password, user?.passwordHash);
+
+    if (!user || !passwordValid) {
       throw new HttpError(401, "Identifiants invalides");
     }
 
