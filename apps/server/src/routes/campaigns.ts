@@ -8,8 +8,16 @@ import { sseBroadcast, sseSubscribe, sseUnsubscribe } from "../lib/sseHub.js";
 import { getBaseStats } from "../lib/characterStats.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 export const campaignsRouter = Router();
+
+// Limite l'enumeration des codes de partie (espace de 32^6 mais devine-able en masse).
+const joinLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: "Trop de tentatives. Reessaie dans quelques minutes."
+});
 
 function generateJoinCode() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -289,7 +297,7 @@ campaignsRouter.post("/campaigns", async (request, response, next) => {
   }
 });
 
-campaignsRouter.post("/campaigns/join", async (request, response, next) => {
+campaignsRouter.post("/campaigns/join", joinLimiter, async (request, response, next) => {
   try {
     const auth = requireAuth(request);
     const body = request.body as Record<string, unknown>;
@@ -881,7 +889,6 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls", async (request, resp
 campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/roll", async (request, response, next) => {
   try {
     const auth = requireAuth(request);
-    const body = request.body as Record<string, unknown>;
     await requireCampaignMember(request.params.campaignId, auth.user.id);
 
     const existing = await prisma.actionRoll.findFirst({
@@ -899,10 +906,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/roll", async (
       throw new HttpError(400, "Ce personnage est a terre (0 PV) : il doit etre soigne avant d'agir");
     }
 
-    const requestedResult = toInteger(body.result, 0);
-    const result = requestedResult >= 1 && requestedResult <= existing.dieSides
-      ? requestedResult
-      : Math.floor(Math.random() * existing.dieSides) + 1;
+    // Le de est tire cote serveur uniquement : le client ne peut pas imposer son resultat.
+    const result = Math.floor(Math.random() * existing.dieSides) + 1;
     const roll = await prisma.actionRoll.update({
       where: { id: existing.id },
       data: { status: ActionRollStatus.ROLLED, result }

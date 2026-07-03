@@ -1313,44 +1313,21 @@ function PlayerActionRollPanel({
     return diceBoxReadyRef.current;
   }
 
-  function extractDiceResult(value: unknown, sides: number): number | null {
-    if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= sides) return value;
-    if (!value || typeof value !== "object") return null;
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        const found = extractDiceResult(item, sides);
-        if (found !== null) return found;
-      }
-      return null;
-    }
-    const record = value as Record<string, unknown>;
-    if ("value" in record) {
-      const found = extractDiceResult(record.value, sides);
-      if (found !== null) return found;
-    }
-    if ("rolls" in record) {
-      const found = extractDiceResult(record.rolls, sides);
-      if (found !== null) return found;
-    }
-    return null;
-  }
-
   async function rollDice(activeRoll: ActionRoll) {
     setIsRolling(true);
     setRollStatus("Lancer du de...");
-    let animatedResult: number | null = null;
     try {
+      // Animation purement decorative : le resultat du de fait foi cote serveur
+      // (le client ne peut pas imposer sa valeur).
       const diceBox = await getDiceBox() as { roll: (notation: string) => Promise<unknown> };
-      const results = await diceBox.roll(`1d${activeRoll.dieSides}`);
-      animatedResult = extractDiceResult(results, activeRoll.dieSides);
+      await diceBox.roll(`1d${activeRoll.dieSides}`);
     } catch {
       setRollStatus("Animation indisponible, lancer serveur...");
     }
 
     try {
       const data = await apiFetch<{ actionRoll: ActionRoll }>(`/campaigns/${campaignId}/action-rolls/${activeRoll.id}/roll`, {
-        method: "POST",
-        json: animatedResult ? { result: animatedResult } : undefined
+        method: "POST"
       });
       setLocalRolls((prev) => [data.actionRoll, ...prev.filter((item) => item.id !== data.actionRoll.id)]);
       setRollStatus("");

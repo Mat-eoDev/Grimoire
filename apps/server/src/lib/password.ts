@@ -25,3 +25,22 @@ export function verifyPassword(password: string, passwordHash: string) {
   return timingSafeEqual(derived, expectedBuffer);
 }
 
+// Hash bidon (mot de passe aleatoire) calcule au demarrage. Sert a faire tourner
+// scrypt meme quand l'email n'existe pas, pour egaliser le temps de reponse du
+// login et empecher l'enumeration d'emails par mesure du temps.
+const DUMMY_PASSWORD_HASH = hashPassword(randomBytes(32).toString("hex"));
+
+/**
+ * Verifie un mot de passe en temps ~constant, que le compte existe ou non.
+ * Si `passwordHash` est absent (email inconnu), scrypt tourne quand meme contre
+ * un hash bidon puis renvoie false.
+ */
+export function verifyPasswordOrDummy(password: string, passwordHash: string | null | undefined) {
+  if (!passwordHash) {
+    verifyPassword(password, DUMMY_PASSWORD_HASH);
+    return false;
+  }
+
+  return verifyPassword(password, passwordHash);
+}
+
