@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { Router } from "express";
 
 import { HttpError } from "../lib/http.js";
@@ -39,14 +40,18 @@ function serializeTrade(trade: {
   };
 }
 
+// Transfere tout ou partie d'une entree d'inventaire, de maniere atomique.
+// Doit s'executer dans une transaction (tx) : les update conditionnels
+// (WHERE sur quantite/proprietaire) empechent la double-depense concurrente.
 async function transferEntry(
+  tx: Prisma.TransactionClient,
   entryId: string,
   fromUserId: string,
   toUserId: string,
   qty: number,
   campaignId: string
 ) {
-  const entry = await prisma.inventoryEntry.findUnique({
+  const entry = await tx.inventoryEntry.findUnique({
     where: { id: entryId },
     include: { item: true }
   });
@@ -58,10 +63,24 @@ async function transferEntry(
   }
 
   if (entry.quantity === qty) {
-    await prisma.inventoryEntry.update({ where: { id: entry.id }, data: { userId: toUserId, equipped: false } });
+    // Deplace toute la pile — echoue si la pile a change de proprietaire/quantite entre-temps.
+    const moved = await tx.inventoryEntry.updateMany({
+      where: { id: entry.id, userId: fromUserId, campaignId, quantity: qty },
+      data: { userId: toUserId, equipped: false }
+    });
+    if (moved.count !== 1) {
+      throw new HttpError(409, "Inventaire modifie entre-temps, reessaie");
+    }
   } else {
-    await prisma.inventoryEntry.update({ where: { id: entry.id }, data: { quantity: entry.quantity - qty } });
-    await prisma.inventoryEntry.create({
+    // Decrement atomique conditionnel : n'aboutit que s'il reste assez de quantite.
+    const decremented = await tx.inventoryEntry.updateMany({
+      where: { id: entry.id, userId: fromUserId, campaignId, quantity: { gte: qty } },
+      data: { quantity: { decrement: qty } }
+    });
+    if (decremented.count !== 1) {
+      throw new HttpError(409, "Inventaire modifie entre-temps, reessaie");
+    }
+    await tx.inventoryEntry.create({
       data: {
         campaignId,
         userId: toUserId,
@@ -94,7 +113,9 @@ tradesRouter.post("/campaigns/:campaignId/inventory/player-give", async (request
     await requireMember(request.params.campaignId, toUserId);
     if (toUserId === auth.user.id) throw new HttpError(400, "Tu ne peux pas te donner un objet a toi-meme");
 
-    await transferEntry(entryId, auth.user.id, toUserId, qty, request.params.campaignId);
+    await prisma.$transaction((tx) =>
+      transferEntry(tx, entryId, auth.user.id, toUserId, qty, request.params.campaignId)
+    );
 
     const toUser = await prisma.user.findUnique({ where: { id: toUserId }, select: { username: true } });
     sseBroadcast(request.params.campaignId, {
@@ -274,23 +295,37 @@ tradesRouter.post("/campaigns/:campaignId/trades/:tradeId/accept", async (reques
     if (trade.toUserId !== auth.user.id) throw new HttpError(403, "Tu n'es pas le destinataire de cette offre");
     if (trade.status !== "PENDING") throw new HttpError(400, "Cette offre n'est plus en attente");
 
-    await transferEntry(trade.offeredEntryId, trade.fromUserId, trade.toUserId, trade.offeredQty, request.params.campaignId);
+    // Tout se joue dans une seule transaction : claim de l'offre, les deux transferts
+    // et l'annulation en cascade. Si un transfert echoue, tout est annule (pas de duplication).
+    await prisma.$transaction(async (tx) => {
+      // Verrou logique : seule la premiere acceptation concurrente passe.
+      const claimed = await tx.tradeOffer.updateMany({
+        where: { id: trade.id, status: "PENDING" },
+        data: { status: "ACCEPTED" }
+      });
+      if (claimed.count !== 1) {
+        throw new HttpError(400, "Cette offre n'est plus en attente");
+      }
 
-    if (trade.requestedEntryId) {
-      await transferEntry(trade.requestedEntryId, trade.toUserId, trade.fromUserId, trade.requestedQty, request.params.campaignId);
-    }
+      await transferEntry(tx, trade.offeredEntryId, trade.fromUserId, trade.toUserId, trade.offeredQty, request.params.campaignId);
 
-    await prisma.tradeOffer.update({ where: { id: trade.id }, data: { status: "ACCEPTED" } });
-    await prisma.tradeOffer.updateMany({
-      where: {
-        campaignId: request.params.campaignId,
-        status: "PENDING",
-        OR: [
-          { offeredEntryId: trade.offeredEntryId },
-          { requestedEntryId: trade.offeredEntryId }
-        ]
-      },
-      data: { status: "CANCELLED" }
+      if (trade.requestedEntryId) {
+        await transferEntry(tx, trade.requestedEntryId, trade.toUserId, trade.fromUserId, trade.requestedQty, request.params.campaignId);
+      }
+
+      // Annule les autres offres en attente portant sur l'objet desormais transfere.
+      await tx.tradeOffer.updateMany({
+        where: {
+          id: { not: trade.id },
+          campaignId: request.params.campaignId,
+          status: "PENDING",
+          OR: [
+            { offeredEntryId: trade.offeredEntryId },
+            { requestedEntryId: trade.offeredEntryId }
+          ]
+        },
+        data: { status: "CANCELLED" }
+      });
     });
 
     sseBroadcast(request.params.campaignId, {
