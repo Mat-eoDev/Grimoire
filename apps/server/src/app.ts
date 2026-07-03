@@ -9,6 +9,7 @@ import { env } from "./env.js";
 import { attachAuth } from "./middleware/auth.js";
 import { authRouter } from "./routes/auth.js";
 import { campaignsRouter } from "./routes/campaigns.js";
+import { dataExchangeRouter } from "./routes/dataExchange.js";
 import { inventoryRouter } from "./routes/inventory.js";
 import { tradesRouter } from "./routes/trades.js";
 import { HttpError } from "./lib/http.js";
@@ -48,6 +49,7 @@ app.use("/api/auth", authRouter);
 app.use("/api", campaignsRouter);
 app.use("/api", inventoryRouter);
 app.use("/api", tradesRouter);
+app.use("/api", dataExchangeRouter);
 
 // Fallback SPA : toute autre route GET renvoie index.html (react-router gere la navigation cote client).
 // Place APRES les routes d'API pour ne pas les intercepter.

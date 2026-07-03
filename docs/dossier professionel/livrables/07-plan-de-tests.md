@@ -18,7 +18,7 @@ Commande : `npm --workspace @newmj/server test`.
 | Fichier | Cible | Cas nominaux | Cas limites |
 |---|---|---|---|
 | `lib/password.test.ts` | hachage/vérif | bon mot de passe accepté | mauvais rejeté, hash malformé |
-| `lib/characterStats.test.ts` | `getBaseStats` | chaque classe (1–4) | id inconnu → fallback |
+| `lib/characterStats.test.ts` | `getBaseStats` | chaque classe (1–4) | id inconnu → erreur gérée |
 | `lib/http.test.ts` | validation d'entrée | chaîne valide | vide, non-string, trop longue, nombre invalide |
 | `lib/rateLimit.test.ts` | limiteur | passe sous le seuil | bloque (429) au-delà, reset après fenêtre |
 
