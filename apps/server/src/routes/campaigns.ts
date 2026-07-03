@@ -8,8 +8,16 @@ import { sseBroadcast, sseSubscribe, sseUnsubscribe } from "../lib/sseHub.js";
 import { getBaseStats } from "../lib/characterStats.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 export const campaignsRouter = Router();
+
+// Limite l'enumeration des codes de partie (espace de 32^6 mais devine-able en masse).
+const joinLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: "Trop de tentatives. Reessaie dans quelques minutes."
+});
 
 function generateJoinCode() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -289,7 +297,7 @@ campaignsRouter.post("/campaigns", async (request, response, next) => {
   }
 });
 
-campaignsRouter.post("/campaigns/join", async (request, response, next) => {
+campaignsRouter.post("/campaigns/join", joinLimiter, async (request, response, next) => {
   try {
     const auth = requireAuth(request);
     const body = request.body as Record<string, unknown>;

@@ -9,10 +9,25 @@ import { hashPassword, verifyPassword } from "../lib/password.js";
 import { prisma } from "../lib/prisma.js";
 import { createSession, destroySessionById } from "../lib/session.js";
 import { requireAuth } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 export const authRouter = Router();
 
-authRouter.post("/register", async (request, response, next) => {
+// Anti-bruteforce sur le login et la reinitialisation (par IP).
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: "Trop de tentatives de connexion. Reessaie dans quelques minutes."
+});
+
+// Anti-spam sur les endpoints qui declenchent un envoi d'email ou une creation de compte.
+const emailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: "Trop de demandes. Reessaie plus tard."
+});
+
+authRouter.post("/register", emailLimiter, async (request, response, next) => {
   try {
     const body = request.body as Record<string, unknown>;
     const email = assertString(body.email, "email").toLowerCase();
@@ -59,7 +74,7 @@ authRouter.post("/register", async (request, response, next) => {
   }
 });
 
-authRouter.post("/login", async (request, response, next) => {
+authRouter.post("/login", loginLimiter, async (request, response, next) => {
   try {
     const body = request.body as Record<string, unknown>;
     const email = assertString(body.email, "email").toLowerCase();
@@ -89,7 +104,7 @@ authRouter.post("/login", async (request, response, next) => {
   }
 });
 
-authRouter.post("/forgot-password", async (request, response, next) => {
+authRouter.post("/forgot-password", emailLimiter, async (request, response, next) => {
   try {
     const body = request.body as Record<string, unknown>;
     const email = assertString(body.email, "email").toLowerCase();
@@ -120,7 +135,7 @@ authRouter.post("/forgot-password", async (request, response, next) => {
   }
 });
 
-authRouter.post("/reset-password", async (request, response, next) => {
+authRouter.post("/reset-password", loginLimiter, async (request, response, next) => {
   try {
     const body = request.body as Record<string, unknown>;
     const token = assertString(body.token, "token");
