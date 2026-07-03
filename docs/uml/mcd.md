@@ -5,21 +5,6 @@
 Le depot ne contient pas encore de code applicatif, de schema SQL ou de modele ORM.
 Le present livrable est donc derive du besoin fonctionnel decrit dans `projet.txt`.
 
-## Hypothese sur le terme "MPC"
-
-Le document de referentiel present dans `docs/dossier professionel/ATTENDUE DU REFFERENTIEL.docx`
-ne donne pas de definition explicite du terme `MPC`.
-
-Dans un contexte de modelisation de donnees, le livrable attendu est generalement :
-
-- `MCD` : modele conceptuel de donnees
-- `MLD` ou `MPD` : modele logique / physique de donnees
-
-Pour eviter l'ambiguite, ce document te fournit :
-
-- un `MCD` metier
-- un `MPC` interprete ici comme un `modele physique cible`, equivalent a un `MPD`
-
 ## Hypotheses de conception
 
 - Un utilisateur peut etre MJ dans une campagne et joueur dans une autre.
