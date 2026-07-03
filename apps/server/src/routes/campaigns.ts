@@ -7,6 +7,7 @@ import { assertString, HttpError, optionalString } from "../lib/http.js";
 import { sseBroadcast, sseSubscribe, sseUnsubscribe } from "../lib/sseHub.js";
 import { getBaseStats } from "../lib/characterStats.js";
 import { prisma } from "../lib/prisma.js";
+import { getRollOutcome, type RollOutcome } from "../lib/rollOutcome.js";
 import { requireAuth } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 
@@ -65,20 +66,7 @@ function serializeCampaign(campaign: {
   };
 }
 
-function getRollOutcome(roll: {
-  result: number | null;
-  totalFailureMax: number;
-  successMin: number;
-  totalSuccessMin: number;
-}) {
-  if (roll.result === null) return null;
-  if (roll.result <= roll.totalFailureMax) return "TOTAL_FAILURE";
-  if (roll.result >= roll.totalSuccessMin) return "TOTAL_SUCCESS";
-  if (roll.result >= roll.successMin) return "SUCCESS";
-  return "FAILURE";
-}
-
-type RollOutcome = "TOTAL_FAILURE" | "FAILURE" | "SUCCESS" | "TOTAL_SUCCESS";
+// getRollOutcome et le type RollOutcome sont dans lib/rollOutcome.ts (brique metier testable).
 
 type OutcomeConsequence = {
   type: ActionRollConsequenceType;
