@@ -1,0 +1,30 @@
+# Empeche la mise en veille de l'app sur le plan gratuit Render.
+# Le plan free endort le service apres ~15 min d'inactivite : le premier
+# acces suivant subit alors un cold start de plusieurs dizaines de secondes.
+# Ce cron reveille le serveur en pingant l'endpoint /health.
+#
+# Remarque : les crons GitHub Actions peuvent etre retardes (voire sautes)
+# en periode de forte charge. L'intervalle de 5 min garde une marge sous les
+# 15 min. Pour un reveil garanti a l'heure, utiliser un service dedie type
+# cron-job.org pointant sur la meme URL /health.
+name: keep-alive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        env:
+          # Surchargeable via une variable de repo (Settings > Variables) ;
+          # sinon on retombe sur l'URL de production par defaut.
+          APP_URL: ${{ vars.APP_URL || 'https://grimoire-q9hj.onrender.com' }}
+        run: |
+          echo "Ping ${APP_URL}/health"
+          code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 60 --retry 3 --retry-delay 10 "${APP_URL}/health")
+          echo "HTTP ${code}"
+          test "${code}" = "200"
