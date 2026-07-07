@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../lib/api";
 import type { CampaignSummaryResponse, SessionPayload } from "../lib/types";
@@ -261,6 +261,15 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
           )}
           </>
           )}
+          <p className="auth-switch" style={{ marginTop: "0.75rem", fontSize: "0.8rem", opacity: 0.65 }}>
+            <Link className="auth-link" to="/confidentialite">
+              Politique de confidentialité
+            </Link>
+            {" · "}
+            <Link className="auth-link" to="/mentions-legales">
+              Mentions légales
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -407,6 +416,12 @@ export function HomePage({ session, onSessionRefresh, onLogout }: Props) {
           </div>
         </div>
       )}
+
+      <footer style={{ textAlign: "center", padding: "2rem 1rem 1rem", fontSize: "0.8rem", opacity: 0.6 }}>
+        <Link className="auth-link" to="/confidentialite">Politique de confidentialité</Link>
+        {" · "}
+        <Link className="auth-link" to="/mentions-legales">Mentions légales</Link>
+      </footer>
     </div>
   );
 }
