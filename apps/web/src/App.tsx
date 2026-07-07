@@ -5,6 +5,8 @@ import { apiFetch } from "./lib/api";
 import type { SessionPayload } from "./lib/types";
 import { CampaignPage } from "./pages/CampaignPage";
 import { HomePage } from "./pages/HomePage";
+import { LegalPage } from "./pages/LegalPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 export function App() {
@@ -46,6 +48,8 @@ export function App() {
         element={<CampaignPage session={session} onLogout={logout} />}
       />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/confidentialite" element={<PrivacyPage />} />
+      <Route path="/mentions-legales" element={<LegalPage />} />
     </Routes>
   );
 }
