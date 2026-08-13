@@ -67,6 +67,11 @@ enum ActionRollConsequenceType {
   HEAL_PLAYER
 }
 
+enum CombatLogKind {
+  ATTACK
+  RESOLUTION
+}
+
 enum RollOutcome {
   TOTAL_FAILURE
   FAILURE
@@ -136,6 +141,24 @@ model Campaign {
   sceneElements    SceneElement[]
   actionRolls      ActionRoll[]
   tradeOffers      TradeOffer[]
+  combatLog        CombatLogEntry[]
+}
+
+/// Trace automatique des coups portes et des resolutions de jet.
+/// Ces evenements etaient auparavant ecrits comme des SceneElement de type NARRATION,
+/// visibles par defaut et positionnes au centre de la scene : ils s'y empilaient sans
+/// limite, etaient renvoyes en entier a chaque chargement de campagne et brouillaient
+/// la mise en scene. Les SceneElement NARRATION restent reserves a la narration que le
+/// MJ place volontairement.
+model CombatLogEntry {
+  id         String        @id @default(uuid())
+  campaignId String
+  campaign   Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  kind       CombatLogKind
+  message    String
+  createdAt  DateTime      @default(now())
+
+  @@index([campaignId, createdAt])
 }
 
 model TradeOffer {

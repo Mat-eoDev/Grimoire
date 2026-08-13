@@ -1369,3 +1369,53 @@ label, legend {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ── Journal de combat ─────────────────────────────────────────────── */
+.combat-log {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(201, 146, 43, 0.28);
+  border-radius: 14px;
+  background: rgba(20, 14, 6, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.combat-log__list {
+  display: grid;
+  gap: 0.3rem;
+  max-height: 11rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+}
+
+.combat-log__item {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px solid rgba(201, 146, 43, 0.12);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.combat-log__item:last-child { border-bottom: none; }
+
+.combat-log__icon { color: #c9922b; }
+.combat-log__item--attack .combat-log__icon { color: #e05a4e; }
+
+.combat-log__message { color: var(--ink, #f3e4c4); }
+
+.combat-log__time {
+  font-size: 0.72rem;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .combat-log__list { max-height: 7.5rem; }
+}

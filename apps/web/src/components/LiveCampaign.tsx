@@ -7,6 +7,7 @@ import type { ActionRoll, ActionRollConsequenceType, CampaignDetail } from "../l
 import { Inventory } from "./Inventory";
 import { TradePanel } from "./TradePanel";
 import { CharacterSheet } from "./CharacterSheet";
+import { CombatLog } from "./CombatLog";
 import { PlayerDetailModal } from "./PlayerDetailModal";
 
 type Props = {
@@ -176,6 +177,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
   const [search, setSearch] = useState("");
   const [actionRolls, setActionRolls] = useState<ActionRoll[]>(data.live.actionRolls ?? []);
   const [downedMessage, setDownedMessage] = useState<string | null>(null);
+  const [logKey, setLogKey] = useState(0);
 
   const [positions, setPositions] = useState<Map<string, ElementPos>>(() =>
     new Map(data.live.elements.map((el) => [el.id, { posX: el.posX, posY: el.posY }]))
@@ -247,6 +249,9 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
         }
         if (event.type === "campaign:changed") {
           void onReload();
+        }
+        if (event.type === "log:appended") {
+          setLogKey((key) => key + 1);
         }
         if (event.type === "player:down" && event.name) {
           setDownedMessage(event.name);
@@ -382,6 +387,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
           actionRolls={actionRolls}
           sceneStyle={sceneBackgroundStyle(data.live.scene.preset)}
           refreshKey={refreshKey}
+          logKey={logKey}
         />
       </>
     );
@@ -665,6 +671,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
                 actionRolls={actionRolls}
                 onlyOwnRoll
               />
+              <CombatLog campaignId={data.campaign.id} refreshKey={logKey} />
             </div>
           )}
 
@@ -1148,11 +1155,12 @@ type PlayerViewProps = {
   actionRolls: ActionRoll[];
   sceneStyle: CSSProperties;
   refreshKey: number;
+  logKey: number;
 };
 
 type PlayerTab = "scene" | "character" | "inventory";
 
-function PlayerView({ data, visibleElements, positions, scales, actionRolls, sceneStyle, refreshKey }: PlayerViewProps) {
+function PlayerView({ data, visibleElements, positions, scales, actionRolls, sceneStyle, refreshKey, logKey }: PlayerViewProps) {
   const [tab, setTab] = useState<PlayerTab>("scene");
   const currentUserId = data.viewer.userId || data.members.find((member) => member.id === data.viewer.memberId)?.user.id || "";
 
@@ -1173,6 +1181,7 @@ function PlayerView({ data, visibleElements, positions, scales, actionRolls, sce
               <h1>{data.live.scene.text || "Le MJ prépare la suite de votre aventure…"}</h1>
             </section>
             <PlayerHealth players={data.live.players} />
+            <CombatLog campaignId={data.campaign.id} refreshKey={logKey} />
           </div>
           <PlayerActionRollPanel
             campaignId={data.campaign.id}
