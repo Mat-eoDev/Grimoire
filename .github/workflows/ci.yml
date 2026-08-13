@@ -1,0 +1,49 @@
+# Verification automatique de chaque pull request et de chaque push sur main.
+# Jusqu'ici le seul workflow du depot etait le keep-alive Render : ni les tests
+# ni le typage ne tournaient avant un merge, et une regression fonctionnelle
+# passait sans obstacle (le build Render ne casse que sur une erreur de compilation).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+# Une seule execution par branche : un nouveau push annule la precedente.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typage, tests et build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Installer les dependances
+        run: npm ci
+
+      # Le client Prisma est genere, donc absent du depot : sans cette etape
+      # tsc echoue sur les types @prisma/client.
+      - name: Generer le client Prisma
+        run: npm run prisma:generate
+
+      - name: Verifier le typage (serveur + web)
+        run: npm run check
+
+      - name: Executer les tests unitaires
+        run: npm --workspace @newmj/server run test
+
+      - name: Verifier que le build passe
+        run: npm run build
+
+      # Bloquant sur les dependances de production uniquement : une faille dans un
+      # outil de developpement ne doit pas empecher de merger un correctif.
+      - name: Auditer les dependances de production
+        run: npm audit --omit=dev --audit-level=high
