@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 
 import { env } from "./env.js";
 import { attachAuth } from "./middleware/auth.js";
@@ -24,17 +25,50 @@ app.set("trust proxy", 1);
 const webDistPath = path.resolve(fileURLToPath(new URL(".", import.meta.url)), "../../../web/dist");
 const hasWebBuild = fs.existsSync(path.join(webDistPath, "index.html"));
 
+// En-tetes de securite (CSP, HSTS, nosniff, anti-clickjacking, Referrer-Policy...).
+// Place en tout premier pour couvrir aussi les fichiers statiques.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        // Vite injecte des styles inline ; les composants utilisent aussi style={{...}}.
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        // dice-box compile son moteur physique WebAssembly a la volee.
+        scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+        connectSrc: ["'self'"],
+        workerSrc: ["'self'", "blob:"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+        upgradeInsecureRequests: env.isProd ? [] : null
+      }
+    },
+    // Les assets (images, wasm) sont servis a la meme origine : le mode par defaut
+    // "require-corp" casserait leur chargement sans rien apporter ici.
+    crossOriginEmbedderPolicy: false
+  })
+);
+
 if (hasWebBuild) {
   // Fichiers statiques (JS/CSS, images, assets des des 3D) servis sans passer par l'auth.
   app.use(express.static(webDistPath));
 }
 
-app.use(
-  cors({
-    origin: env.clientOrigin,
-    credentials: true
-  })
-);
+// CORS : uniquement utile en developpement, ou le front (Vite, port 5173) et l'API
+// (port 4000) sont sur deux origines. En production tout est servi par ce meme
+// serveur, donc aucune requete n'est cross-origin et activer CORS avec
+// `credentials: true` sur une origine localhost ouvrirait inutilement l'API
+// authentifiee a n'importe quelle page servie sur ce port.
+if (!env.isProd) {
+  app.use(
+    cors({
+      origin: env.clientOrigin,
+      credentials: true
+    })
+  );
+}
+
 app.use(express.json({ limit: "100kb" }));
 app.use(attachAuth);
 

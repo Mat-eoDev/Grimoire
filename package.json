@@ -22,4 +22,3 @@
     "prisma:seed": "npm --workspace @newmj/server run prisma:seed"
   }
 }
-

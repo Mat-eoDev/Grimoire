@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { assertString, HttpError } from "../lib/http.js";
+import { assertInteger, assertString, HttpError } from "../lib/http.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 
@@ -112,7 +112,7 @@ inventoryRouter.post("/campaigns/:campaignId/inventory/give", async (request, re
     const body = request.body as Record<string, unknown>;
     const playerId = assertString(body.playerId, "playerId");
     const itemSlug = assertString(body.itemSlug, "itemSlug");
-    const quantity = typeof body.quantity === "number" && body.quantity > 0 ? body.quantity : 1;
+    const quantity = assertInteger(body.quantity, "quantity", { min: 1, max: 999, fallback: 1 });
 
     function toBonus(val: unknown) {
       const n = Number(val);
