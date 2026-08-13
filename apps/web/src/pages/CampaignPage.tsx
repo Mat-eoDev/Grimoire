@@ -58,9 +58,15 @@ export function CampaignPage({ session, onLogout }: Props) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Dans le lobby, rien n'arrive par SSE (arrivees de joueurs, statuts "pret") :
+  // le sondage rapide y est la seule source de fraicheur. Une fois la partie lancee,
+  // le flux temps reel prend le relais et ce sondage n'est plus qu'un filet de
+  // securite en cas de connexion coupee — toutes les 4 secondes, il rechargeait la
+  // campagne entiere en permanence.
   useEffect(() => {
     if (!data || data.campaign.status === "CLOSED") return;
-    const interval = setInterval(load, 4000);
+    const delay = data.campaign.status === "ACTIVE" ? 20_000 : 4_000;
+    const interval = setInterval(load, delay);
     return () => clearInterval(interval);
   }, [data, load]);
 
