@@ -5,7 +5,7 @@ import { Router } from "express";
 
 import { assertString, HttpError, optionalString } from "../lib/http.js";
 import { sseBroadcast, sseSubscribe, sseUnsubscribe } from "../lib/sseHub.js";
-import { getBaseStats } from "../lib/characterStats.js";
+import { CHARACTER_NAMES, getBaseStats } from "../lib/characterStats.js";
 import { prisma } from "../lib/prisma.js";
 import { getRollOutcome, type RollOutcome } from "../lib/rollOutcome.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -1246,18 +1246,58 @@ campaignsRouter.put("/campaigns/:campaignId/notes", async (request, response, ne
   }
 });
 
-// POST /campaigns/:campaignId/character — crée la fiche avec les stats de base
+// POST /campaigns/:campaignId/character — cree la fiche avec les stats de base.
+//
+// Cette route ecrase les stats par les valeurs de base : c'est voulu tant que la partie
+// n'a pas commence (le joueur peut changer d'avis dans le lobby), mais ce serait un soin
+// gratuit une fois la campagne lancee. Deux gardes ferment cet abus :
+//   1. la fiche est verrouillee des que la campagne quitte l'etat DRAFT ;
+//   2. reposter le meme personnage est idempotent (aucune remise a plein des PV).
+// Sans elles, n'importe quel joueur pouvait se resoigner a volonte en rappelant cette
+// route, ce qui annulait la regle "personnage a terre a 0 PV".
 campaignsRouter.post("/campaigns/:campaignId/character", async (request, response, next) => {
   try {
     const auth = requireAuth(request);
     const body = request.body as Record<string, unknown>;
     const charId   = Number(body.charId);
-    const charName = assertString(body.charName, "charName");
+    const charName = assertString(body.charName, "charName", 32);
+
+    if (!Number.isInteger(charId) || !(charId in CHARACTER_NAMES)) {
+      throw new HttpError(400, "Personnage inconnu");
+    }
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: request.params.campaignId },
+      select: { status: true }
+    });
+    if (!campaign) throw new HttpError(404, "Partie introuvable");
 
     const member = await prisma.campaignMember.findUnique({
       where: { campaignId_userId: { campaignId: request.params.campaignId, userId: auth.user.id } }
     });
     if (!member) throw new HttpError(403, "Tu ne participes pas a cette partie");
+    if (member.role === MemberRole.GM) {
+      throw new HttpError(400, "Le MJ n'a pas de fiche personnage");
+    }
+
+    const existing = await prisma.characterSheet.findUnique({
+      where: { userId_campaignId: { userId: auth.user.id, campaignId: request.params.campaignId } }
+    });
+
+    if (existing) {
+      // Meme personnage, meme nom : rien a faire (rechargement de page, autre appareil...).
+      if (existing.charId === charId && existing.charName === charName) {
+        response.status(200).json({ sheet: existing });
+        return;
+      }
+      // Changement de personnage : possible uniquement avant le lancement.
+      if (campaign.status !== "DRAFT") {
+        throw new HttpError(
+          409,
+          "Ta fiche est verrouillee : on ne change pas de personnage une fois la partie lancee"
+        );
+      }
+    }
 
     const stats = getBaseStats(charId);
 
@@ -1267,7 +1307,7 @@ campaignsRouter.post("/campaigns/:campaignId/character", async (request, respons
       create: { userId: auth.user.id, campaignId: request.params.campaignId, charId, charName, ...stats }
     });
 
-    response.status(201).json({ sheet });
+    response.status(existing ? 200 : 201).json({ sheet });
   } catch (error) {
     next(error);
   }

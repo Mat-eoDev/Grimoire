@@ -41,14 +41,6 @@ export function CampaignPage({ session, onLogout }: Props) {
   const [inviteFeedback, setInviteFeedback] = useState<string | null>(null);
   const [refreshKey, setRefreshKey]   = useState(0);
 
-  const [character, setCharacter] = useState<CharacterChoice | null>(() => {
-    if (!campaignId) return null;
-    try {
-      const stored = localStorage.getItem(`char_${campaignId}`);
-      return stored ? (JSON.parse(stored) as CharacterChoice) : null;
-    } catch { return null; }
-  });
-
   const load = useCallback(async () => {
     if (!campaignId) return;
     try {
@@ -138,9 +130,10 @@ export function CampaignPage({ session, onLogout }: Props) {
     setTimeout(() => setInviteFeedback(null), 4000);
   }
 
-  function handleCharacterConfirm(choice: CharacterChoice) {
-    if (campaignId) localStorage.setItem(`char_${campaignId}`, JSON.stringify(choice));
-    setCharacter(choice);
+  // La fiche fait foi cote serveur : on se contente de recharger la campagne,
+  // `viewerSheet` passera de undefined a la fiche creee.
+  async function handleCharacterConfirm(_choice: CharacterChoice) {
+    await load();
   }
 
   if (loading) return <div className="app-shell">Chargement...</div>;
@@ -158,7 +151,11 @@ export function CampaignPage({ session, onLogout }: Props) {
   const { campaign } = data;
   const MAX_PLAYERS = 5;
 
-  if (!isGm && !character) {
+  // Source de verite : la fiche existe-t-elle en base ? (et non un flag localStorage,
+  // qui renvoyait le joueur sur l'ecran de selection depuis un autre navigateur.)
+  const viewerSheet = data.live.players.find((player) => player.userId === data.viewer.userId);
+
+  if (!isGm && !viewerSheet) {
     return <CharacterSelect campaignId={campaignId!} onConfirm={handleCharacterConfirm} />;
   }
 
@@ -267,9 +264,9 @@ export function CampaignPage({ session, onLogout }: Props) {
             {campaign.status === "CLOSED" && (
               <p style={{ margin: 0, color: "var(--ink-soft)" }}>Cette campagne est terminée.</p>
             )}
-            {!isGm && character && campaign.status !== "CLOSED" && (
+            {!isGm && viewerSheet && campaign.status !== "CLOSED" && (
               <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--ink-soft)" }}>
-                Personnage {character.charId} — <strong>{character.name}</strong>
+                Personnage : <strong>{viewerSheet.charName}</strong>
               </p>
             )}
           </div>
