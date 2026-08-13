@@ -971,95 +971,98 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
     const outcome = getRollOutcome(existing);
     if (!outcome) throw new HttpError(400, "Resultat de jet introuvable");
     const consequence = getStoredOutcomeConsequences(existing)[outcome];
+    const campaignId = request.params.campaignId;
 
-    // Nom du personnage tombe a 0 PV lors de cette resolution (pour l'annonce a tous).
-    let downedName: string | null = null;
-
-    if (consequence.type === ActionRollConsequenceType.NARRATION && consequence.text.trim()) {
-      await prisma.sceneElement.create({
-        data: {
-          campaignId: request.params.campaignId,
-          type: SceneElementType.NARRATION,
-          name: "Resolution",
-          description: consequence.text.trim(),
-          quantity: 1
-        }
+    // Toute la resolution tient dans une seule transaction : soit la consequence est
+    // appliquee ET le jet passe a RESOLVED, soit rien ne bouge. Sans cela, une erreur
+    // au milieu laissait les degats appliques avec un jet encore ouvert (ou l'inverse),
+    // et le MJ pouvait rejouer la meme consequence en revalidant.
+    const { roll, downedName } = await prisma.$transaction(async (tx) => {
+      // Verrou logique : seule la premiere resolution concurrente passe.
+      const claimed = await tx.actionRoll.updateMany({
+        where: { id: existing.id, status: ActionRollStatus.ROLLED },
+        data: { status: ActionRollStatus.RESOLVED }
       });
-    }
+      if (claimed.count !== 1) {
+        throw new HttpError(400, "Ce jet vient d'etre resolu ou annule");
+      }
 
-    if (consequence.type === ActionRollConsequenceType.DAMAGE_TARGET) {
-      if (existing.targetType === ActionRollTargetType.ELEMENT && existing.targetElementId) {
-        const target = await prisma.sceneElement.findFirst({
-          where: { id: existing.targetElementId, campaignId: request.params.campaignId }
+      // Nom du personnage tombe a 0 PV lors de cette resolution (pour l'annonce a tous).
+      let downed: string | null = null;
+
+      async function damageSheet(userId: string) {
+        const sheet = await tx.characterSheet.findUnique({
+          where: { userId_campaignId: { userId, campaignId } }
         });
-        if (target) {
-          await prisma.sceneElement.update({
-            where: { id: target.id },
-            data: { hp: Math.max(0, target.hp - consequence.amount) }
+        if (!sheet) return;
+        const newHp = Math.max(0, sheet.hp - consequence.amount);
+        await tx.characterSheet.update({ where: { id: sheet.id }, data: { hp: newHp } });
+        if (newHp === 0 && sheet.hp > 0) downed = sheet.charName;
+      }
+
+      // Cible implicite des effets "joueur" : la cible designee si c'en est une, sinon le lanceur.
+      const affectedUserId = existing.targetType === ActionRollTargetType.PLAYER && existing.targetUserId
+        ? existing.targetUserId
+        : existing.playerUserId;
+
+      if (consequence.type === ActionRollConsequenceType.NARRATION && consequence.text.trim()) {
+        await tx.sceneElement.create({
+          data: {
+            campaignId,
+            type: SceneElementType.NARRATION,
+            name: "Resolution",
+            description: consequence.text.trim(),
+            quantity: 1
+          }
+        });
+      }
+
+      if (consequence.type === ActionRollConsequenceType.DAMAGE_TARGET) {
+        if (existing.targetType === ActionRollTargetType.ELEMENT && existing.targetElementId) {
+          const target = await tx.sceneElement.findFirst({
+            where: { id: existing.targetElementId, campaignId }
           });
+          if (target) {
+            await tx.sceneElement.update({
+              where: { id: target.id },
+              data: { hp: Math.max(0, target.hp - consequence.amount) }
+            });
+          }
+        }
+        if (existing.targetType === ActionRollTargetType.PLAYER && existing.targetUserId) {
+          await damageSheet(existing.targetUserId);
         }
       }
-      if (existing.targetType === ActionRollTargetType.PLAYER && existing.targetUserId) {
-        const sheet = await prisma.characterSheet.findUnique({
-          where: { userId_campaignId: { userId: existing.targetUserId, campaignId: request.params.campaignId } }
+
+      if (consequence.type === ActionRollConsequenceType.DAMAGE_PLAYER) {
+        await damageSheet(affectedUserId);
+      }
+
+      if (consequence.type === ActionRollConsequenceType.HEAL_PLAYER) {
+        const sheet = await tx.characterSheet.findUnique({
+          where: { userId_campaignId: { userId: affectedUserId, campaignId } }
         });
         if (sheet) {
-          const newHp = Math.max(0, sheet.hp - consequence.amount);
-          await prisma.characterSheet.update({
+          await tx.characterSheet.update({
             where: { id: sheet.id },
-            data: { hp: newHp }
+            data: { hp: Math.min(sheet.maxHp, sheet.hp + consequence.amount) }
           });
-          if (newHp === 0 && sheet.hp > 0) downedName = sheet.charName;
         }
       }
-    }
 
-    if (consequence.type === ActionRollConsequenceType.DAMAGE_PLAYER) {
-      const targetUserId = existing.targetType === ActionRollTargetType.PLAYER && existing.targetUserId
-        ? existing.targetUserId
-        : existing.playerUserId;
-      const sheet = await prisma.characterSheet.findUnique({
-        where: { userId_campaignId: { userId: targetUserId, campaignId: request.params.campaignId } }
-      });
-      if (sheet) {
-        const newHp = Math.max(0, sheet.hp - consequence.amount);
-        await prisma.characterSheet.update({
-          where: { id: sheet.id },
-          data: { hp: newHp }
+      if (
+        consequence.type === ActionRollConsequenceType.DELETE_TARGET &&
+        existing.targetType === ActionRollTargetType.ELEMENT &&
+        existing.targetElementId
+      ) {
+        const target = await tx.sceneElement.findFirst({
+          where: { id: existing.targetElementId, campaignId }
         });
-        if (newHp === 0 && sheet.hp > 0) downedName = sheet.charName;
+        if (target) await tx.sceneElement.delete({ where: { id: target.id } });
       }
-    }
 
-    if (consequence.type === ActionRollConsequenceType.HEAL_PLAYER) {
-      const targetUserId = existing.targetType === ActionRollTargetType.PLAYER && existing.targetUserId
-        ? existing.targetUserId
-        : existing.playerUserId;
-      const sheet = await prisma.characterSheet.findUnique({
-        where: { userId_campaignId: { userId: targetUserId, campaignId: request.params.campaignId } }
-      });
-      if (sheet) {
-        await prisma.characterSheet.update({
-          where: { id: sheet.id },
-          data: { hp: Math.min(sheet.maxHp, sheet.hp + consequence.amount) }
-        });
-      }
-    }
-
-    if (
-      consequence.type === ActionRollConsequenceType.DELETE_TARGET &&
-      existing.targetType === ActionRollTargetType.ELEMENT &&
-      existing.targetElementId
-    ) {
-      const target = await prisma.sceneElement.findFirst({
-        where: { id: existing.targetElementId, campaignId: request.params.campaignId }
-      });
-      if (target) await prisma.sceneElement.delete({ where: { id: target.id } });
-    }
-
-    const roll = await prisma.actionRoll.update({
-      where: { id: existing.id },
-      data: { status: ActionRollStatus.RESOLVED }
+      const updated = await tx.actionRoll.findUniqueOrThrow({ where: { id: existing.id } });
+      return { roll: updated, downedName: downed as string | null };
     });
 
     sseBroadcast(request.params.campaignId, { type: "action-roll:closed", actionRollId: roll.id });
