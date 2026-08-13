@@ -30,6 +30,19 @@ présente les choix de conception, l'état de conformité auto-évalué, et le p
 | Contrastes | 🟡 | À mesurer au contrôleur de contraste (objectif AA 4.5:1) |
 | Zoom / responsive | ✅ | Mobile-first, unités relatives |
 
+## 3bis. Améliorations réellement appliquées (code)
+
+| Correctif | Fichier | Critère RGAA |
+|---|---|---|
+| `lang="fr"` + `<meta description>` | `apps/web/index.html` | Langue, métadonnées |
+| **`aria-live="polite"` + `role="status"`** sur les zones de résultat/statut des jets | `LiveCampaign.tsx` (3 zones) | Contenu dynamique annoncé aux lecteurs d'écran |
+| **`aria-label`** sur le champ de recherche (placeholder ≠ label) | `LiveCampaign.tsx` | Étiquetage des champs |
+| Champs titre/narration déjà encapsulés dans `<label>` | `LiveCampaign.tsx` | Étiquetage (vérifié conforme) |
+
+Ces correctifs traitent le point le plus critique pour un joueur déficient visuel : **le résultat
+d'un jet et son issue, mis à jour en asynchrone, sont désormais annoncés** par les technologies
+d'assistance.
+
 ## 4. Plan de mise en conformité (prévention du handicap)
 
 1. **Handicap visuel** : `aria-label` sur tous les boutons-icônes ; vérifier les contrastes au ratio
