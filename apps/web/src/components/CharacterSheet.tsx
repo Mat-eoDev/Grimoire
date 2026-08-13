@@ -16,10 +16,10 @@ type Sheet = {
 };
 
 const CHAR_IMGS: Record<number, string> = {
-  1: "/lib_picture/player/ASSASSIN.png",
-  2: "/lib_picture/player/CHEVALIER.png",
-  3: "/lib_picture/player/ELFE.png",
-  4: "/lib_picture/player/MAG.png",
+  1: "/lib_picture/player/ASSASSIN.webp",
+  2: "/lib_picture/player/CHEVALIER.webp",
+  3: "/lib_picture/player/ELFE.webp",
+  4: "/lib_picture/player/MAG.webp",
 };
 
 const CHAR_LABELS: Record<number, string> = {
