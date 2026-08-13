@@ -193,3 +193,10 @@ export type CampaignSummaryResponse = {
     endedAt: string | null;
   };
 };
+
+export type CombatLogEntry = {
+  id: string;
+  kind: "ATTACK" | "RESOLUTION";
+  message: string;
+  createdAt: string;
+};

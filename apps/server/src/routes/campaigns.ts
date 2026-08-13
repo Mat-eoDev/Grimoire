@@ -4,6 +4,7 @@ import {
   ActionRollConsequenceType,
   ActionRollStatus,
   ActionRollTargetType,
+  CombatLogKind,
   MemberRole,
   Prisma,
   RollOutcome as RollOutcomeEnum,
@@ -537,18 +538,17 @@ campaignsRouter.post("/campaigns/:campaignId/scene-elements/:elementId/attack", 
       data: { hp: newHp }
     });
 
-    // Trace visible dans la scene (journal de combat).
-    await prisma.sceneElement.create({
+    // Trace dans le journal de combat (et non plus un element de scene, qui
+    // s'empilait au centre du decor sans jamais etre nettoye).
+    await prisma.combatLogEntry.create({
       data: {
         campaignId: request.params.campaignId,
-        type: SceneElementType.NARRATION,
-        name: "Attaque",
-        description: `${attacker.name} attaque ${sheet.charName || sheet.user.username} (-${amount} PV)`,
-        quantity: 1,
-        isVisible: true
+        kind: CombatLogKind.ATTACK,
+        message: `${attacker.name} attaque ${sheet.charName || sheet.user.username} (-${amount} PV)`
       }
     });
 
+    sseBroadcast(request.params.campaignId, { type: "log:appended" });
     sseBroadcast(request.params.campaignId, { type: "campaign:changed" });
 
     response.json({ ok: true, targetUserId, hp: newHp });
@@ -980,13 +980,11 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
         : existing.playerUserId;
 
       if (consequence.type === ActionRollConsequenceType.NARRATION && consequence.text.trim()) {
-        await tx.sceneElement.create({
+        await tx.combatLogEntry.create({
           data: {
             campaignId,
-            type: SceneElementType.NARRATION,
-            name: "Resolution",
-            description: consequence.text.trim(),
-            quantity: 1
+            kind: CombatLogKind.RESOLUTION,
+            message: consequence.text.trim()
           }
         });
       }
@@ -1048,6 +1046,29 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
       sseBroadcast(request.params.campaignId, { type: "player:down", name: downedName });
     }
     response.json({ actionRoll: await serializeActionRoll(roll) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /campaigns/:campaignId/log — dernieres entrees du journal de combat.
+ * Lecture bornee : le journal grandit avec la partie, mais la reponse non.
+ */
+campaignsRouter.get("/campaigns/:campaignId/log", async (request, response, next) => {
+  try {
+    const auth = requireAuth(request);
+    await requireCampaignMember(request.params.campaignId, auth.user.id);
+
+    const limit = Math.min(100, Math.max(1, toInteger(request.query.limit, 30)));
+    const entries = await prisma.combatLogEntry.findMany({
+      where: { campaignId: request.params.campaignId },
+      orderBy: { createdAt: "desc" },
+      take: limit
+    });
+
+    // Renvoye du plus ancien au plus recent : l'ordre de lecture d'un journal.
+    response.json({ entries: entries.reverse() });
   } catch (error) {
     next(error);
   }
