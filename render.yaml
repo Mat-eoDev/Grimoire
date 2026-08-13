@@ -18,6 +18,14 @@ services:
         sync: false
       - key: SESSION_COOKIE_NAME
         value: newmj_session
+      # Origine autorisee du front. En production le front est servi par ce meme
+      # service (aucune requete cross-origin), mais la variable doit etre definie :
+      # sans elle, env.clientOrigin retombait sur http://localhost:5173.
+      - key: CLIENT_ORIGIN
+        fromService:
+          type: web
+          name: grimoire
+          envVarKey: RENDER_EXTERNAL_URL
       # Email de bienvenue (optionnel) — a renseigner dans le dashboard Render.
       - key: BREVO_API_KEY
         sync: false

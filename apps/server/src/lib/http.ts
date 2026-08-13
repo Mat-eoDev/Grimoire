@@ -74,6 +74,33 @@ export function optionalNumber(value: unknown) {
   return parsed;
 }
 
+/**
+ * Lit un entier borne. `Math.max(1, Number(x))` ne suffisait pas : `Number("abc")`
+ * vaut NaN, et NaN traverse toutes les comparaisons sans les declencher — la valeur
+ * finissait dans Prisma et remontait en 500 au lieu d'un 400 explicite.
+ */
+export function assertInteger(
+  value: unknown,
+  fieldName: string,
+  { min = 1, max = 1000, fallback }: { min?: number; max?: number; fallback?: number } = {}
+) {
+  if ((value == null || value === "") && fallback !== undefined) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed)) {
+    throw new HttpError(400, `Champ invalide: ${fieldName} (entier attendu)`);
+  }
+
+  if (parsed < min || parsed > max) {
+    throw new HttpError(400, `Champ hors bornes: ${fieldName} (entre ${min} et ${max})`);
+  }
+
+  return parsed;
+}
+
 export function requireArray(value: unknown, fieldName: string) {
   if (!Array.isArray(value)) {
     throw new HttpError(400, `Champ invalide: ${fieldName}`);

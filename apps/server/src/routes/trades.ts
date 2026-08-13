@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Router } from "express";
 
-import { HttpError } from "../lib/http.js";
+import { assertInteger, HttpError } from "../lib/http.js";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import { sseBroadcast } from "../lib/sseHub.js";
@@ -106,7 +106,7 @@ tradesRouter.post("/campaigns/:campaignId/inventory/player-give", async (request
     const body = request.body as Record<string, unknown>;
     const entryId = String(body.entryId ?? "");
     const toUserId = String(body.toUserId ?? "");
-    const qty = Math.max(1, Number(body.qty ?? 1));
+    const qty = assertInteger(body.qty, "qty", { min: 1, max: 999, fallback: 1 });
 
     if (!entryId || !toUserId) throw new HttpError(400, "entryId et toUserId requis");
 
@@ -140,7 +140,7 @@ tradesRouter.post("/campaigns/:campaignId/inventory/give-npc", async (request, r
     const body = request.body as Record<string, unknown>;
     const entryId = String(body.entryId ?? "");
     const targetElementId = body.targetElementId ? String(body.targetElementId) : "";
-    const qty = Math.max(1, Number(body.qty ?? 1));
+    const qty = assertInteger(body.qty, "qty", { min: 1, max: 999, fallback: 1 });
 
     if (!entryId) throw new HttpError(400, "entryId requis");
 
@@ -235,9 +235,9 @@ tradesRouter.post("/campaigns/:campaignId/trades", async (request, response, nex
     const body = request.body as Record<string, unknown>;
     const toUserId = String(body.toUserId ?? "");
     const offeredEntryId = String(body.offeredEntryId ?? "");
-    const offeredQty = Math.max(1, Number(body.offeredQty ?? 1));
+    const offeredQty = assertInteger(body.offeredQty, "offeredQty", { min: 1, max: 999, fallback: 1 });
     const requestedEntryId = body.requestedEntryId ? String(body.requestedEntryId) : null;
-    const requestedQty = Math.max(1, Number(body.requestedQty ?? 1));
+    const requestedQty = assertInteger(body.requestedQty, "requestedQty", { min: 1, max: 999, fallback: 1 });
 
     if (!toUserId || !offeredEntryId) throw new HttpError(400, "toUserId et offeredEntryId requis");
     if (toUserId === auth.user.id) throw new HttpError(400, "Tu ne peux pas echanger avec toi-meme");
