@@ -1,6 +1,14 @@
 import { randomBytes } from "node:crypto";
 
-import { ActionRollConsequenceType, ActionRollStatus, ActionRollTargetType, MemberRole, SceneElementType } from "@prisma/client";
+import {
+  ActionRollConsequenceType,
+  ActionRollStatus,
+  ActionRollTargetType,
+  MemberRole,
+  Prisma,
+  RollOutcome as RollOutcomeEnum,
+  SceneElementType
+} from "@prisma/client";
 import { Router } from "express";
 
 import { assertString, HttpError, optionalString } from "../lib/http.js";
@@ -74,6 +82,15 @@ type OutcomeConsequence = {
   text: string;
 };
 
+type RollOutcomeEnumType = (typeof RollOutcomeEnum)[keyof typeof RollOutcomeEnum];
+type ActionRollConsequenceRow = { outcome: RollOutcomeEnumType } & OutcomeConsequence;
+
+/** Un jet accompagne de ses effets par palier — la forme attendue par la serialisation. */
+type ActionRollWithConsequences = Prisma.ActionRollGetPayload<{ include: { consequences: true } }>;
+
+/** A passer a toute lecture de jet destinee a serializeActionRoll. */
+const withConsequences = { consequences: true } as const;
+
 function readOutcomeConsequence(value: unknown): OutcomeConsequence {
   if (!value || typeof value !== "object") {
     return { type: ActionRollConsequenceType.NONE, amount: 0, text: "" };
@@ -89,97 +106,60 @@ function readOutcomeConsequence(value: unknown): OutcomeConsequence {
   };
 }
 
+const NO_CONSEQUENCE: OutcomeConsequence = {
+  type: ActionRollConsequenceType.NONE,
+  amount: 0,
+  text: ""
+};
+
+/** Lit les effets par palier envoyes par le MJ a la creation d'un jet. */
 function getOutcomeConsequences(body: Record<string, unknown>) {
   const source = body.consequences && typeof body.consequences === "object"
     ? body.consequences as Record<string, unknown>
     : {};
-  const fallback = {
-    type: typeof body.consequenceType === "string" ? body.consequenceType : "NONE",
-    amount: body.consequenceAmount,
-    text: body.consequenceText
-  };
 
   return {
     TOTAL_FAILURE: readOutcomeConsequence(source.TOTAL_FAILURE),
     FAILURE: readOutcomeConsequence(source.FAILURE),
-    SUCCESS: readOutcomeConsequence(source.SUCCESS ?? fallback),
+    SUCCESS: readOutcomeConsequence(source.SUCCESS),
     TOTAL_SUCCESS: readOutcomeConsequence(source.TOTAL_SUCCESS)
   } satisfies Record<RollOutcome, OutcomeConsequence>;
 }
 
-function getStoredOutcomeConsequences(roll: {
-  consequenceType: ActionRollConsequenceType;
-  consequenceAmount: number;
-  consequenceText: string;
-  totalFailureConsequenceType: ActionRollConsequenceType;
-  totalFailureConsequenceAmount: number;
-  totalFailureConsequenceText: string;
-  failureConsequenceType: ActionRollConsequenceType;
-  failureConsequenceAmount: number;
-  failureConsequenceText: string;
-  successConsequenceType: ActionRollConsequenceType;
-  successConsequenceAmount: number;
-  successConsequenceText: string;
-  totalSuccessConsequenceType: ActionRollConsequenceType;
-  totalSuccessConsequenceAmount: number;
-  totalSuccessConsequenceText: string;
-}) {
+/**
+ * Reconstitue les quatre paliers depuis les lignes filles. Seuls les effets
+ * reellement parametres sont stockes : un palier absent vaut "aucun effet".
+ */
+function getStoredOutcomeConsequences(roll: { consequences: ActionRollConsequenceRow[] }) {
+  const byOutcome = new Map(roll.consequences.map((row) => [row.outcome, row]));
+
+  function read(outcome: RollOutcome): OutcomeConsequence {
+    const row = byOutcome.get(outcome);
+    if (!row) return { ...NO_CONSEQUENCE };
+    return { type: row.type, amount: row.amount, text: row.text };
+  }
+
   return {
-    TOTAL_FAILURE: {
-      type: roll.totalFailureConsequenceType,
-      amount: roll.totalFailureConsequenceAmount,
-      text: roll.totalFailureConsequenceText
-    },
-    FAILURE: {
-      type: roll.failureConsequenceType,
-      amount: roll.failureConsequenceAmount,
-      text: roll.failureConsequenceText
-    },
-    SUCCESS: {
-      type: roll.successConsequenceType,
-      amount: roll.successConsequenceAmount,
-      text: roll.successConsequenceText
-    },
-    TOTAL_SUCCESS: {
-      type: roll.totalSuccessConsequenceType,
-      amount: roll.totalSuccessConsequenceAmount,
-      text: roll.totalSuccessConsequenceText
-    }
+    TOTAL_FAILURE: read(RollOutcomeEnum.TOTAL_FAILURE),
+    FAILURE: read(RollOutcomeEnum.FAILURE),
+    SUCCESS: read(RollOutcomeEnum.SUCCESS),
+    TOTAL_SUCCESS: read(RollOutcomeEnum.TOTAL_SUCCESS)
   } satisfies Record<RollOutcome, OutcomeConsequence>;
 }
 
-async function serializeActionRoll(roll: {
-  id: string;
-  campaignId: string;
-  playerUserId: string;
-  actionText: string;
-  dieSides: number;
-  totalFailureMax: number;
-  successMin: number;
-  totalSuccessMin: number;
-  targetType: ActionRollTargetType;
-  targetElementId: string | null;
-  targetUserId: string | null;
-  consequenceType: ActionRollConsequenceType;
-  consequenceAmount: number;
-  consequenceText: string;
-  totalFailureConsequenceType: ActionRollConsequenceType;
-  totalFailureConsequenceAmount: number;
-  totalFailureConsequenceText: string;
-  failureConsequenceType: ActionRollConsequenceType;
-  failureConsequenceAmount: number;
-  failureConsequenceText: string;
-  successConsequenceType: ActionRollConsequenceType;
-  successConsequenceAmount: number;
-  successConsequenceText: string;
-  totalSuccessConsequenceType: ActionRollConsequenceType;
-  totalSuccessConsequenceAmount: number;
-  totalSuccessConsequenceText: string;
-  status: ActionRollStatus;
-  result: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
+/** Transforme les quatre paliers en lignes a inserer, en omettant ceux sans effet. */
+function toConsequenceRows(consequences: Record<RollOutcome, OutcomeConsequence>) {
+  return (Object.entries(consequences) as Array<[RollOutcome, OutcomeConsequence]>)
+    .filter(([, value]) => value.type !== ActionRollConsequenceType.NONE || value.text.trim() !== "")
+    .map(([outcome, value]) => ({
+      outcome: outcome as RollOutcomeEnumType,
+      type: value.type,
+      amount: value.amount,
+      text: value.text
+    }));
+}
+
+async function serializeActionRoll(roll: ActionRollWithConsequences) {
   const [player, targetPlayer, targetElement, rollerSheet, targetSheet] = await Promise.all([
     prisma.user.findUnique({ where: { id: roll.playerUserId }, select: { id: true, username: true } }),
     roll.targetUserId
@@ -214,9 +194,6 @@ async function serializeActionRoll(roll: {
     targetUserId: roll.targetUserId,
     targetName: targetElement?.name ?? targetSheet?.charName ?? targetPlayer?.username ?? "",
     targetElement,
-    consequenceType: roll.consequenceType,
-    consequenceAmount: roll.consequenceAmount,
-    consequenceText: roll.consequenceText,
     consequences: getStoredOutcomeConsequences(roll),
     status: roll.status,
     result: roll.result,
@@ -374,7 +351,8 @@ campaignsRouter.get("/campaigns/:campaignId", async (request, response, next) =>
         status: { in: [ActionRollStatus.PENDING, ActionRollStatus.ROLLED] },
         OR: viewer.role === MemberRole.GM ? undefined : [{ playerUserId: auth.user.id }]
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
+      include: withConsequences
     });
     const activeRolls = await Promise.all(activeRollsRaw.map(serializeActionRoll));
 
@@ -745,7 +723,8 @@ campaignsRouter.get("/campaigns/:campaignId/action-rolls/active", async (request
         status: { in: [ActionRollStatus.PENDING, ActionRollStatus.ROLLED] },
         ...(member.role === MemberRole.GM ? {} : { playerUserId: auth.user.id })
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
+      include: withConsequences
     });
 
     response.json({ actionRolls: await Promise.all(rolls.map(serializeActionRoll)) });
@@ -778,9 +757,6 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls", async (request, resp
     const targetType = assertString(body.targetType ?? "NONE", "targetType") as ActionRollTargetType;
     const targetElementId = optionalString(body.targetElementId);
     const targetUserId = optionalString(body.targetUserId);
-    const consequenceType = assertString(body.consequenceType ?? "NONE", "consequenceType") as ActionRollConsequenceType;
-    const consequenceAmount = Math.max(0, toInteger(body.consequenceAmount, 0));
-    const consequenceText = optionalString(body.consequenceText) ?? "";
     const consequences = getOutcomeConsequences(body);
 
     if (![4, 6, 8, 10, 12, 20, 100].includes(dieSides)) {
@@ -800,8 +776,13 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls", async (request, resp
     if (!Object.values(ActionRollTargetType).includes(targetType)) {
       throw new HttpError(400, "Type de cible invalide");
     }
-    if (!Object.values(ActionRollConsequenceType).includes(consequenceType)) {
-      throw new HttpError(400, "Type de consequence invalide");
+    // readOutcomeConsequence() a deja ramene tout type inconnu a NONE ; on refuse
+    // explicitement une valeur non reconnue plutot que de l'ignorer en silence.
+    for (const [outcome, value] of Object.entries(consequences)) {
+      const raw = (body.consequences as Record<string, { type?: unknown }> | undefined)?.[outcome]?.type;
+      if (typeof raw === "string" && value.type === ActionRollConsequenceType.NONE && raw !== "NONE") {
+        throw new HttpError(400, "Type de consequence invalide");
+      }
     }
 
     // Le lanceur est un membre de la campagne : un joueur, ou le MJ lui-meme
@@ -848,22 +829,9 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls", async (request, resp
         targetType,
         targetElementId: targetType === ActionRollTargetType.ELEMENT ? targetElementId : null,
         targetUserId: targetType === ActionRollTargetType.PLAYER ? targetUserId : null,
-        consequenceType,
-        consequenceAmount,
-        consequenceText,
-        totalFailureConsequenceType: consequences.TOTAL_FAILURE.type,
-        totalFailureConsequenceAmount: consequences.TOTAL_FAILURE.amount,
-        totalFailureConsequenceText: consequences.TOTAL_FAILURE.text,
-        failureConsequenceType: consequences.FAILURE.type,
-        failureConsequenceAmount: consequences.FAILURE.amount,
-        failureConsequenceText: consequences.FAILURE.text,
-        successConsequenceType: consequences.SUCCESS.type,
-        successConsequenceAmount: consequences.SUCCESS.amount,
-        successConsequenceText: consequences.SUCCESS.text,
-        totalSuccessConsequenceType: consequences.TOTAL_SUCCESS.type,
-        totalSuccessConsequenceAmount: consequences.TOTAL_SUCCESS.amount,
-        totalSuccessConsequenceText: consequences.TOTAL_SUCCESS.text
-      }
+        consequences: { create: toConsequenceRows(consequences) }
+      },
+      include: withConsequences
     });
 
     const payload = await serializeActionRoll(roll);
@@ -880,7 +848,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/roll", async (
     await requireCampaignMember(request.params.campaignId, auth.user.id);
 
     const existing = await prisma.actionRoll.findFirst({
-      where: { id: request.params.rollId, campaignId: request.params.campaignId }
+      where: { id: request.params.rollId, campaignId: request.params.campaignId },
+      include: withConsequences
     });
     if (!existing) throw new HttpError(404, "Demande de jet introuvable");
     if (existing.playerUserId !== auth.user.id) throw new HttpError(403, "Ce jet est destine a un autre joueur");
@@ -898,7 +867,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/roll", async (
     const result = Math.floor(Math.random() * existing.dieSides) + 1;
     const roll = await prisma.actionRoll.update({
       where: { id: existing.id },
-      data: { status: ActionRollStatus.ROLLED, result }
+      data: { status: ActionRollStatus.ROLLED, result },
+      include: withConsequences
     });
 
     const payload = await serializeActionRoll(roll);
@@ -915,7 +885,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/reroll", async
     await requireGmCampaign(request.params.campaignId, auth.user.id);
 
     const existing = await prisma.actionRoll.findFirst({
-      where: { id: request.params.rollId, campaignId: request.params.campaignId }
+      where: { id: request.params.rollId, campaignId: request.params.campaignId },
+      include: withConsequences
     });
     if (!existing) throw new HttpError(404, "Demande de jet introuvable");
     if (existing.status === ActionRollStatus.RESOLVED || existing.status === ActionRollStatus.CANCELLED) {
@@ -924,7 +895,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/reroll", async
 
     const roll = await prisma.actionRoll.update({
       where: { id: existing.id },
-      data: { status: ActionRollStatus.PENDING, result: null }
+      data: { status: ActionRollStatus.PENDING, result: null },
+      include: withConsequences
     });
 
     const payload = await serializeActionRoll(roll);
@@ -941,7 +913,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/cancel", async
     await requireGmCampaign(request.params.campaignId, auth.user.id);
 
     const existing = await prisma.actionRoll.findFirst({
-      where: { id: request.params.rollId, campaignId: request.params.campaignId }
+      where: { id: request.params.rollId, campaignId: request.params.campaignId },
+      include: withConsequences
     });
     if (!existing) throw new HttpError(404, "Demande de jet introuvable");
 
@@ -963,7 +936,8 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
     await requireGmCampaign(request.params.campaignId, auth.user.id);
 
     const existing = await prisma.actionRoll.findFirst({
-      where: { id: request.params.rollId, campaignId: request.params.campaignId }
+      where: { id: request.params.rollId, campaignId: request.params.campaignId },
+      include: withConsequences
     });
     if (!existing) throw new HttpError(404, "Demande de jet introuvable");
     if (existing.status !== ActionRollStatus.ROLLED) throw new HttpError(400, "Le joueur doit lancer le de avant resolution");
@@ -1061,7 +1035,10 @@ campaignsRouter.post("/campaigns/:campaignId/action-rolls/:rollId/resolve", asyn
         if (target) await tx.sceneElement.delete({ where: { id: target.id } });
       }
 
-      const updated = await tx.actionRoll.findUniqueOrThrow({ where: { id: existing.id } });
+      const updated = await tx.actionRoll.findUniqueOrThrow({
+        where: { id: existing.id },
+        include: withConsequences
+      });
       return { roll: updated, downedName: downed as string | null };
     });
 

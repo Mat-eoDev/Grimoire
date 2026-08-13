@@ -99,6 +99,20 @@ export type CampaignDetail = {
 
 export type ActionRollOutcome = "TOTAL_FAILURE" | "FAILURE" | "SUCCESS" | "TOTAL_SUCCESS";
 
+export type ActionRollConsequenceType =
+  | "NONE"
+  | "NARRATION"
+  | "DAMAGE_TARGET"
+  | "DAMAGE_PLAYER"
+  | "DELETE_TARGET"
+  | "HEAL_PLAYER";
+
+export type ActionRollConsequence = {
+  type: ActionRollConsequenceType;
+  amount: number;
+  text: string;
+};
+
 export type ActionRoll = {
   id: string;
   playerUserId: string;
@@ -119,14 +133,7 @@ export type ActionRoll = {
     hp: number;
     maxHp: number;
   } | null;
-  consequenceType: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET" | "HEAL_PLAYER";
-  consequenceAmount: number;
-  consequenceText: string;
-  consequences: Record<ActionRollOutcome, {
-    type: "NONE" | "NARRATION" | "DAMAGE_TARGET" | "DAMAGE_PLAYER" | "DELETE_TARGET" | "HEAL_PLAYER";
-    amount: number;
-    text: string;
-  }>;
+  consequences: Record<ActionRollOutcome, ActionRollConsequence>;
   status: "PENDING" | "ROLLED" | "RESOLVED" | "CANCELLED";
   result: number | null;
   outcome: ActionRollOutcome | null;
