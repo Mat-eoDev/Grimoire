@@ -25,7 +25,7 @@ Express (apps/server)  ──►  Prisma Client  ──►  PostgreSQL (Neon)
 | **Communication** | `apps/web/src/lib/api.ts` | Client HTTP unique (`apiFetch`), gestion des erreurs et des cookies |
 | **API / Contrôleurs** | `apps/server/src/routes/*` | Endpoints Express, validation d'entrée, orchestration |
 | **Middleware transverse** | `apps/server/src/middleware/*` | Authentification (`attachAuth`/`requireAuth`), rate limiting |
-| **Métier / utilitaires** | `apps/server/src/lib/*` | Règles réutilisables : `password`, `session`, `characterStats`, `http`, `sseHub`, `mailer` |
+| **Métier / utilitaires** | `apps/server/src/lib/*` | Règles réutilisables : `password`, `session`, `characterStats`, `rollOutcome`, `sheetStats`, `http`, `sseHub`, `mailer` |
 | **Accès aux données** | `apps/server/src/lib/prisma.ts` + Prisma | Persistance découplée du SGBD, requêtes paramétrées |
 | **Données** | `apps/server/prisma/schema.prisma` + migrations | Modèle, contraintes d'intégrité |
 
@@ -63,8 +63,10 @@ présentation ignore le SGBD ; les routes ignorent le SQL (Prisma) ; le métier 
 | **PostgreSQL / Neon** | SGBD managé | Persistance | via `DATABASE_URL` |
 | **Brevo** | Service email externe (HTTP) | Mails de bienvenue et de reset | `lib/mailer.ts` (échec non bloquant) |
 | **@3d-dice/dice-box** | Librairie front | Animation 3D des dés (décorative) | import dynamique dans `LiveCampaign.tsx` |
-| **SSE** | Protocole temps réel | Diffusion d'événements | `lib/sseHub.ts` |
+| **SSE** | Protocole temps réel | Diffusion d'événements | `lib/sseHub.ts` (heartbeat 25 s), côté client une seule connexion par campagne via `lib/campaignStream.ts` |
 | **Render + cron-job.org** | PaaS + planificateur | Hébergement + anti-veille | `render.yaml` |
+| **helmet** | Middleware Express | En-têtes de sécurité (CSP, HSTS, anti-clickjacking) | `app.ts`, monté avant les fichiers statiques |
+| **GitHub Actions** | Intégration continue | Typage, tests, build et audit à chaque PR | `.github/workflows/ci.yml` |
 
 **Robustesse d'intégration** : les services externes non critiques sont **tolérants à la panne**
 (ex. l'envoi d'email échoue silencieusement sans casser l'inscription ; l'animation 3D indisponible

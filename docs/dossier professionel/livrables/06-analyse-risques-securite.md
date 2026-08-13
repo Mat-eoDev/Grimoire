@@ -3,7 +3,8 @@
 *Compétences visées : C8 (identification et criticité des risques, prévention, DevSecOps), C32 (analyse d'impact).*
 
 > Ce document formalise l'audit de sécurité réalisé sur le code déployé et les correctifs
-> appliqués (PR #15 à #20, en production le 2026-07-03).
+> appliqués : première campagne PR #15 à #20 (2026-07-03), seconde campagne PR #29 à #37
+> (2026-08-13) issue d'une revue complète du dépôt.
 
 ## 1. Méthode
 
@@ -30,24 +31,39 @@ criticité = f(probabilité, impact)** (échelle 1–4), puis plan de préventio
 | R9 | Injection SQL | Intégrité/confid. | 1 | 4 | **4** | ✅ Nul (Prisma paramétré) |
 | R10 | XSS stocké/réfléchi | Confidentialité | 1 | 3 | **3** | ✅ Nul (React échappe, `<img src>`) |
 | R11 | Absence de rotation/purge de session | Confidentialité | 2 | 2 | **4** | 🟡 Résiduel (durcissement futur) |
-| R12 | Absence de jeton CSRF (défense en profondeur) | Intégrité | 1 | 2 | **2** | 🟡 Résiduel (SameSite=Lax en place) |
+| R12 | Absence de jeton CSRF (défense en profondeur) | Intégrité | 1 | 2 | **2** | 🟡 Résiduel (SameSite=Lax, CORS retiré en prod) |
+| R13 | Soin illimité via `POST /character` | Intégrité métier | 4 | 3 | **12** | ✅ Corrigé (fiche verrouillée hors DRAFT, PR #29) |
+| R14 | État de jeu incohérent si la résolution d'un jet échoue en cours | Intégrité données | 2 | 3 | **6** | ✅ Corrigé (transaction + verrou, PR #30) |
+| R15 | API authentifiée ouverte à `localhost:5173` en production | Confidentialité | 2 | 3 | **6** | ✅ Corrigé (CORS retiré en prod, PR #31) |
+| R16 | Absence d'en-têtes de sécurité (CSP, HSTS, clickjacking) | Confidentialité | 2 | 3 | **6** | ✅ Corrigé (helmet, PR #31) |
+| R17 | Vulnérabilités réapparues sans détection (aucune CI) | Intégrité/dispo | 3 | 3 | **9** | ✅ Corrigé (audit bloquant en CI, PR #32) |
+| R18 | `NaN` traversant les validations numériques → 500 | Disponibilité | 2 | 2 | **4** | ✅ Corrigé (`assertInteger`, PR #31) |
+| R19 | Croissance non bornée des traces de combat | Disponibilité | 2 | 2 | **4** | ✅ Corrigé (table dédiée + lecture bornée, PR #35) |
 
 ## 3. Matrice criticité (synthèse)
 
 ```
-Impact →      1        2        3        4
+Impact →      1        2            3              4
 Prob ↓
-  4                            R2*
-  3                   R4      R1*,R3*
-  2         R6*,R8*  R11,R12  R5*,R7*   R9*
-  1                   R10*    R10       R9*
+  4                              R2*, R13*
+  3                   R4*     R1*, R17*         R3*
+  2      R6*, R8*  R11, R12,   R5*, R7*,        R9*
+                    R18*, R19*  R14*, R15*, R16*
+  1                   R10*        R10*
 ```
-`*` = traité. Aucun risque de criticité ≥ 9 ne subsiste ouvert.
+`*` = traité. **Aucun risque de criticité ≥ 9 ne subsiste ouvert.** Les deux risques les plus
+critiques identifiés lors de la seconde campagne (R13 et R17) l'ont été par revue de code et
+non par exploitation : R13 était directement exploitable par n'importe quel joueur authentifié
+et annulait silencieusement la règle « personnage à terre » introduite en PR #14.
 
 ## 4. Plan de prévention
 
 **Mesures appliquées (préventives et détectives)**
-1. **Contrôle des dépendances** : `npm audit` intégré au cycle ; mise à jour semver-safe.
+1. **Contrôle des dépendances** : `npm audit --omit=dev --audit-level=high` **bloquant en
+   intégration continue** ; mise à jour semver-safe. État courant : 0 vulnérabilité.
+0. **En-têtes de sécurité** : `helmet` monté avant les fichiers statiques — CSP (avec
+   `wasm-unsafe-eval` pour le moteur physique des dés), HSTS, `nosniff`, anti-clickjacking,
+   `Referrer-Policy`.
 2. **Rate limiting** par IP sur les endpoints sensibles (auth, join).
 3. **Autorisation systématique** (gardes `require*`) et cloisonnement par `campaignId`.
 4. **Secrets hors dépôt** (`.env` ignoré, variables Render `sync:false`).

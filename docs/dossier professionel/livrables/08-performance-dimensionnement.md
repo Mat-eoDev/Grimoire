@@ -74,3 +74,31 @@ et quelques requêtes tombent en timeout. C'est la **confirmation empirique du p
 gratuit** décrit au §4 : pour un usage réel soutenu (> quelques dizaines de connexions), le passage
 au palier P1/P2 (instance dédiée, puis multi-instances + Redis pub/sub pour le SSE) est nécessaire.
 Pour la cible réelle (~4 à 7 joueurs par partie, actions espacées), la marge est confortable.
+
+
+## Optimisations mesurées (2026-08-13)
+
+**Trafic temps réel.** Le temps réel reposait sur trois mécanismes simultanés : SSE, sondage
+de la campagne toutes les 4 s et sondage des jets toutes les 2 s. Chaque joueur ouvrait en
+outre deux `EventSource` (scène et panneau d'échanges).
+
+| | Avant | Après |
+|---|---|---|
+| Connexions SSE (table de 5 joueurs + MJ) | ~12 | 6 (une par client) |
+| Requêtes de sondage par client en partie | ~0,75 /s | ~0,08 /s |
+| Coupure de connexion inactive par un proxy | non traitée | heartbeat serveur toutes les 25 s |
+
+Le sondage de la campagne reste à 4 s dans le lobby, où aucun événement n'arrive par SSE
+(arrivées de joueurs, statuts « prêt »), et passe à 20 s une fois la partie lancée.
+
+**Poids des médias.** 59 images étaient servies en PNG non redimensionnés — dont des portraits
+de 3,6 Mo en 1024×1536 et une icône d'inventaire de 3 Mo à la même résolution.
+
+| | Avant | Après |
+|---|---|---|
+| Poids total des médias | 92,5 Mo | 4,1 Mo (**−95,6 %**) |
+| Portrait de personnage | 3,6 Mo | ~90 Ko |
+| Icône d'inventaire | 3,0 Mo | ~25 Ko |
+
+Format WebP, dimensions plafonnées selon l'usage : 1920 px pour les décors, 1024 px pour les
+portraits, 768 px pour les PNJ, 512 px pour les icônes d'inventaire.

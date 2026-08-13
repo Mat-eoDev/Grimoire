@@ -33,6 +33,8 @@ erDiagram
     CAMPAIGN ||--o{ PLAYER_NOTE : contient
     CAMPAIGN ||--o{ SCENE_ELEMENT : compose
     CAMPAIGN ||--o{ ACTION_ROLL : orchestre
+    ACTION_ROLL ||--o{ ACTION_ROLL_CONSEQUENCE : "definit par palier"
+    CAMPAIGN ||--o{ COMBAT_LOG_ENTRY : journalise
     CAMPAIGN ||--o{ INVENTORY_ENTRY : heberge
     CAMPAIGN ||--o{ TRADE_OFFER : arbitre
     USER ||--o{ CHARACTER_SHEET : incarne
@@ -47,7 +49,7 @@ erDiagram
 Types clés (extrait) :
 
 - Clés primaires `uuid` (`@default(uuid())`).
-- Enums PostgreSQL natifs : `AccountStatus, CampaignStatus, MemberRole, SceneElementType, ItemType, TradeStatus, ActionRollStatus, ActionRollTargetType, ActionRollConsequenceType`.
+- Enums PostgreSQL natifs : `AccountStatus, CampaignStatus, MemberRole, SceneElementType, ItemType, TradeStatus, ActionRollStatus, ActionRollTargetType, ActionRollConsequenceType, RollOutcome, CombatLogKind`.
 - Horodatage `createdAt`/`updatedAt` (`@default(now())`, `@updatedAt`).
 
 ## 4. Dictionnaire de données (extrait des tables sensibles)
@@ -75,7 +77,24 @@ Types clés (extrait) :
 | role | enum MemberRole | GM / PLAYER |
 
 **ActionRoll** (extrait) : `dieSides`, `totalFailureMax`, `successMin`, `totalSuccessMin`,
-conséquences par issue (`*ConsequenceType/Amount/Text`), `result`, `status`.
+`targetType`, `result`, `status`.
+
+**ActionRollConsequence** : `(rollId, outcome)` **UNIQUE**, `type` (enum), `amount`, `text`.
+Une ligne par palier réellement paramétré ; un palier absent vaut « aucun effet ».
+
+> **Décision de conception (normalisation).** `ActionRoll` portait initialement quinze
+> colonnes plates `<palier>Consequence<Type|Amount|Text>`, plus trois colonnes génériques
+> héritées d'une version antérieure. Ajouter un palier imposait une migration de colonnes et
+> deux fonctions ne faisaient que traduire ce format plat en structure. Le passage à une table
+> fille ramène la relation à sa forme naturelle (1 jet → n paliers), confie l'unicité
+> `(jet, palier)` au SGBD et divise par quatre la surface du modèle. La migration
+> `action_roll_consequences_table` **crée et alimente la table avant de supprimer les
+> colonnes**, et récupère les anciennes colonnes génériques pour le palier `SUCCESS`.
+
+**CombatLogEntry** : `kind` (enum `ATTACK` / `RESOLUTION`), `message`, `createdAt`,
+index `(campaignId, createdAt)`. Les traces automatiques de combat étaient auparavant
+écrites comme des `SceneElement` de type `NARRATION`, visibles par défaut et jamais purgés ;
+elles disposent désormais de leur propre table, lue par lots bornés.
 
 *(Dictionnaire complet : le schéma `schema.prisma` fait foi et est versionné.)*
 
@@ -98,6 +117,20 @@ conséquences par issue (`*ConsequenceType/Amount/Text`), `result`, `status`.
   direct à la base (défense au plus près de la donnée).
 
 Voir le script dans `apps/server/prisma/migrations/<date>_integrity_triggers/migration.sql`.
+
+**Conséquence sur les statistiques effectives.** Parce que l'invariant `hp <= maxHp` est tenu
+par une contrainte CHECK **et** par un trigger, les bonus d'équipement ne peuvent pas rester
+une simple addition faite à l'affichage : un `maxHp` calculé à la volée serait systématiquement
+raboté par le trigger. Les statistiques effectives (base de la classe + équipement porté) sont
+donc **recalculées et persistées** à chaque changement d'équipement (`lib/sheetStats.ts`),
+chacun de ces changements passant par une transaction pour que fiche et inventaire ne puissent
+pas diverger.
+
+## 6. État du modèle
+
+20 migrations, 15 modèles, 11 énumérations. La chaîne complète
+(`migrate deploy` → `seed`) a été rejouée sur une base PostgreSQL 16 vierge :
+toutes les migrations s'appliquent et `prisma migrate status` ne signale aucune dérive.
 
 **Gestion des erreurs d'accès sans interruption** : les violations de contrainte remontent en
 exception Prisma, interceptées par le middleware d'erreurs (`app.ts`) qui renvoie un code HTTP
