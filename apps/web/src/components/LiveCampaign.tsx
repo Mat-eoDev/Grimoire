@@ -3,7 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } f
 import "@3d-dice/dice-box/dist/style.css";
 
 import { apiFetch, API_URL } from "../lib/api";
-import type { ActionRoll, CampaignDetail } from "../lib/types";
+import type { ActionRoll, ActionRollConsequenceType, CampaignDetail } from "../lib/types";
 import { Inventory } from "./Inventory";
 import { TradePanel } from "./TradePanel";
 import { CharacterSheet } from "./CharacterSheet";
@@ -128,7 +128,7 @@ const OUTCOME_LABELS: Record<NonNullable<ActionRoll["outcome"]>, string> = {
   TOTAL_SUCCESS: "Reussite totale"
 };
 
-const CONSEQUENCE_LABELS: Record<ActionRoll["consequenceType"], string> = {
+const CONSEQUENCE_LABELS: Record<ActionRollConsequenceType, string> = {
   NONE: "Aucun effet automatique",
   NARRATION: "Ajouter une narration",
   DAMAGE_TARGET: "Retirer des PV a la cible",
@@ -778,9 +778,6 @@ function ActionRollGmPanel({
           targetType,
           targetElementId: targetType === "ELEMENT" ? targetId : undefined,
           targetUserId: targetType === "PLAYER" ? targetId : undefined,
-          consequenceType: consequences.SUCCESS.type,
-          consequenceAmount: consequences.SUCCESS.amount,
-          consequenceText: consequences.SUCCESS.text,
           consequences
         }
       });

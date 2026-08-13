@@ -67,6 +67,13 @@ enum ActionRollConsequenceType {
   HEAL_PLAYER
 }
 
+enum RollOutcome {
+  TOTAL_FAILURE
+  FAILURE
+  SUCCESS
+  TOTAL_SUCCESS
+}
+
 model User {
   id           String           @id @default(uuid())
   email        String           @unique
@@ -240,30 +247,35 @@ model ActionRoll {
   targetType         ActionRollTargetType      @default(NONE)
   targetElementId    String?
   targetUserId       String?
-  consequenceType    ActionRollConsequenceType @default(NONE)
-  consequenceAmount  Int                       @default(0)
-  consequenceText    String                    @default("")
-  totalFailureConsequenceType ActionRollConsequenceType @default(NONE)
-  totalFailureConsequenceAmount Int                     @default(0)
-  totalFailureConsequenceText String                    @default("")
-  failureConsequenceType ActionRollConsequenceType      @default(NONE)
-  failureConsequenceAmount Int                          @default(0)
-  failureConsequenceText String                         @default("")
-  successConsequenceType ActionRollConsequenceType      @default(NONE)
-  successConsequenceAmount Int                          @default(0)
-  successConsequenceText String                         @default("")
-  totalSuccessConsequenceType ActionRollConsequenceType @default(NONE)
-  totalSuccessConsequenceAmount Int                     @default(0)
-  totalSuccessConsequenceText String                    @default("")
   status             ActionRollStatus          @default(PENDING)
   result             Int?
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
 
+  // Une ligne par palier de resultat, au lieu des 15 colonnes plates precedentes.
+  consequences       ActionRollConsequence[]
+
   @@index([campaignId, status])
   @@index([playerUserId, status])
   @@index([targetElementId])
   @@index([targetUserId])
+}
+
+/// Effet a appliquer pour un palier de resultat donne d'un jet d'action.
+/// Remplace les 15 colonnes `<palier>Consequence<Type|Amount|Text>` portees par
+/// ActionRoll : ajouter un palier ne demande plus de migration de colonnes, et
+/// l'unicite (jet, palier) est garantie par la base.
+model ActionRollConsequence {
+  id       String                    @id @default(uuid())
+  rollId   String
+  roll     ActionRoll                @relation(fields: [rollId], references: [id], onDelete: Cascade)
+  outcome  RollOutcome
+  type     ActionRollConsequenceType @default(NONE)
+  amount   Int                       @default(0)
+  text     String                    @default("")
+
+  @@unique([rollId, outcome])
+  @@index([rollId])
 }
 
 model Item {
