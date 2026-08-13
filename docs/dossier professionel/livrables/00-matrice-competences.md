@@ -8,7 +8,7 @@
 ## Rappel de l'application réelle
 
 - **Pile technique** : Node + Express + Prisma + PostgreSQL (Neon) / React + Vite / SSE / cookies HttpOnly.
-- **Modèles de données réels** : `User, Session, PasswordResetToken, Campaign, CampaignMember, CharacterSheet, PlayerNote, SceneElement, ActionRoll, Item, InventoryEntry, TradeOffer, RevelationAsset`.
+- **Modèles de données réels** : `User, Session, PasswordResetToken, Campaign, CampaignMember, CharacterSheet, PlayerNote, SceneElement, ActionRoll, ActionRollConsequence, CombatLogEntry, Item, InventoryEntry, TradeOffer, RevelationAsset` (15 modèles, 20 migrations).
 - **Domaines fonctionnels réels** : authentification, campagnes (join par code), scène live (drag & drop, révélation), jets de dés à conséquences, inventaire, échanges entre joueurs, temps réel SSE.
 
 ## Tableau de couverture
@@ -19,7 +19,7 @@
 | C2 | Architecture qualité en couches + PAQ | `02-architecture-logicielle.md`, `03-plan-assurance-qualite.md` | ✅ |
 | C3 | Règles métier isolées / réutilisables | `05-services-metier-regles.md`, code `apps/server/src/lib/` | ✅ |
 | C4 | Accès données découplé du stockage | `04-modele-donnees.md` §Persistance, `05-services-metier-regles.md` | ✅ |
-| C5 | Tests unitaires + analyse statique | `07-plan-de-tests.md`, tests `apps/server/src/**/*.test.ts`, `tsc` | ✅ |
+| C5 | Tests unitaires + analyse statique | `07-plan-de-tests.md`, 24 tests `apps/server/src/**/*.test.ts`, `tsc`, CI `.github/workflows/ci.yml` | ✅ |
 | C6 | Dimensionnement / performance | `08-performance-dimensionnement.md` | ✅ |
 | C7 | IHM accessible (RGAA) | `09-accessibilite-rgaa.md` + améliorations front | ✅ |
 | C8 | Analyse de risques / criticité | `06-analyse-risques-securite.md` | ✅ |

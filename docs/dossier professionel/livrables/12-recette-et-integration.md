@@ -70,3 +70,15 @@ Branche fix/*  →  PR (revue)  →  develop (intégration)  →  PR develop→m
 
 > Preuve de mise en exploitation réelle : le déploiement du 2026-07-03 (PR #21) a été suivi d'une
 > vérification en production concluante.
+
+
+## Barrière d'intégration automatisée
+
+Depuis la PR #32, toute pull request déclenche le workflow `ci.yml` : installation
+reproductible (`npm ci`), génération du client Prisma, `tsc --noEmit` sur le serveur et sur le
+front, exécution des 24 tests unitaires, build complet, puis `npm audit` bloquant sur les
+dépendances de production au niveau `high`.
+
+Avant cela, le dépôt ne comportait qu'un workflow de maintien en éveil de l'hébergement :
+ni les tests ni le typage ne s'exécutaient avant un merge, et seule une erreur de compilation
+était rattrapée — tardivement — par le build de déploiement.
