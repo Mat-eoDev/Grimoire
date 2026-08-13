@@ -3,6 +3,7 @@ import { Router } from "express";
 
 import { assertInteger, HttpError } from "../lib/http.js";
 import { prisma } from "../lib/prisma.js";
+import { syncSheetStats } from "../lib/sheetStats.js";
 import { requireAuth } from "../middleware/auth.js";
 import { sseBroadcast } from "../lib/sseHub.js";
 
@@ -95,6 +96,12 @@ async function transferEntry(
       }
     });
   }
+
+  // L'objet transfere arrive desequipe chez le destinataire, mais il pouvait etre
+  // porte par l'expediteur : ses stats effectives doivent retomber.
+  if (entry.equipped) {
+    await syncSheetStats(tx, campaignId, fromUserId);
+  }
 }
 
 // POST /campaigns/:campaignId/inventory/player-give — don direct sans confirmation
@@ -163,11 +170,16 @@ tradesRouter.post("/campaigns/:campaignId/inventory/give-npc", async (request, r
     }
 
     // Retire l'objet de l'inventaire du joueur (le don est purement narratif).
-    if (entry.quantity === qty) {
-      await prisma.inventoryEntry.delete({ where: { id: entry.id } });
-    } else {
-      await prisma.inventoryEntry.update({ where: { id: entry.id }, data: { quantity: entry.quantity - qty } });
-    }
+    await prisma.$transaction(async (tx) => {
+      if (entry.quantity === qty) {
+        await tx.inventoryEntry.delete({ where: { id: entry.id } });
+      } else {
+        await tx.inventoryEntry.update({ where: { id: entry.id }, data: { quantity: entry.quantity - qty } });
+      }
+      if (entry.equipped) {
+        await syncSheetStats(tx, request.params.campaignId, auth.user.id);
+      }
+    });
 
     sseBroadcast(request.params.campaignId, {
       type: "inventory:gift-npc",

@@ -52,6 +52,10 @@ export function CharacterSheet({ campaignId, refreshKey }: Props) {
       .catch(() => setError("Impossible de charger la fiche."));
   }, [campaignId, refreshKey]);
 
+  // Les stats de la fiche sont deja effectives (base + equipement) : le serveur les
+  // recalcule et les persiste a chaque changement d'equipement. Cette fonction ne sert
+  // plus qu'a afficher la part apportee par l'equipement — l'additionner de nouveau
+  // compterait les bonus deux fois.
   function bonus(key: keyof InventoryEntry) {
     return equipped.reduce((sum, e) => sum + ((e[key] as number) ?? 0), 0);
   }
@@ -59,8 +63,10 @@ export function CharacterSheet({ campaignId, refreshKey }: Props) {
   if (error)  return <p className="cs-error">Fiche introuvable.</p>;
   if (!sheet) return null;
 
-  const effectiveMaxHp = sheet.maxHp + bonus("bonusMaxHp");
-  const hpPct = Math.min(Math.round((sheet.hp / effectiveMaxHp) * 100), 100);
+  const effectiveMaxHp = sheet.maxHp;
+  const hpPct = effectiveMaxHp > 0
+    ? Math.min(Math.round((sheet.hp / effectiveMaxHp) * 100), 100)
+    : 0;
   const hpColor = hpPct > 60 ? "#4ec47a" : hpPct > 30 ? "#e0934e" : "#e05a4e";
 
   return (
@@ -114,7 +120,7 @@ export function CharacterSheet({ campaignId, refreshKey }: Props) {
       <div className="cs-stats">
         {STATS.map(({ key, label, icon, bonusKey, color, max }) => {
           const b = bonus(bonusKey as keyof InventoryEntry);
-          const val = sheet[key] + b;
+          const val = sheet[key];
           const pct = Math.min(Math.round((val / max) * 100), 100);
           return (
             <div key={key} className="cs-stat">

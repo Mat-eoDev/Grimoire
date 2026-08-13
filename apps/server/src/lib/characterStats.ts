@@ -27,3 +27,57 @@ export function getBaseStats(charId: number): BaseStats {
   if (!stats) throw new Error(`Personnage ${charId} inconnu`);
   return stats;
 }
+
+export type EquipmentBonuses = {
+  bonusMaxHp:   number;
+  bonusAttack:  number;
+  bonusDefense: number;
+  bonusSpeed:   number;
+  bonusMagic:   number;
+};
+
+const EMPTY_BONUSES: EquipmentBonuses = {
+  bonusMaxHp: 0,
+  bonusAttack: 0,
+  bonusDefense: 0,
+  bonusSpeed: 0,
+  bonusMagic: 0,
+};
+
+/** Somme les bonus d'un ensemble d'entrees d'inventaire (typiquement celles equipees). */
+export function sumEquipmentBonuses(entries: Partial<EquipmentBonuses>[]): EquipmentBonuses {
+  return entries.reduce<EquipmentBonuses>(
+    (total, entry) => ({
+      bonusMaxHp:   total.bonusMaxHp   + (entry.bonusMaxHp   ?? 0),
+      bonusAttack:  total.bonusAttack  + (entry.bonusAttack  ?? 0),
+      bonusDefense: total.bonusDefense + (entry.bonusDefense ?? 0),
+      bonusSpeed:   total.bonusSpeed   + (entry.bonusSpeed   ?? 0),
+      bonusMagic:   total.bonusMagic   + (entry.bonusMagic   ?? 0),
+    }),
+    { ...EMPTY_BONUSES }
+  );
+}
+
+/**
+ * Statistiques effectives d'un personnage : stats de base de sa classe + bonus de
+ * l'equipement porte. Regle metier pure, sans dependance a Express ni a Prisma.
+ *
+ * Ces valeurs sont ensuite persistees sur la fiche (voir lib/sheetStats.ts) : la
+ * contrainte CHECK "hp <= maxHp" et le trigger character_sheet_hp_guard s'appliquent
+ * au plus pres de la donnee, donc le plafond de PV doit exister en base et pas
+ * seulement dans une addition faite a l'affichage.
+ */
+export function getEffectiveStats(charId: number, equipped: Partial<EquipmentBonuses>[]): BaseStats {
+  const base  = getBaseStats(charId);
+  const bonus = sumEquipmentBonuses(equipped);
+
+  return {
+    hp:      base.hp,
+    maxHp:   base.maxHp   + bonus.bonusMaxHp,
+    attack:  base.attack  + bonus.bonusAttack,
+    defense: base.defense + bonus.bonusDefense,
+    speed:   base.speed   + bonus.bonusSpeed,
+    magic:   base.magic   + bonus.bonusMagic,
+    level:   base.level,
+  };
+}

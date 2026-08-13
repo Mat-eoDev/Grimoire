@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { assertInteger, assertString, HttpError } from "../lib/http.js";
 import { prisma } from "../lib/prisma.js";
+import { syncSheetStats } from "../lib/sheetStats.js";
 import { requireAuth } from "../middleware/auth.js";
 
 export const inventoryRouter = Router();
@@ -175,30 +176,36 @@ inventoryRouter.patch("/campaigns/:campaignId/inventory/:entryId/equip", async (
 
     const nowEquipped = !existing.equipped;
 
-    // Déséquiper les items du même type si on équipe
-    if (nowEquipped) {
-      const sameType = await prisma.inventoryEntry.findMany({
-        where: {
-          campaignId: request.params.campaignId,
-          userId: auth.user.id,
-          equipped: true,
-          item: { type: existing.item.type },
-          NOT: { id: existing.id },
-        },
+    // Le changement d'equipement et la mise a jour des stats effectives forment un tout :
+    // sortir de la transaction laisserait une fiche desynchronisee de son equipement.
+    const { entry, sheet } = await prisma.$transaction(async (tx) => {
+      // Déséquiper les items du même type si on équipe
+      if (nowEquipped) {
+        await tx.inventoryEntry.updateMany({
+          where: {
+            campaignId: request.params.campaignId,
+            userId: auth.user.id,
+            equipped: true,
+            item: { type: existing.item.type },
+            NOT: { id: existing.id },
+          },
+          data: { equipped: false },
+        });
+      }
+
+      const updated = await tx.inventoryEntry.update({
+        where: { id: existing.id },
+        data: { equipped: nowEquipped },
         include: { item: true },
       });
-      for (const e of sameType) {
-        await prisma.inventoryEntry.update({ where: { id: e.id }, data: { equipped: false } });
-      }
-    }
 
-    const entry = await prisma.inventoryEntry.update({
-      where: { id: existing.id },
-      data: { equipped: nowEquipped },
-      include: { item: true },
+      return {
+        entry: updated,
+        sheet: await syncSheetStats(tx, request.params.campaignId, auth.user.id),
+      };
     });
 
-    response.json({ entry: serializeEntry(entry) });
+    response.json({ entry: serializeEntry(entry), sheet });
   } catch (error) {
     next(error);
   }
@@ -223,7 +230,14 @@ inventoryRouter.delete("/campaigns/:campaignId/inventory/:entryId", async (reque
       throw new HttpError(403, "Action non autorisee");
     }
 
-    await prisma.inventoryEntry.delete({ where: { id: existing.id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.inventoryEntry.delete({ where: { id: existing.id } });
+      // Retirer un objet equipe fait retomber les stats (et peut rogner les PV max).
+      if (existing.equipped) {
+        await syncSheetStats(tx, request.params.campaignId, existing.userId);
+      }
+    });
+
     response.status(204).end();
   } catch (error) {
     next(error);
