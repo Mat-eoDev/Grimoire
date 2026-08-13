@@ -1,0 +1,133 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram name="workflow-mj-joueurs" id="workflow_mj_joueurs">
+    <mxGraphModel dx="1873" dy="1105" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" value="Deroulement d&#39;une campagne - MJ, code, scenes, actions et lancers de de" vertex="1">
+          <mxGeometry height="50" width="920" x="40" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="laneMj_3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;fontStyle=1;fontSize=14;align=left;verticalAlign=top;spacing=10" value="Maitre du Jeu" vertex="1">
+          <mxGeometry height="980" width="470" x="40" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="laneApp_4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;fontStyle=1;fontSize=14;align=left;verticalAlign=top;spacing=10" value="Application Grimoire / NewMJ" vertex="1">
+          <mxGeometry height="980" width="470" x="560" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="lanePlayers_5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;fontStyle=1;fontSize=14;align=left;verticalAlign=top;spacing=10" value="Joueurs 1..n" vertex="1">
+          <mxGeometry height="980" width="560" x="1080" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="mj_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" value="Cree et lance la campagne" vertex="1">
+          <mxGeometry height="70" width="270" x="130" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="app_7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" value="Genere un code de campagne" vertex="1">
+          <mxGeometry height="70" width="270" x="660" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="mj_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" value="Donne le code aux joueurs" vertex="1">
+          <mxGeometry height="70" width="270" x="130" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="players_9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" value="Rejoignent la campagne avec le code" vertex="1">
+          <mxGeometry height="70" width="320" x="1180" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="app_10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" value="Associe chaque joueur a la campagne" vertex="1">
+          <mxGeometry height="70" width="270" x="660" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="players_11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" value="Visualisent la campagne et attendent les actions proposees" vertex="1">
+          <mxGeometry height="80" width="360" x="1160" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="loop_12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;dashed=1;fontStyle=1;align=left;verticalAlign=top;spacing=8" value="&lt;b&gt;Boucle de narration pendant la partie&lt;/b&gt;&lt;br&gt;Le MJ garde le controle du rythme et peut repeter ces etapes autant que necessaire." vertex="1">
+          <mxGeometry height="475" width="1510" x="70" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="mj_13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" value="Choisit une scene en background" vertex="1">
+          <mxGeometry height="70" width="270" x="130" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="app_14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" value="Met a jour la scene visible" vertex="1">
+          <mxGeometry height="70" width="270" x="660" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="players_15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" value="Voient le decor propose" vertex="1">
+          <mxGeometry height="70" width="320" x="1180" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="mj_16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" value="Ajoute a volonte : ennemis, PNJ, objets" vertex="1">
+          <mxGeometry height="80" width="270" x="130" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="app_17" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" value="Enregistre les elements et leur visibilite" vertex="1">
+          <mxGeometry height="80" width="270" x="660" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="players_18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" value="Voient uniquement les elements publies" vertex="1">
+          <mxGeometry height="80" width="320" x="1180" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="mj_19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" value="Propose une action a resoudre" vertex="1">
+          <mxGeometry height="70" width="270" x="130" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="app_20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" value="Cree une demande de lancer de de" vertex="1">
+          <mxGeometry height="70" width="270" x="660" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="players_21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" value="Lance le de et envoie le resultat" vertex="1">
+          <mxGeometry height="70" width="320" x="1180" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="app_22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontSize=12" value="Calcule l&#39;issue et applique la consequence" vertex="1">
+          <mxGeometry height="70" width="270" x="660" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="mj_23" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontSize=12" value="Continue la narration ou adapte la scene" vertex="1">
+          <mxGeometry height="70" width="270" x="130" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="players_24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontSize=12" value="Voient le resultat : narration, degats, objet ou changement de scene" vertex="1">
+          <mxGeometry height="80" width="320" x="1180" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="e_25" edge="1" parent="1" source="mj_6" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="app_7" value="creation">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_26" edge="1" parent="1" source="app_7" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="mj_8" value="code">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_27" edge="1" parent="1" source="mj_8" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_9" value="partage hors application">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_28" edge="1" parent="1" source="players_9" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="app_10" value="POST /campaigns/join">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_29" edge="1" parent="1" source="app_10" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_11" value="acces campagne">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_30" edge="1" parent="1" source="mj_13" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="app_14" value="choix background">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_31" edge="1" parent="1" source="app_14" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_15" value="publication">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_32" edge="1" parent="1" source="players_15" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_11" value="attente">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_33" edge="1" parent="1" source="mj_16" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="app_17" value="ennemi / PNJ / objet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_34" edge="1" parent="1" source="app_17" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_18" value="filtrage visible">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_35" edge="1" parent="1" source="players_18" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_11" value="observation">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_36" edge="1" parent="1" source="mj_19" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="app_20" value="demande de jet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_37" edge="1" parent="1" source="app_20" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_21" value="notification action">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_38" edge="1" parent="1" source="players_21" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="app_22" value="resultat du de">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_39" edge="1" parent="1" source="app_22" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="players_24" value="mise a jour">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_40" edge="1" parent="1" source="app_22" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="mj_23" value="resultat pour arbitrage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_41" edge="1" parent="1" source="mj_23" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=1" target="mj_13" value="nouvelle scene ou nouvelle action">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note_42" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8;fontSize=12" value="A expliquer a l&#39;oral : l&#39;application ne remplace pas le MJ. Elle sert de support visuel, gere les acces joueurs, synchronise la scene et structure les lancers de de." vertex="1">
+          <mxGeometry height="90" width="520" x="1030" y="170" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

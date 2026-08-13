@@ -1,0 +1,64 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36" version="29.2.1">
+  <diagram name="deploiement-local" id="deploiement_local">
+    <mxGraphModel dx="1042" dy="608" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="840" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" value="Deploiement local" vertex="1">
+          <mxGeometry height="48" width="520" x="40" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dev_3" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12" value="Poste developpeur" vertex="1">
+          <mxGeometry height="80" width="180" x="80" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="node_4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;dashed=1;fontStyle=1;fontColor=#334155;align=left;verticalAlign=top;spacing=10" value="Runtime Node.js" vertex="1">
+          <mxGeometry height="420" width="330" x="340" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="web_5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" value="Frontend Vite&#xa;npm run dev:web" vertex="1">
+          <mxGeometry height="80" width="180" x="420" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="api_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" value="Backend Express&#xa;npm run dev:server" vertex="1">
+          <mxGeometry height="80" width="180" x="420" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="docker_7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#94a3b8;dashed=1;fontStyle=1;fontColor=#334155;align=left;verticalAlign=top;spacing=10" value="Docker Compose" vertex="1">
+          <mxGeometry height="420" width="330" x="780" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="db_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" value="PostgreSQL" vertex="1">
+          <mxGeometry height="80" width="190" x="850" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="env_9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" value=".env&#xa;DATABASE_URL&#xa;CLIENT_ORIGIN&#xa;SESSION_SECRET" vertex="1">
+          <mxGeometry height="110" width="220" x="80" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="prisma_10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" value="Prisma&#xa;generate / migrate / seed" vertex="1">
+          <mxGeometry height="90" width="190" x="850" y="205" as="geometry" />
+        </mxCell>
+        <mxCell id="browser_11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" value="Navigateur" vertex="1">
+          <mxGeometry height="70" width="180" x="80" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="e_12" edge="1" parent="1" source="dev_3" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="env_9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_13" edge="1" parent="1" source="dev_3" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="web_5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_14" edge="1" parent="1" source="dev_3" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="api_6" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_16" edge="1" parent="1" source="browser_11" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="web_5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_17" edge="1" parent="1" source="web_5" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="api_6" value="HTTP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_18" edge="1" parent="1" source="api_6" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="prisma_10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_19" edge="1" parent="1" source="prisma_10" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="db_8" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_20" edge="1" parent="1" source="api_6" style="endArrow=block;html=1;rounded=1;strokeWidth=2" target="db_8" value="Prisma Client">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

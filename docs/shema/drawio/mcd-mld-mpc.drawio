@@ -1,0 +1,97 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram name="mcd-mld-mpc" id="mcd_mld_mpc">
+    <mxGraphModel dx="1373" dy="811" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1040" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title_2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;fontColor=#ffffff;strokeColor=#0f172a;fontStyle=1;fontSize=18" value="Modele de donnees simplifie" vertex="1">
+          <mxGeometry height="48" width="520" x="40" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="user_3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="USER&#xa;email unique&#xa;username unique&#xa;passwordHash" vertex="1">
+          <mxGeometry height="100" width="190" x="80" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="session_4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="SESSION&#xa;tokenHash&#xa;expiresAt" vertex="1">
+          <mxGeometry height="80" width="190" x="60" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="campaign_5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="CAMPAIGN&#xa;title&#xa;joinCode&#xa;status" vertex="1">
+          <mxGeometry height="100" width="200" x="480" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="member_6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="CAMPAIGN_MEMBER&#xa;role GM / PLAYER&#xa;isReady" vertex="1">
+          <mxGeometry height="90" width="210" x="330" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="character_7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="CHARACTER_SHEET&#xa;charName&#xa;stats" vertex="1">
+          <mxGeometry height="90" width="200" x="960" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="note_8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="PLAYER_NOTE&#xa;content" vertex="1">
+          <mxGeometry height="70" width="200" x="780" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="scene_9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="SCENE_ELEMENT&#xa;type&#xa;isVisible&#xa;position&#xa;stats" vertex="1">
+          <mxGeometry height="110" width="210" x="740" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="asset_10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="REVELATION_ASSET&#xa;imageDataUrl" vertex="1">
+          <mxGeometry height="80" width="210" x="1065" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="roll_11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="ACTION_ROLL&#xa;status&#xa;result&#xa;consequences" vertex="1">
+          <mxGeometry height="110" width="210" x="1050" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="item_12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="ITEM&#xa;slug&#xa;type&#xa;equipable" vertex="1">
+          <mxGeometry height="100" width="190" x="80" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="inv_13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="INVENTORY_ENTRY&#xa;quantity&#xa;equipped&#xa;bonus" vertex="1">
+          <mxGeometry height="110" width="210" x="410" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="trade_14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontStyle=1" value="TRADE_OFFER&#xa;fromUser / toUser&#xa;status" vertex="1">
+          <mxGeometry height="100" width="220" x="650" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="e_15" edge="1" parent="1" source="user_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="session_4" value="1 -&gt; 0..n">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_16" edge="1" parent="1" source="user_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="campaign_5" value="dirige">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_17" edge="1" parent="1" source="user_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="member_6" value="participe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_18" edge="1" parent="1" source="campaign_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="member_6" value="contient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_19" edge="1" parent="1" source="user_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="character_7" value="possede">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_20" edge="1" parent="1" source="campaign_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="character_7" value="regroupe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_21" edge="1" parent="1" source="user_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="note_8" value="redige">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_22" edge="1" parent="1" source="campaign_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="note_8" value="contient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_23" edge="1" parent="1" source="campaign_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="scene_9" value="affiche">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_24" edge="1" parent="1" source="asset_10" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="scene_9" value="illustre">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_25" edge="1" parent="1" source="campaign_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="roll_11" value="organise">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_26" edge="1" parent="1" source="item_12" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="inv_13" value="reference">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_27" edge="1" parent="1" source="user_3" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="inv_13" value="possede">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_28" edge="1" parent="1" source="campaign_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="inv_13" value="contient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_29" edge="1" parent="1" source="campaign_5" style="endArrow=none;html=1;rounded=1;strokeWidth=2" target="trade_14" value="contient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note_30" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#f59e0b;align=left;verticalAlign=top;spacing=8" value="Version complete : docs/uml/mcd-mpc.md&#xa;Ce schema resume les entites principales du MVP implemente." vertex="1">
+          <mxGeometry height="90" width="420" x="960" y="600" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
