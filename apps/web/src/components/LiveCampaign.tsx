@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import "@3d-dice/dice-box/dist/style.css";
 
-import { apiFetch, API_URL } from "../lib/api";
+import { apiFetch } from "../lib/api";
+import { subscribeCampaignStream } from "../lib/campaignStream";
 import type { ActionRoll, ActionRollConsequenceType, CampaignDetail } from "../lib/types";
 import { Inventory } from "./Inventory";
 import { TradePanel } from "./TradePanel";
@@ -215,21 +216,10 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
     setActionRolls(data.live.actionRolls ?? []);
   }, [data.live.actionRolls]);
 
-  // SSE: real-time position updates
+  // Flux temps reel partage (une seule EventSource par campagne, cf. lib/campaignStream).
   useEffect(() => {
-    const es = new EventSource(`${API_URL}/campaigns/${data.campaign.id}/stream`, { withCredentials: true });
-    es.onmessage = (e) => {
-      try {
-        const event = JSON.parse(e.data as string) as {
-          type: string;
-          elementId?: string;
-          posX?: number;
-          posY?: number;
-          scale?: number;
-          actionRoll?: ActionRoll;
-          actionRollId?: string;
-          name?: string;
-        };
+    return subscribeCampaignStream(data.campaign.id, (raw) => {
+        const event = raw as typeof raw & { actionRoll?: ActionRoll };
         if (event.type === "element:moved") {
           if (event.elementId && typeof event.posX === "number" && typeof event.posY === "number") {
             setPositions((prev) => new Map(prev).set(event.elementId!, { posX: event.posX!, posY: event.posY! }));
@@ -257,9 +247,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
           setDownedMessage(event.name);
           void onReload();
         }
-      } catch {}
-    };
-    return () => es.close();
+    });
   }, [data.campaign.id, onReload]);
 
   const handlePositionDrop = useCallback(async (elementId: string, posX: number, posY: number) => {
@@ -1287,10 +1275,24 @@ function PlayerActionRollPanel({
     }
 
     void loadActiveRolls();
-    const interval = window.setInterval(loadActiveRolls, 2000);
+
+    // Les jets arrivent par SSE ; ce filet lent ne sert qu'a rattraper une
+    // connexion coupee, la ou un sondage toutes les 2 secondes tournait en continu.
+    const interval = window.setInterval(loadActiveRolls, 30_000);
+    const unsubscribe = subscribeCampaignStream(campaignId, (event) => {
+      if (event.type === "action-roll:changed" && event.actionRoll) {
+        const roll = event.actionRoll as ActionRoll;
+        setLocalRolls((prev) => [roll, ...prev.filter((item) => item.id !== roll.id)]);
+      }
+      if (event.type === "action-roll:closed" && event.actionRollId) {
+        setLocalRolls((prev) => prev.filter((item) => item.id !== event.actionRollId));
+      }
+    });
+
     return () => {
       cancelled = true;
       window.clearInterval(interval);
+      unsubscribe();
     };
   }, [campaignId]);
 

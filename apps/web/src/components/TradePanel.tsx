@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { apiFetch, API_URL } from "../lib/api";
+import { apiFetch } from "../lib/api";
+import { subscribeCampaignStream } from "../lib/campaignStream";
 import type { TradeOffer, InventoryEntry, CampaignMemberView } from "../lib/types";
 
 type NpcTarget = { id: string; name: string; type: string };
@@ -28,16 +29,11 @@ export function TradePanel({ campaignId, currentUserId, members, npcTargets = []
 
   useEffect(() => { load(); }, [load]);
 
-  // SSE: refresh on trade events
+  // Evenements d'echange, sur le flux partage de la campagne.
   useEffect(() => {
-    const es = new EventSource(`${API_URL}/campaigns/${campaignId}/stream`, { withCredentials: true });
-    es.onmessage = (e) => {
-      try {
-        const ev = JSON.parse(e.data as string) as { type: string };
-        if (ev.type.startsWith("trade:")) load();
-      } catch {}
-    };
-    return () => es.close();
+    return subscribeCampaignStream(campaignId, (event) => {
+      if (event.type.startsWith("trade:")) void load();
+    });
   }, [campaignId, load]);
 
   async function act(tradeId: string, action: "accept" | "refuse" | "cancel") {
