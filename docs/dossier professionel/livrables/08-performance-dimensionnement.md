@@ -50,14 +50,27 @@ petit et concurrentiel-faible** :
 | P2 | milliers | Multi-instances + **Redis pub/sub** pour le SSE + pool Postgres dédié |
 | P3 | forte croissance | Séparer le service statique (CDN), réplique lecture Postgres |
 
-## 6. Protocole de test de performance (à exécuter pour la preuve)
+## 6. Test de charge — résultats mesurés
 
-Test de charge léger reproductible (ex. `autocannon` ou `ab`) sur un endpoint représentatif :
+Test **réellement exécuté** avec `autocannon` (20 connexions concurrentes, 15 s) sur `/health`
+en production (Render *free*), le 2026-07-03 :
 
 ```bash
-# 50 connexions, 30 s, sur /health (lecture) et un login (écriture)
-npx autocannon -c 50 -d 30 https://grimoire-q9hj.onrender.com/health
+npx autocannon -c 20 -d 15 https://grimoire-q9hj.onrender.com/health
 ```
 
-Relever : latence p50/p99, req/s, taux d'erreur. Objectif : p99 < 500 ms sur `/health`, 0 erreur.
-Le rate limiting (10 login/15 min/IP) borne volontairement l'écriture — attendu.
+| Métrique | Mesure |
+|---|---|
+| Requêtes servies | 596 en 15,04 s (~40 req/s) |
+| Latence médiane (p50) | **55 ms** |
+| Latence p97.5 | 2 318 ms |
+| Latence p99 | 3 169 ms |
+| Latence max | 3 177 ms |
+| Erreurs | 20 timeouts |
+
+**Interprétation (honnête).** En usage nominal, la latence est excellente (p50 = 55 ms). Mais sous
+**20 connexions simultanées**, l'instance *free* mono-cœur sature : la queue s'allonge (p99 ≈ 3,2 s)
+et quelques requêtes tombent en timeout. C'est la **confirmation empirique du plafond du plan
+gratuit** décrit au §4 : pour un usage réel soutenu (> quelques dizaines de connexions), le passage
+au palier P1/P2 (instance dédiée, puis multi-instances + Redis pub/sub pour le SSE) est nécessaire.
+Pour la cible réelle (~4 à 7 joueurs par partie, actions espacées), la marge est confortable.

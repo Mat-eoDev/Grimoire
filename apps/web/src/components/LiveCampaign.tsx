@@ -475,7 +475,7 @@ export function LiveCampaign({ data, onReload, onStop, refreshKey }: Props) {
               </div>
               <div className="media-section-heading">
                 <h2>Décors</h2>
-                <input value={search} placeholder="Rechercher un décor…" onChange={(event) => setSearch(event.target.value)} />
+                <input aria-label="Rechercher un décor" value={search} placeholder="Rechercher un décor…" onChange={(event) => setSearch(event.target.value)} />
               </div>
               <div className="media-grid">
                 {BACKGROUND_CONTEXTS
@@ -852,7 +852,7 @@ function ActionRollGmPanel({
         </div>
       ) : (
         <div className="action-roll__wizard">
-          {status && <p className="action-roll__status">{status}</p>}
+          {status && <p className="action-roll__status" role="status" aria-live="polite">{status}</p>}
           <div className="action-roll__steps">
             {[1, 2].map((item) => (
               <button key={item} type="button" className={step >= item ? "action-roll__step--active" : ""} onClick={() => setStep(item)}>
@@ -1355,15 +1355,17 @@ function PlayerActionRollPanel({
         <span>Reussite {">="} {roll.successMin}</span>
         <span>Totale {">="} {roll.totalSuccessMin}</span>
       </div>
-      {rollStatus && <p className="player-roll-card__status">{rollStatus}</p>}
+      {rollStatus && (
+        <p className="player-roll-card__status" role="status" aria-live="polite">{rollStatus}</p>
+      )}
       {roll.status === "PENDING" && canRoll ? (
         <button type="button" onClick={() => rollDice(roll)} disabled={isRolling}>
           {isRolling ? "Le de roule..." : `Lancer le d${roll.dieSides}`}
         </button>
       ) : roll.status === "PENDING" ? (
-        <p className="player-roll-card__status">En attente du lancer…</p>
+        <p className="player-roll-card__status" role="status" aria-live="polite">En attente du lancer…</p>
       ) : (
-        <div className="player-roll-card__result">
+        <div className="player-roll-card__result" role="status" aria-live="polite">
           <span>Resultat</span>
           <b>{roll.result}</b>
           <strong>{roll.outcome ? OUTCOME_LABELS[roll.outcome] : "En attente"}</strong>
