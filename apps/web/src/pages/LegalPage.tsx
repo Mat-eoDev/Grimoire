@@ -15,18 +15,22 @@ export function LegalPage() {
         </p>
 
         <div style={{ fontSize: "0.95rem", lineHeight: 1.65 }}>
-          <h2 style={sectionTitle}>Éditeur du site</h2>
+          <h2 style={sectionTitle}>Éditeurs du site</h2>
           <p>
-            Le site Grimoire est édité par Mateo H., dans le cadre d'un projet personnel /
-            de formation. Contact :{" "}
+            Le site Grimoire est édité par Mateo H. et Marc L., dans le cadre d'un projet
+            personnel / de formation. Contact :{" "}
             <a href="mailto:mateo.hennebelle@gmail.com" className="auth-link">
               mateo.hennebelle@gmail.com
+            </a>{" "}
+            ou{" "}
+            <a href="mailto:marc.longmar@gmail.com" className="auth-link">
+              marc.longmar@gmail.com
             </a>
             .
           </p>
 
-          <h2 style={sectionTitle}>Directeur de la publication</h2>
-          <p>Mateo H.</p>
+          <h2 style={sectionTitle}>Directeurs de la publication</h2>
+          <p>Mateo H. et Marc L.</p>
 
           <h2 style={sectionTitle}>Hébergement</h2>
           <p>
@@ -44,8 +48,8 @@ export function LegalPage() {
 
           <h2 style={sectionTitle}>Propriété intellectuelle</h2>
           <p>
-            L'ensemble du contenu de ce site (code, interface, textes) est la propriété de
-            l'éditeur, sauf mention contraire. Toute reproduction non autorisée est interdite.
+            L'ensemble du contenu de ce site (code, interface, textes) est la propriété des
+            éditeurs, sauf mention contraire. Toute reproduction non autorisée est interdite.
           </p>
 
           <h2 style={sectionTitle}>Données personnelles</h2>

@@ -23,12 +23,16 @@ export function PrivacyPage() {
             sont conservées, et quels sont vos droits.
           </p>
 
-          <h2 style={sectionTitle}>1. Responsable du traitement</h2>
+          <h2 style={sectionTitle}>1. Responsables du traitement</h2>
           <p>
-            Le responsable du traitement est l'éditeur du projet Grimoire. Pour toute
-            question relative à vos données, vous pouvez écrire à :{" "}
+            Les responsables du traitement sont les éditeurs du projet Grimoire, Mateo H. et
+            Marc L. Pour toute question relative à vos données, vous pouvez écrire à :{" "}
             <a href="mailto:mateo.hennebelle@gmail.com" className="auth-link">
               mateo.hennebelle@gmail.com
+            </a>{" "}
+            ou{" "}
+            <a href="mailto:marc.longmar@gmail.com" className="auth-link">
+              marc.longmar@gmail.com
             </a>
             .
           </p>
@@ -116,7 +120,7 @@ export function PrivacyPage() {
           <p>
             Conformément au RGPD, vous disposez d'un droit d'accès, de rectification,
             d'effacement et d'opposition sur vos données. Pour exercer ces droits, contactez
-            l'adresse indiquée en section 1. Vous pouvez également introduire une réclamation
+            l'une des adresses indiquées en section 1. Vous pouvez également introduire une réclamation
             auprès de la CNIL (
             <a href="https://www.cnil.fr" className="auth-link" target="_blank" rel="noreferrer">
               cnil.fr
