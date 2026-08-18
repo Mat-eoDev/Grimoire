@@ -11,14 +11,14 @@ export function LegalPage() {
           Mentions légales
         </h1>
         <p style={{ fontSize: "0.85rem", opacity: 0.7, marginBottom: "1.5rem" }}>
-          Dernière mise à jour : 7 juillet 2026
+          Dernière mise à jour : 18 août 2026
         </p>
 
         <div style={{ fontSize: "0.95rem", lineHeight: 1.65 }}>
           <h2 style={sectionTitle}>Éditeurs du site</h2>
           <p>
-            Le site Grimoire est édité par Mateo H. et Marc L., dans le cadre d'un projet
-            personnel / de formation. Contact :{" "}
+            Le site Grimoire est édité conjointement par Mateo H. et Marc L., dans le
+            cadre d'un projet personnel / de formation. Contact :{" "}
             <a href="mailto:mateo.hennebelle@gmail.com" className="auth-link">
               mateo.hennebelle@gmail.com
             </a>{" "}
@@ -30,7 +30,7 @@ export function LegalPage() {
           </p>
 
           <h2 style={sectionTitle}>Directeurs de la publication</h2>
-          <p>Mateo H. et Marc L.</p>
+          <p>Mateo H. et Marc L., co-directeurs de la publication.</p>
 
           <h2 style={sectionTitle}>Hébergement</h2>
           <p>
@@ -48,8 +48,9 @@ export function LegalPage() {
 
           <h2 style={sectionTitle}>Propriété intellectuelle</h2>
           <p>
-            L'ensemble du contenu de ce site (code, interface, textes) est la propriété des
-            éditeurs, sauf mention contraire. Toute reproduction non autorisée est interdite.
+            L'ensemble du contenu de ce site (code, interface, textes) est la propriété
+            conjointe de ses co-éditeurs, sauf mention contraire. Toute reproduction non
+            autorisée est interdite.
           </p>
 
           <h2 style={sectionTitle}>Données personnelles</h2>

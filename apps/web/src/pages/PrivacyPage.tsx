@@ -13,7 +13,7 @@ export function PrivacyPage() {
           Politique de confidentialité
         </h1>
         <p style={{ fontSize: "0.85rem", opacity: 0.7, marginBottom: "1.5rem" }}>
-          Dernière mise à jour : 7 juillet 2026
+          Dernière mise à jour : 18 août 2026
         </p>
 
         <div style={{ fontSize: "0.95rem", lineHeight: 1.65 }}>
@@ -25,8 +25,9 @@ export function PrivacyPage() {
 
           <h2 style={sectionTitle}>1. Responsables du traitement</h2>
           <p>
-            Les responsables du traitement sont les éditeurs du projet Grimoire, Mateo H. et
-            Marc L. Pour toute question relative à vos données, vous pouvez écrire à :{" "}
+            Les responsables conjoints du traitement sont les co-éditeurs du projet
+            Grimoire, Mateo H. et Marc L. Pour toute question relative à vos données ou
+            pour exercer vos droits, vous pouvez écrire à :{" "}
             <a href="mailto:mateo.hennebelle@gmail.com" className="auth-link">
               mateo.hennebelle@gmail.com
             </a>{" "}
