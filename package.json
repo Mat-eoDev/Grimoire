@@ -11,11 +11,12 @@
   },
   "scripts": {
     "start": "node apps/server/dist/src/server.js",
-    "render-build": "npm install --include=dev && npm run prisma:generate && npm run build && npm run prisma:deploy && npm run prisma:seed",
+    "render-build": "npm install --include=dev && npm run prisma:generate && npm run build && npm run test && npm run prisma:deploy && npm run prisma:seed",
     "dev:server": "npm --workspace @newmj/server run dev",
     "dev:web": "npm --workspace @newmj/web run dev",
     "build": "npm --workspace @newmj/server run build && npm --workspace @newmj/web run build",
     "check": "npm --workspace @newmj/server run check && npm --workspace @newmj/web run check",
+    "test": "npm --prefix apps/server run test",
     "prisma:generate": "npm --workspace @newmj/server run prisma:generate",
     "prisma:migrate": "npm --workspace @newmj/server run prisma:migrate",
     "prisma:deploy": "npm --workspace @newmj/server run prisma:deploy",
