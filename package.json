@@ -21,5 +21,8 @@
     "prisma:migrate": "npm --workspace @newmj/server run prisma:migrate",
     "prisma:deploy": "npm --workspace @newmj/server run prisma:deploy",
     "prisma:seed": "npm --workspace @newmj/server run prisma:seed"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.1"
   }
 }
