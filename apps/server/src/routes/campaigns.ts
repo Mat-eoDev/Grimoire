@@ -439,6 +439,9 @@ campaignsRouter.put("/campaigns/:campaignId/live-scene", async (request, respons
       }
     });
 
+    // Les joueurs rechargent la scene tout de suite, au lieu d'attendre le sondage.
+    sseBroadcast(request.params.campaignId, { type: "campaign:changed" });
+
     response.json({
       scene: {
         preset: campaign.scenePreset,
@@ -497,6 +500,9 @@ campaignsRouter.post("/campaigns/:campaignId/scene-elements", async (request, re
         assetId
       }
     });
+
+    // Un element est visible par defaut : il doit apparaitre sans attendre le sondage.
+    sseBroadcast(request.params.campaignId, { type: "campaign:changed" });
 
     response.status(201).json({ element });
   } catch (error) {
@@ -584,6 +590,9 @@ campaignsRouter.patch("/campaigns/:campaignId/scene-elements/:elementId", async 
       data: { isVisible: body.isVisible }
     });
 
+    // Revelation ou masquage : les joueurs rechargent la scene filtree immediatement.
+    sseBroadcast(request.params.campaignId, { type: "campaign:changed" });
+
     response.json({ element });
   } catch (error) {
     next(error);
@@ -608,6 +617,8 @@ campaignsRouter.delete("/campaigns/:campaignId/scene-elements/:elementId", async
     }
 
     await prisma.sceneElement.delete({ where: { id: existing.id } });
+
+    sseBroadcast(request.params.campaignId, { type: "campaign:changed" });
 
     response.status(204).end();
   } catch (error) {
