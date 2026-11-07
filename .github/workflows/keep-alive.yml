@@ -7,11 +7,15 @@
 # en periode de forte charge. L'intervalle de 5 min garde une marge sous les
 # 15 min. Pour un reveil garanti a l'heure, utiliser un service dedie type
 # cron-job.org pointant sur la meme URL /health.
+#
+# DESACTIVE : le declenchement planifie (toutes les 5 min) a ete retire car
+# chaque echec envoyait une notification GitHub. Le workflow reste lancable
+# a la main (Actions > keep-alive > Run workflow). Pour le reactiver, remettre :
+#   schedule:
+#     - cron: "*/5 * * * *"
 name: keep-alive
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 jobs:
